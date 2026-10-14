@@ -1,0 +1,35 @@
+# === API Keys & Secrets ===
+backend/llm_config.json
+backend/.env
+*.pem
+*.crt
+*.key
+
+# === Cache & Temporary ===
+backend/_extraction_cache.json
+backend/_trace_tmp/
+backend/__pycache__/
+backend/*.pyc
+*.log
+
+# === Variable Library (JSON per variabel) ===
+backend/variable_library/*.json
+!backend/variable_library/.gitkeep
+
+# === Output & Dataset ===
+output/
+*.xlsx
+
+# === OS/IDE ===
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+venv/
+env/

@@ -1,0 +1,31 @@
+# fly.toml - Konfigurasi Fly.io (alternatif deploy)
+# Deploy: flyctl launch → flyctl deploy
+
+app = "autotesis-ai"
+primary_region = "sin"  # Singapore - GRATIS di Fly.io, latency rendah ke Indonesia
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 5050
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[env]
+  PYTHON_VERSION = "3.11"
+  # API Keys di-set via: flyctl secrets set GEMINI_API_KEYS='["key1","key2",...]' NVIDIA_API_KEY=nvapi-xxx
+
+[mounts]
+  source = "variable_library"
+  destination = "/app/backend/variable_library"
+
+[processes]
+  app = "gunicorn backend.server:app --bind 0.0.0.0:5050 --workers 2 --timeout 120"
+
+# Postgres internal (gratis shared)
+# [services.postgres]
+#   enabled = true

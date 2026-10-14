@@ -1,0 +1,32 @@
+# render.yaml - Infrastructure as Code untuk Render.com
+# Deploy: push ke GitHub → connect di dashboard.render.com → auto deploy
+
+services:
+  - type: web
+    name: autotesis-ai
+    runtime: python
+    region: oregon  # free tier hanya oregon; upgrade $7/bln untuk singapore
+    branch: main
+    buildCommand: |
+      apt-get update && apt-get install -y libmupdf-dev && pip install -r requirements.txt
+    startCommand: gunicorn backend.server:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      # API Keys di-set manual di dashboard Environment Variables (lebih aman):
+      # GEMINI_API_KEYS = ["key1","key2",...] (JSON array)
+      # NVIDIA_API_KEY = nvapi-xxx
+    healthCheckPath: /api/variable/list
+    autoDeploy: true
+    # Persistent Disk untuk variable_library (butuh upgrade $7/bln)
+    # disk:
+    #   name: variable-library
+    #   mountPath: /opt/render/project/src/backend/variable_library
+    #   sizeGB: 1
+
+# Database PostgreSQL (gratis 90 hari, lalu $7/bln)
+# databases:
+#   - name: autotesis-db
+#     databaseName: autotesis
+#     user: autotesis
+#     plan: free

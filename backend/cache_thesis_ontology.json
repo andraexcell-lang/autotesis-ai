@@ -1,0 +1,1006 @@
+{
+  "status": "success",
+  "metadata": {
+    "judul": "Pelatihan Dan Pengembangan Karir Terhadap Employee Engagement Serta Dampaknya Pada Kinerja Pegawai Pemerintah Daerah Bagian Humas Kabupaten Ogan Komering Ilir",
+    "instansi": "Pemerintah Daerah Bagian Humas Kabupaten Ogan Komering Ilir",
+    "sektor": "",
+    "total_indikator": 33,
+    "skala": "Likert 1-5",
+    "engines": {
+      "x1": "library:crossref:2025",
+      "x2": "library:crossref:2026",
+      "m": "library:crossref:2025",
+      "y": "library:openalex:2024"
+    },
+    "needs_review": []
+  },
+  "variables": {
+    "x1": {
+      "role": "X1",
+      "input_name": "Pelatihan",
+      "nama_resmi": "Pelatihan",
+      "grand_theory": "Human Relations Theory (Elton Mayo, 1933) dan Social Exchange Theory (George Homans, 1958)",
+      "tokoh_ahli": "Gary Dessler (2020); Raymond A. Noe (2021); Sedarmayanti (2021)",
+      "definisi": "Pelatihan adalah proses sistematis untuk meningkatkan pengetahuan, keterampilan, dan kemampuan pegawai Bagian Humas dalam menjalankan tugas kehumasan dan pelayanan informasi publik di lingkungan Pemerintah Daerah Kabupaten Ogan Komering Ilir.",
+      "dimensi": [
+        {
+          "nama": "Reaksi",
+          "indikator": [
+            "respon atau tanggapan setiap peserta terhadap isi, metode, serta fasilitator pelatihan",
+            "kepuasan dari peserta",
+            "kualitas dari fasilitator, relevansi materi, dan juga efektivitas dari metode yang digunakan"
+          ],
+          "pernyataan": [
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "nama": "Pembelajaran",
+          "indikator": [
+            "kemampuan mengingat serta memahami semua hal yang ada dalam pelatihan",
+            "pengalaman yang menyenangkan selama peserta tersebut mengikuti program pelatihan"
+          ],
+          "pernyataan": [
+            "",
+            ""
+          ]
+        },
+        {
+          "nama": "Perilaku",
+          "indikator": [
+            "perubahan perilaku atau sikap setelah mengikuti pelatihan"
+          ],
+          "pernyataan": [
+            ""
+          ]
+        },
+        {
+          "nama": "Hasil",
+          "indikator": [
+            "hasil akhir atau perubahan yang ditunjukkan",
+            "kinerja kerja yang akan diberikan oleh peserta yang mengikuti pelatihan berlangsung dalam jangka waktu yang panjang"
+          ],
+          "pernyataan": [
+            "",
+            ""
+          ]
+        }
+      ],
+      "jurnal_rujukan": {
+        "sitasi": "Fitri et al. (2025)",
+        "entri": "Fitri, N. K., Pratama, F. H., Purnomo, F., Roby, A. B., Hasanah, A., & Mangundjaya, W. L. (2025). Evaluasi Pelatihan: Menelaah Reaksi Peserta dan Proses Pembelajaran sebagai Indikator Efektivitas Pelatihan. Jurnal Komunikasi dan Ilmu Sosial, 3(2), 83-89. https://doi.org/10.38035/jkis.v3i2.2185"
+      },
+      "skala_pengukuran": "Skala Likert 1-5 (1: Sangat Tidak Setuju s/d 5: Sangat Setuju)",
+      "engine": "library:crossref:2025",
+      "needs_review": false,
+      "source_note": "Sumber: Fitri et al. (2025)"
+    },
+    "x2": {
+      "role": "X2",
+      "input_name": "Pengembangan Karir",
+      "nama_resmi": "Pengembangan Karir",
+      "grand_theory": "Human Capital Theory (Gary Becker, 1964) dan Career Development Theory (Donald Super, 1990)",
+      "tokoh_ahli": "Michael Armstrong (2020); Ed Hannan (2021); Dessler Gary (2022)",
+      "definisi": "Pengembangan karir adalah proses peningkatan kemampuan pegawai secara terencana dan berkelanjutan yang memfasilitasi penyesuaian antara kebutuhan individu dan instansi untuk menjembatani efektivitas pelatihan terhadap keterikatan serta kinerja pegawai.",
+      "dimensi": [
+        {
+          "nama": "Kemampuan",
+          "indikator": [
+            "kemampuan fisik",
+            "kemampuan intelektual"
+          ],
+          "pernyataan": [
+            "",
+            ""
+          ]
+        },
+        {
+          "nama": "Pengalaman",
+          "indikator": [
+            "pengalaman jabatan",
+            "masa kerja"
+          ],
+          "pernyataan": [
+            "",
+            ""
+          ]
+        },
+        {
+          "nama": "Pendidikan",
+          "indikator": [
+            "latar belakang pendidikan",
+            "pendidikan tambahan"
+          ],
+          "pernyataan": [
+            "",
+            ""
+          ]
+        },
+        {
+          "nama": "Pelatihan",
+          "indikator": [
+            "pelatihan berupa seminar",
+            "pelatihan berupa pelatihan motivasi"
+          ],
+          "pernyataan": [
+            "",
+            ""
+          ]
+        }
+      ],
+      "jurnal_rujukan": {
+        "sitasi": "Octorian & Haga (2026)",
+        "entri": "Octorian, B. & Haga, R. (2026). ANALISIS DIMENSI PENGEMBANGAN KARIR APARATUR SIPIL NEGARA (ASN) TENAGA KEPENDIDIKAN DI UNIVERSITAS PALANGKA RAYA. Jurnal Ilmiah Manajemen, Ekonomi, &amp; Akuntansi (MEA), 10(1), 156-170. https://doi.org/10.31955/mea.v10i1.6588"
+      },
+      "skala_pengukuran": "Skala Likert 1-5 (1: Sangat Tidak Setuju s/d 5: Sangat Setuju)",
+      "engine": "library:crossref:2026",
+      "needs_review": false,
+      "source_note": "Sumber: Octorian & Haga (2026)"
+    },
+    "m": {
+      "role": "M",
+      "input_name": "Employee Engagement",
+      "nama_resmi": "Employee Engagement",
+      "grand_theory": "Social Exchange Theory (Blau, 1964)",
+      "tokoh_ahli": "William A. Kahn (1990); Arnold B. Bakker (2010); Mark A. Schaufeli (2014)",
+      "definisi": "Employee engagement adalah tingkat keterikatan fisik, kognitif, dan emosional pegawai terhadap pekerjaan dan organisasi, yang ditandai oleh semangat, dedikasi, dan penghayatan mendalam dalam menjalankan tugas pelayanan publik di BPKAD.",
+      "dimensi": [
+        {
+          "nama": "X2.1",
+          "indikator": [
+            "X2.1.1",
+            "X2.1.2",
+            "X2.1.3"
+          ],
+          "pernyataan": [
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "nama": "X2.2",
+          "indikator": [
+            "X2.2.1",
+            "X2.2.2",
+            "X2.2.3"
+          ],
+          "pernyataan": [
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "nama": "X2.3",
+          "indikator": [
+            "X2.3.1",
+            "X2.3.2",
+            "X2.3.3"
+          ],
+          "pernyataan": [
+            "",
+            "",
+            ""
+          ]
+        }
+      ],
+      "jurnal_rujukan": {
+        "sitasi": "Puspitasari & Aulia (2025)",
+        "entri": "Puspitasari, D. N. & Aulia, I. N. (2025). Driving Corporate Sustainability Through A Green HRM, Employee Engagement, and Green Innovation at PT GHP. Indikator: Jurnal Ilmiah Manajemen dan Bisnis, 9(2), 12. https://doi.org/10.22441/indikator.v9i2.32922"
+      },
+      "skala_pengukuran": "Skala Likert 1-5 (1: Sangat Tidak Setuju s/d 5: Sangat Setuju)",
+      "engine": "library:crossref:2025",
+      "needs_review": false,
+      "source_note": "Sumber: Puspitasari & Aulia (2025)"
+    },
+    "y": {
+      "role": "Y",
+      "input_name": "Kinerja Pegawai",
+      "nama_resmi": "Kinerja Pegawai",
+      "grand_theory": "Social Exchange Theory (Blau, 1964)",
+      "tokoh_ahli": "Mangkunegara (2021); Robbins & Judge (2019); Sedarmayanti (2020)",
+      "definisi": "Kinerja pegawai adalah hasil kerja secara kualitas dan kuantitas yang dicapai oleh seorang pegawai dalam melaksanakan tugasnya sesuai dengan tanggung jawab yang diberikan oleh Dinas Pendidikan.",
+      "dimensi": [
+        {
+          "nama": "Konteks",
+          "indikator": [
+            "sikap dan ketegasan kepala BKPSDM dalam memantau perkembangan atau pencapaian target kinerja pegawai",
+            "sikap dan ketegasan kepala BKPSDM dalam memantau perkembangan atau pencapaian target kinerja instansi"
+          ],
+          "pernyataan": [
+            "",
+            ""
+          ]
+        },
+        {
+          "nama": "Input",
+          "indikator": [
+            "target indikator kinerja terealisasi",
+            "pencapaian indikator kinerja yang melampaui target"
+          ],
+          "pernyataan": [
+            "",
+            ""
+          ]
+        },
+        {
+          "nama": "Proses",
+          "indikator": [
+            "presentase indikator penanganan pelanggaran disiplin pegawai ASN",
+            "pelayanan terhadap masyarakat tidak terganggu"
+          ],
+          "pernyataan": [
+            "",
+            ""
+          ]
+        },
+        {
+          "nama": "Produk",
+          "indikator": [
+            "prestasi kerja pegawai",
+            "produktivitas"
+          ],
+          "pernyataan": [
+            "",
+            ""
+          ]
+        }
+      ],
+      "jurnal_rujukan": {
+        "sitasi": "Bilqisti et al. (2024)",
+        "entri": "Bilqisti, B., Alamsyah, A., & Sunarto, S. (2024). Evaluasi Kinerja Pegawai Pada Badan Kepegawaian Dan Pengembangan Sumberdaya Manusia (BKPSDM) Kota Palembang. Parlementer, 1(3), 119-130. https://doi.org/10.62383/parlementer.v1i3.111"
+      },
+      "skala_pengukuran": "Skala Likert 1-5 (1: Sangat Tidak Setuju s/d 5: Sangat Setuju)",
+      "engine": "library:openalex:2024",
+      "needs_review": false,
+      "source_note": "Sumber: Bilqisti et al. (2024)"
+    }
+  },
+  "phenomenon_anchors": {
+    "tabel_1_1_params": [
+      "Kualitas Kinerja (sikap dan ketegasan kepala BKPSDM dalam memantau perkembangan atau pencapaian target kinerja pegawai)",
+      "Kuantitas Output (target indikator kinerja terealisasi)",
+      "Ketepatan Waktu (presentase indikator penanganan pelanggaran disiplin pegawai ASN)"
+    ],
+    "tabel_1_2_issues": [
+      "X2.1",
+      "X2.2",
+      "X2.3"
+    ],
+    "x1_focus": "Reaksi",
+    "x2_focus": "Kemampuan"
+  },
+  "kisi_kisi_bab3": [
+    {
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Reaksi",
+      "indikator": "respon atau tanggapan setiap peserta terhadap isi, metode, serta fasilitator pelatihan",
+      "pernyataan_ai": "",
+      "nomor_butir": "1",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Reaksi",
+      "indikator": "kepuasan dari peserta",
+      "pernyataan_ai": "",
+      "nomor_butir": "2",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Reaksi",
+      "indikator": "kualitas dari fasilitator, relevansi materi, dan juga efektivitas dari metode yang digunakan",
+      "pernyataan_ai": "",
+      "nomor_butir": "3",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Pembelajaran",
+      "indikator": "kemampuan mengingat serta memahami semua hal yang ada dalam pelatihan",
+      "pernyataan_ai": "",
+      "nomor_butir": "4",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Pembelajaran",
+      "indikator": "pengalaman yang menyenangkan selama peserta tersebut mengikuti program pelatihan",
+      "pernyataan_ai": "",
+      "nomor_butir": "5",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Perilaku",
+      "indikator": "perubahan perilaku atau sikap setelah mengikuti pelatihan",
+      "pernyataan_ai": "",
+      "nomor_butir": "6",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Hasil",
+      "indikator": "hasil akhir atau perubahan yang ditunjukkan",
+      "pernyataan_ai": "",
+      "nomor_butir": "7",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Hasil",
+      "indikator": "kinerja kerja yang akan diberikan oleh peserta yang mengikuti pelatihan berlangsung dalam jangka waktu yang panjang",
+      "pernyataan_ai": "",
+      "nomor_butir": "8",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Kemampuan",
+      "indikator": "kemampuan fisik",
+      "pernyataan_ai": "",
+      "nomor_butir": "9",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Kemampuan",
+      "indikator": "kemampuan intelektual",
+      "pernyataan_ai": "",
+      "nomor_butir": "10",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Pengalaman",
+      "indikator": "pengalaman jabatan",
+      "pernyataan_ai": "",
+      "nomor_butir": "11",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Pengalaman",
+      "indikator": "masa kerja",
+      "pernyataan_ai": "",
+      "nomor_butir": "12",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Pendidikan",
+      "indikator": "latar belakang pendidikan",
+      "pernyataan_ai": "",
+      "nomor_butir": "13",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Pendidikan",
+      "indikator": "pendidikan tambahan",
+      "pernyataan_ai": "",
+      "nomor_butir": "14",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Pelatihan",
+      "indikator": "pelatihan berupa seminar",
+      "pernyataan_ai": "",
+      "nomor_butir": "15",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Pelatihan",
+      "indikator": "pelatihan berupa pelatihan motivasi",
+      "pernyataan_ai": "",
+      "nomor_butir": "16",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.1",
+      "indikator": "X2.1.1",
+      "pernyataan_ai": "",
+      "nomor_butir": "17",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.1",
+      "indikator": "X2.1.2",
+      "pernyataan_ai": "",
+      "nomor_butir": "18",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.1",
+      "indikator": "X2.1.3",
+      "pernyataan_ai": "",
+      "nomor_butir": "19",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.2",
+      "indikator": "X2.2.1",
+      "pernyataan_ai": "",
+      "nomor_butir": "20",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.2",
+      "indikator": "X2.2.2",
+      "pernyataan_ai": "",
+      "nomor_butir": "21",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.2",
+      "indikator": "X2.2.3",
+      "pernyataan_ai": "",
+      "nomor_butir": "22",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.3",
+      "indikator": "X2.3.1",
+      "pernyataan_ai": "",
+      "nomor_butir": "23",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.3",
+      "indikator": "X2.3.2",
+      "pernyataan_ai": "",
+      "nomor_butir": "24",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.3",
+      "indikator": "X2.3.3",
+      "pernyataan_ai": "",
+      "nomor_butir": "25",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Konteks",
+      "indikator": "sikap dan ketegasan kepala BKPSDM dalam memantau perkembangan atau pencapaian target kinerja pegawai",
+      "pernyataan_ai": "",
+      "nomor_butir": "26",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Konteks",
+      "indikator": "sikap dan ketegasan kepala BKPSDM dalam memantau perkembangan atau pencapaian target kinerja instansi",
+      "pernyataan_ai": "",
+      "nomor_butir": "27",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Input",
+      "indikator": "target indikator kinerja terealisasi",
+      "pernyataan_ai": "",
+      "nomor_butir": "28",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Input",
+      "indikator": "pencapaian indikator kinerja yang melampaui target",
+      "pernyataan_ai": "",
+      "nomor_butir": "29",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Proses",
+      "indikator": "presentase indikator penanganan pelanggaran disiplin pegawai ASN",
+      "pernyataan_ai": "",
+      "nomor_butir": "30",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Proses",
+      "indikator": "pelayanan terhadap masyarakat tidak terganggu",
+      "pernyataan_ai": "",
+      "nomor_butir": "31",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Produk",
+      "indikator": "prestasi kerja pegawai",
+      "pernyataan_ai": "",
+      "nomor_butir": "32",
+      "skala": "Likert (1-5)"
+    },
+    {
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Produk",
+      "indikator": "produktivitas",
+      "pernyataan_ai": "",
+      "nomor_butir": "33",
+      "skala": "Likert (1-5)"
+    }
+  ],
+  "kuesioner_lampiran": [
+    {
+      "no": "1",
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Reaksi",
+      "indikator": "respon atau tanggapan setiap peserta terhadap isi, metode, serta fasilitator pelatihan",
+      "pernyataan": "Saya menunjukkan respon atau tanggapan setiap peserta terhadap isi, metode, serta fasilitator pelatihan dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "2",
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Reaksi",
+      "indikator": "kepuasan dari peserta",
+      "pernyataan": "Saya menunjukkan kepuasan dari peserta dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "3",
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Reaksi",
+      "indikator": "kualitas dari fasilitator, relevansi materi, dan juga efektivitas dari metode yang digunakan",
+      "pernyataan": "Saya menunjukkan kualitas dari fasilitator, relevansi materi, dan juga efektivitas dari metode yang digunakan dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "4",
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Pembelajaran",
+      "indikator": "kemampuan mengingat serta memahami semua hal yang ada dalam pelatihan",
+      "pernyataan": "Saya menunjukkan kemampuan mengingat serta memahami semua hal yang ada dalam pelatihan dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "5",
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Pembelajaran",
+      "indikator": "pengalaman yang menyenangkan selama peserta tersebut mengikuti program pelatihan",
+      "pernyataan": "Saya menunjukkan pengalaman yang menyenangkan selama peserta tersebut mengikuti program pelatihan dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "6",
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Perilaku",
+      "indikator": "perubahan perilaku atau sikap setelah mengikuti pelatihan",
+      "pernyataan": "Saya menunjukkan perubahan perilaku atau sikap setelah mengikuti pelatihan dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "7",
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Hasil",
+      "indikator": "hasil akhir atau perubahan yang ditunjukkan",
+      "pernyataan": "Saya menunjukkan hasil akhir atau perubahan yang ditunjukkan dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "8",
+      "variabel": "Pelatihan (X1)",
+      "dimensi": "Hasil",
+      "indikator": "kinerja kerja yang akan diberikan oleh peserta yang mengikuti pelatihan berlangsung dalam jangka waktu yang panjang",
+      "pernyataan": "Saya menunjukkan kinerja kerja yang akan diberikan oleh peserta yang mengikuti pelatihan berlangsung dalam jangka waktu yang panjang dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "9",
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Kemampuan",
+      "indikator": "kemampuan fisik",
+      "pernyataan": "Saya menunjukkan kemampuan fisik dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "10",
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Kemampuan",
+      "indikator": "kemampuan intelektual",
+      "pernyataan": "Saya menunjukkan kemampuan intelektual dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "11",
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Pengalaman",
+      "indikator": "pengalaman jabatan",
+      "pernyataan": "Saya menunjukkan pengalaman jabatan dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "12",
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Pengalaman",
+      "indikator": "masa kerja",
+      "pernyataan": "Saya menunjukkan masa kerja dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "13",
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Pendidikan",
+      "indikator": "latar belakang pendidikan",
+      "pernyataan": "Saya menunjukkan latar belakang pendidikan dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "14",
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Pendidikan",
+      "indikator": "pendidikan tambahan",
+      "pernyataan": "Saya menunjukkan pendidikan tambahan dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "15",
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Pelatihan",
+      "indikator": "pelatihan berupa seminar",
+      "pernyataan": "Saya menunjukkan pelatihan berupa seminar dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "16",
+      "variabel": "Pengembangan Karir (X2)",
+      "dimensi": "Pelatihan",
+      "indikator": "pelatihan berupa pelatihan motivasi",
+      "pernyataan": "Saya menunjukkan pelatihan berupa pelatihan motivasi dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "17",
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.1",
+      "indikator": "X2.1.1",
+      "pernyataan": "Saya menunjukkan X2.1.1 dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "18",
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.1",
+      "indikator": "X2.1.2",
+      "pernyataan": "Saya menunjukkan X2.1.2 dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "19",
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.1",
+      "indikator": "X2.1.3",
+      "pernyataan": "Saya menunjukkan X2.1.3 dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "20",
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.2",
+      "indikator": "X2.2.1",
+      "pernyataan": "Saya menunjukkan X2.2.1 dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "21",
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.2",
+      "indikator": "X2.2.2",
+      "pernyataan": "Saya menunjukkan X2.2.2 dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "22",
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.2",
+      "indikator": "X2.2.3",
+      "pernyataan": "Saya menunjukkan X2.2.3 dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "23",
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.3",
+      "indikator": "X2.3.1",
+      "pernyataan": "Saya menunjukkan X2.3.1 dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "24",
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.3",
+      "indikator": "X2.3.2",
+      "pernyataan": "Saya menunjukkan X2.3.2 dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "25",
+      "variabel": "Employee Engagement (M)",
+      "dimensi": "X2.3",
+      "indikator": "X2.3.3",
+      "pernyataan": "Saya menunjukkan X2.3.3 dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "26",
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Konteks",
+      "indikator": "sikap dan ketegasan kepala BKPSDM dalam memantau perkembangan atau pencapaian target kinerja pegawai",
+      "pernyataan": "Saya menunjukkan sikap dan ketegasan kepala BKPSDM dalam memantau perkembangan atau pencapaian target kinerja pegawai dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "27",
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Konteks",
+      "indikator": "sikap dan ketegasan kepala BKPSDM dalam memantau perkembangan atau pencapaian target kinerja instansi",
+      "pernyataan": "Saya menunjukkan sikap dan ketegasan kepala BKPSDM dalam memantau perkembangan atau pencapaian target kinerja instansi dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "28",
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Input",
+      "indikator": "target indikator kinerja terealisasi",
+      "pernyataan": "Saya menunjukkan target indikator kinerja terealisasi dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "29",
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Input",
+      "indikator": "pencapaian indikator kinerja yang melampaui target",
+      "pernyataan": "Saya menunjukkan pencapaian indikator kinerja yang melampaui target dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "30",
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Proses",
+      "indikator": "presentase indikator penanganan pelanggaran disiplin pegawai ASN",
+      "pernyataan": "Saya menunjukkan presentase indikator penanganan pelanggaran disiplin pegawai ASN dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "31",
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Proses",
+      "indikator": "pelayanan terhadap masyarakat tidak terganggu",
+      "pernyataan": "Saya menunjukkan pelayanan terhadap masyarakat tidak terganggu dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "32",
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Produk",
+      "indikator": "prestasi kerja pegawai",
+      "pernyataan": "Saya menunjukkan prestasi kerja pegawai dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    },
+    {
+      "no": "33",
+      "variabel": "Kinerja Pegawai (Y)",
+      "dimensi": "Produk",
+      "indikator": "produktivitas",
+      "pernyataan": "Saya menunjukkan produktivitas dalam pelaksanaan tanggung jawab kedinasan.",
+      "skala": [
+        "1. Sangat Tidak Setuju (STS)",
+        "2. Tidak Setuju (TS)",
+        "3. Kurang Setuju (KS)",
+        "4. Setuju (S)",
+        "5. Sangat Setuju (SS)"
+      ]
+    }
+  ]
+}

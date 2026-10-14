@@ -68,14 +68,58 @@ HANYA balas dengan JSON valid, tanpa penjelasan lain, dengan format persis:
 
 
 def load_config():
-    """Muat konfigurasi API key dari llm_config.json."""
-    if not os.path.exists(CONFIG_PATH):
-        return {}
-    try:
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, OSError):
-        return {}
+    """Muat konfigurasi API key dari llm_config.json.
+
+    Di cloud (Render/Fly.io) file llm_config.json TIDAK ikut ter-deploy
+    (dilindungi .gitignore), jadi nilai dibaca dari Environment Variables:
+
+      GEMINI_API_KEYS  -> "api_keys"  (JSON array ATAU dipisah koma)
+      GEMINI_API_KEY   -> "api_key"   (key tunggal, legacy)
+      NVIDIA_API_KEY   -> "nvidia_api_key"
+      LLM_MODELS       -> "models"    (JSON array ATAU dipisah koma)
+      LLM_ENABLED      -> "enabled"   ("true"/"false")
+      LLM_TIMEOUT      -> "timeout_seconds"
+    """
+    cfg = {}
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            cfg = {}
+    if not isinstance(cfg, dict):
+        cfg = {}
+
+    def _split(val):
+        """Terima JSON array atau string dipisah koma."""
+        val = str(val or "").strip()
+        if not val:
+            return None
+        if val.startswith("["):
+            try:
+                parsed = json.loads(val)
+                return [str(x).strip() for x in parsed if str(x).strip()]
+            except (json.JSONDecodeError, TypeError):
+                pass
+        return [p.strip() for p in val.split(",") if p.strip()]
+
+    env_keys = _split(os.environ.get("GEMINI_API_KEYS"))
+    if env_keys:
+        cfg["api_keys"] = env_keys
+    env_one = str(os.environ.get("GEMINI_API_KEY") or "").strip()
+    if env_one:
+        cfg["api_key"] = env_one
+    env_nv = str(os.environ.get("NVIDIA_API_KEY") or "").strip()
+    if env_nv:
+        cfg["nvidia_api_key"] = env_nv
+    env_models = _split(os.environ.get("LLM_MODELS"))
+    if env_models:
+        cfg["models"] = env_models
+    if "LLM_ENABLED" in os.environ:
+        cfg["enabled"] = str(os.environ["LLM_ENABLED"]).lower() in ("1", "true", "yes", "on")
+    if str(os.environ.get("LLM_TIMEOUT") or "").strip().isdigit():
+        cfg["timeout_seconds"] = int(os.environ["LLM_TIMEOUT"])
+    return cfg
 
 
 def gemini_keys(cfg):

@@ -1,39 +1,30 @@
 # Dockerfile - untuk Fly.io deployment
-# Multi-stage build untuk image kecil
-
-FROM python:3.11-slim as builder
-
-# Install system dependencies untuk PyMuPDF
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libmupdf-dev \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install python dependencies
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
-
-# Final stage
+# Single-stage: dependensi sistem + pip dalam satu image (lebih andal).
 FROM python:3.11-slim
 
-# Install runtime dependencies
+# System deps: PyMuPDF (fitz) + libxml2 untuk lxml
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libmupdf-dev \
+    libxml2 \
+    libxslt1.1 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed packages from builder
-COPY --from=builder /root/.local /root/.local
-
-# Set PATH
-ENV PATH=/root/.local/bin:$PATH
-
 WORKDIR /app
+
+# Dependensi Python dulu (cache layer)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Kode aplikasi
 COPY . .
 
-# Create variable_library directory
-RUN mkdir -p backend/variable_library
+# Pastikan folder pustaka & output ada
+RUN mkdir -p backend/variable_library output
 
+ENV PYTHONUNBUFFERED=1
+# Fly.io menyetel FLY_APP_NAME -> server.py masuk mode CLOUD (HTTP saja).
 EXPOSE 5050
 
-CMD ["gunicorn", "backend.server:app", "--bind", "0.0.0.0:5050", "--workers", "2", "--timeout", "120"]
+# Server berbasis http.server (BUKAN Flask/gunicorn).
+CMD ["python", "-u", "backend/server.py"]

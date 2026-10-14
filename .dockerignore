@@ -1,0 +1,24 @@
+# Jangan kirim rahasia/lokal ke build context Docker
+.git
+.gitignore
+backend/llm_config.json
+.env
+_render_env_values.txt
+backend/_extraction_cache.json
+backend/_trace_tmp
+backend/__pycache__
+__pycache__
+*.pyc
+output/
+backend/variable_library/*.json
+!backend/variable_library/.gitkeep
+backend/*.log
+backend/log.txt
+backend/_server.err
+backend/*.crt
+backend/*.cer
+backend/*.key
+backend/*.pfx
+backend/*.docx
+backend/cache_*.json
+*.md

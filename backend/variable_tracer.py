@@ -37,8 +37,15 @@ TMP_DIR = os.path.join(BACKEND_DIR, "_trace_tmp")
 TRACE_TIMEOUT_PDF = 30
 TRACE_MAX_CANDIDATES = 8
 TRACE_MAX_CHARS = 4000       # potongan teks yang dikirim ke Gemini per kandidat (dari 15000 -> hemat 73%)
-TRACE_MIN_INDICATORS = 8     # minimal indikator lolos verifikasi agar diterima
-TRACE_MIN_DIMENSIONS = 3     # agar instrumen cukup kuat (3-4 x 2-3 indikator)
+TRACE_MIN_INDICATORS = 6     # 3 dimensi x 2 indikator minimum (keputusan user)
+TRACE_MIN_DIMENSIONS = 3     # TARGET: 3-6 dimensi per variabel
+TRACE_MAX_DIMENSIONS = 6     # batas atas agar instrumen tidak melebar
+# CATATAN (keputusan user, 15 Okt 2026):
+#   Satu variabel = 3-6 dimensi; tiap dimensi = 2-4 indikator.
+#   Ambang lama (>=3 dimensi & >=8 indikator) terlalu ketat: sumber NYATA
+#   seperti skala NASA-TLX (6 indikator literal) gugur padahal sah.
+#   Jumlah indikator FINAL sengaja TIDAK dikunci di sini — akan diatur pada
+#   prompt penulisan Bab 2 sesuai kebutuhan tesis.
 UA = "AutoTesisVariableTracer/1.0 (mailto:tesismagister@research.ac.id)"
 
 # Cache ekstraksi per (DOI, var_name) -> hasil dimensi/indikator
@@ -111,8 +118,8 @@ def _search_openalex(query, kind="article", limit=6, fast=False):
     enc = urllib.parse.quote(clean_q)
     year_min = VL.SEARCH_YEAR_MIN
     year_max = VL.SEARCH_YEAR_MAX
-    max_retry = 2 if fast else SEARCH_MAX_RETRY
-    backoff_base = 2.0 if fast else SEARCH_BACKOFF_BASE
+    max_retry = 3 if fast else SEARCH_MAX_RETRY
+    backoff_base = 3.0 if fast else SEARCH_BACKOFF_BASE
     url = (
         f"https://api.openalex.org/works?search={enc}"
         f"&filter=has_doi:true,is_oa:true,type:{kind},"
@@ -228,6 +235,7 @@ def _abstract_to_text(inverted):
 
 CROSSREF_BASE = "https://api.crossref.org/works"
 S2_BASE = "https://api.semanticscholar.org/graph/v1/paper/search"
+DOAJ_BASE = "https://doaj.org/api/search/articles"
 UNPAYWALL_BASE = "https://api.unpaywall.org/v2"
 CONTACT_EMAIL = "tesismagister@research.ac.id"
 
@@ -349,8 +357,8 @@ def _search_s2(query, kind="article", limit=4, fast=False):
         f"&year={y_min}-{y_max}&limit={limit}&fields={fields}"
     )
     data = _http_json(url, "s2",
-                      max_retry=2 if fast else 3,
-                      backoff_base=2.0 if fast else None)
+                      max_retry=3 if fast else 3,
+                      backoff_base=3.0 if fast else None)
     if not data:
         return []
     out = []
@@ -381,9 +389,99 @@ def _search_s2(query, kind="article", limit=4, fast=False):
     return out
 
 
+def _search_doaj(query, kind="article", limit=4, fast=False):
+    """
+    DOAJ (Directory of Open Access Journals): sumber kandidat keempat.
+
+    Keunggulan DOAJ dibanding Crossref: banyak hasilnya sudah MENYEDIAKAN PDF
+    lengkap langsung, sehingga tahap ekstraksi/verifikasi tidak bergantung pada
+    Unpaywall. Ini penting karena uji lapangan menunjukkan OpenAlex & Semantic
+    Scholar konsisten membalas HTTP 429 (rate limit publik), sehingga Crossref
+    sendirian menyisakan banyak kandidat tanpa teks.
+
+    Rentang tahun DIFILTER DI PYTHON. Endpoint pencarian DOAJ ternyata BUKAN
+    Lucene: menambahkan operator seperti "AND" atau "year:[2022 TO 2026]"
+    membuat seluruh indeks (4 juta+ dokumen) dianggap cocok, jadi operator
+    sengaja tidak dipakai -- hanya kata kunci polos.
+    """
+    if kind != "article":
+        return []                      # DOAJ tidak memuat buku
+    clean_q = re.sub(r"[^\w\s]", " ", query).strip()
+    y_min, y_max = VL.SEARCH_YEAR_MIN, VL.SEARCH_YEAR_MAX
+    if not clean_q:
+        return []
+    # DOAJ memakai AND sederhana atas SEMUA kata, jadi kueri panjang
+    # ("Beban Kerja indikator pengukuran") sering 0 hasil. Coba bertahap:
+    # kueri penuh -> tanpa kata teknis -> inti variabel (2 kata pertama).
+    teknis = {"dimensi", "indikator", "pengukuran", "operasionalisasi",
+              "dimension", "indicator", "measurement"}
+    kata_tanpa_teknis = [w for w in clean_q.split() if w.lower() not in teknis]
+    variants = [clean_q]
+    if kata_tanpa_teknis and len(kata_tanpa_teknis) < len(clean_q.split()):
+        variants.append(" ".join(kata_tanpa_teknis))
+    if len(kata_tanpa_teknis) > 2:
+        variants.append(" ".join(kata_tanpa_teknis[:2]))
+
+    data = None
+    for qv in variants:
+        url = f"{DOAJ_BASE}/{urllib.parse.quote(qv)}?pageSize=10"
+        data = _http_json(url, "doaj",
+                          max_retry=2 if fast else 3,
+                          backoff_base=2.0 if fast else None)
+        if data and data.get("results"):
+            break
+    if not data:
+        return []
+    out = []
+    for item in data.get("results", []) or []:
+        bib = item.get("bibjson") or {}
+        doi = None
+        for ident in bib.get("identifier") or []:
+            if str(ident.get("type", "")).lower() == "doi" and ident.get("id"):
+                doi = str(ident["id"]).strip()
+                break
+        if not doi:
+            continue                   # tanpa DOI -> tak bisa diverifikasi
+        # Utamakan tautan berlabel "pdf"; baru fallback URL berakhiran .pdf
+        pdf = None
+        for link in bib.get("link") or []:
+            if str(link.get("type", "")).lower() == "pdf" and link.get("url"):
+                pdf = str(link["url"]).strip()
+                break
+        if not pdf:
+            for link in bib.get("link") or []:
+                u = str(link.get("url") or "")
+                if u.lower().split("?")[0].endswith(".pdf"):
+                    pdf = u
+                    break
+        try:
+            year = int(bib.get("year") or 0)
+        except (TypeError, ValueError):
+            year = 0
+        if year and not (y_min <= year <= y_max):
+            continue
+        jr = bib.get("journal") or {}
+        out.append({
+            "doi": f"https://doi.org/{doi}",
+            "title": (bib.get("title") or "Tanpa Judul").strip(),
+            "year": year,
+            "journal": jr.get("title") or "Jurnal Ilmiah",
+            "kind": kind,
+            "pdf_url": pdf or None,
+            "authors": [a.get("name") for a in bib.get("author") or [] if a.get("name")],
+            "volume": jr.get("volume"),
+            "issue": jr.get("issue"),
+            "first_page": None,
+            "last_page": None,
+            "abstract": bib.get("abstract") or "",
+            "_source": "doaj",
+        })
+    return out
+
+
 def _resolve_pdf_unpaywall(cand):
     """
-    Kandidat Crossref/S2/DOAJ sering belum punya tautan PDF karena mereka hanyalah
+    Kandidat Crossref/S2 sering belum punya tautan PDF karena mereka hanyalah
     pendaftar metadata. Unpaywall menerjemahkan DOI -> PDF Open Access paling layak.
     Gratis, tanpa API key (cukup email). Mengisi cand["pdf_url"] bila berhasil.
     """
@@ -423,6 +521,8 @@ def _run_search_job(source, query, kind, limit):
             return source, _search_crossref(query, kind=kind, limit=limit, fast=True)
         if source == "s2":
             return source, _search_s2(query, kind=kind, limit=limit, fast=True)
+        if source == "doaj":
+            return source, _search_doaj(query, kind=kind, limit=limit, fast=True)
     except Exception as e:
         print(f"[tracer] {source} gagal: {e}")
     return source, []
@@ -478,6 +578,7 @@ def _search_all(queries, kinds=("article", "book"), limit=4, seed="",
         for kind in kinds:
             jobs.append(("openalex", q, kind))
         jobs.append(("crossref", q, "article"))
+        jobs.append(("doaj", q, "article"))
         if qi == 0:      # sumber cadangan cukup divalidasi lewat kueri utama
             jobs.append(("s2", q, "article"))
 
@@ -685,7 +786,7 @@ Petunjuk KERAS:
 1. Hanya gunakan informasi yang BENAR-BENAR ADA di teks sumber. DILARANG menambah dimensi/indikator dari pengetahuan umum.
 2. Setiap indikator adalah KUTIPAN LITERAL (persis kata-kata) yang ada di teks sumber, bukan parafrase.
 3. Bila teks memuat tabel/pembahasan indikator variabel tersebut, gunakan itu sebagai dasar.
-4. Hasilkan 3-4 dimensi; tiap dimensi 2-3 indikator (total minimal 8 butir).
+4. Hasilkan {dmin}-{dmax} dimensi; tiap dimensi 2-4 indikator (minimal 2 per dimensi).
 5. Bila teks TIDAK memuat dimensi/indikator variabel itu, balas JSON: {{"dimensi": [], "alasan": "..."}}
 6. HANYA balas JSON valid tanpa teks lain.
 
@@ -719,7 +820,8 @@ def _extract_dims_from_text(var_name, role, source_text, config, doi=None):
     
     # 2. Ekstrak via LLM (matriks)
     full_text = _focus_window(source_text, var_name=var_name)
-    prompt = PROMPT_EXTRACT.format(var_name=var_name, role=role, sumber=full_text)
+    prompt = PROMPT_EXTRACT.format(var_name=var_name, role=role, sumber=full_text,
+                                   dmin=TRACE_MIN_DIMENSIONS, dmax=TRACE_MAX_DIMENSIONS)
     chain = extract_chain()   # #4 Nemotron didahulukan (hemat kuota Gemini)
     timeout = max(int(config.get("timeout_seconds", 12)) * 3, 60)
     keys = gemini_keys(config)
@@ -760,7 +862,7 @@ Petunjuk KERAS:
 1. Tiap sumber punya nomor (SUMBER 0, SUMBER 1, ...). Untuk SUMBER bernomor i, hasilkan HANYA dari teks SUMBER i. DILARANG mencampur atau meminjam kutipan antar sumber.
 2. Setiap indikator adalah KUTIPAN LITERAL (persis kata-kata) yang ada di teks sumber bersangkutan, bukan parafrase.
 3. Bila satu sumber TIDAK memuat dimensi/indikator variabel itu, balas "dimensi": [] untuk nomor tersebut. Jangan mengarang.
-4. Per sumber hasilkan 3-4 dimensi; tiap dimensi 2-3 indikator (total minimal 8 butir) bila memungkinkan.
+4. Per sumber hasilkan {dmin}-{dmax} dimensi; tiap dimensi 2-4 indikator (minimal 2 per dimensi).
 5. Sertakan juga definisi, grand_theory, dan tokoh_ahli yang benar-benar tertulis di sumber bersangkutan (kosongkan bila tidak ada).
 6. HANYA balas JSON valid tanpa teks lain.
 
@@ -821,7 +923,8 @@ def _extract_dims_batch(var_name, role, papers, config):
               for idx, text in papers]
     prompt = PROMPT_EXTRACT_BATCH.format(
         var_name=var_name, role=role, n=len(papers),
-        sumber_list="\n\n".join(blocks))
+        sumber_list="\n\n".join(blocks),
+        dmin=TRACE_MIN_DIMENSIONS, dmax=TRACE_MAX_DIMENSIONS)
     chain = extract_chain()   # #4 Nemotron didahulukan
     timeout = max(int(config.get("timeout_seconds", 12)) * 4, 90)
     keys = gemini_keys(config)

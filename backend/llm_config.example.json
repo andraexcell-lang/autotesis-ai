@@ -1,0 +1,36 @@
+{
+  "_catatan": [
+    "SALIN BERKAS INI MENJADI backend/llm_config.json lalu isi API key Anda.",
+    "backend/llm_config.json TIDAK ikut di-commit (terproteksi .gitignore).",
+    "",
+    "Di cloud (Render/Fly.io) file ini TIDAK dipakai; gunakan Environment",
+    "Variables: GEMINI_API_KEYS, NVIDIA_API_KEY, LLM_MODELS, EXTRACT_MODELS.",
+    "",
+    "Model MATI (jangan dipakai, balasan 404):",
+    "  gemini-2.5-flash, gemini-2.5-flash-lite",
+    "Model PRO (butuh billing, free-tier 429):",
+    "  gemini-pro-latest, gemini-3.1-pro-preview"
+  ],
+  "api_key": "GANTI_DENGAN_API_KEY_GEMINI_ANDA",
+  "api_keys": [
+    "GANTI_DENGAN_API_KEY_1",
+    "GANTI_DENGAN_API_KEY_2"
+  ],
+  "nvidia_api_key": "GANTI_DENGAN_NVIDIA_API_KEY (opsional, gratis di build.nvidia.com)",
+  "enabled": true,
+  "use_ontology_cache": false,
+  "models": [
+    "gemini-flash-lite-latest",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-flash-latest",
+    "nvidia/nemotron-3-ultra-550b-a55b"
+  ],
+  "_extract_models": [
+    "Dipakai untuk EKSTRAKSI dimensi/indikator (beda dengan 'models').",
+    "Nemotron didahulukan: GRATIS, tidak menggerus kuota Gemini, dan",
+    "terbukti kualitasnya (mis. mengembalikan 6 dimensi asli NASA-TLX).",
+    "Override lewat env EXTRACT_MODELS (JSON array ATAU dipisah koma)."
+  ],
+  "timeout_seconds": 12
+}

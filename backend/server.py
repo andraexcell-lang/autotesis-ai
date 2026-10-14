@@ -28,8 +28,11 @@ import llm_title_parser
 import academic_dimension_researcher
 from generate_cert import generate_self_signed_cert
 
-HTTP_PORT = 5050
-HTTPS_PORT = 5051
+# Port dapat di-override lewat env (Render/Fly.io menyediakan $PORT).
+HTTP_PORT = int(os.environ.get("PORT", "5050"))
+HTTPS_PORT = int(os.environ.get("HTTPS_PORT", "5051"))
+# Di cloud (Render/Fly), TLS dihentikan oleh proxy platform -> cukup HTTP saja.
+CLOUD = bool(os.environ.get("PORT") or os.environ.get("RENDER") or os.environ.get("FLY_APP_NAME"))
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TASKPANE_DIR = os.path.join(BASE_DIR, "taskpane")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
@@ -88,6 +91,22 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
         try:
             parsed = urllib.parse.urlparse(self.path)
             path = parsed.path
+
+            # Health check (Render/Fly.io) — GET /api/healthz & GET /api/variable/list
+            if path in ("/api/healthz", "/api/variable/list"):
+                try:
+                    import variable_library as _VL
+                    n = len(_VL.list_library() or [])
+                except Exception:
+                    n = 0
+                encoded = json.dumps({"status": "ok", "library": n}).encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', str(len(encoded)))
+                self.end_headers()
+                if not head_only:
+                    self.wfile.write(encoded)
+                return
 
             # Download endpoint
             if path.startswith("/api/download/"):
@@ -919,6 +938,14 @@ def run_https_server():
     httpd.serve_forever()
 
 def run_dual_server():
+    if CLOUD:
+        # Mode cloud (Render/Fly): hanya HTTP; TLS ditangani proxy platform.
+        print("=================================================================")
+        print(f"AutoTesis AI Cloud Server Aktif! PORT={HTTP_PORT}")
+        print(f"   Web UI : http://0.0.0.0:{HTTP_PORT}/taskpane.html")
+        print("=================================================================")
+        run_http_server()
+        return
     t_http = threading.Thread(target=run_http_server, daemon=True)
     t_https = threading.Thread(target=run_https_server, daemon=True)
     t_http.start()

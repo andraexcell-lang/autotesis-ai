@@ -7,26 +7,23 @@ services:
     runtime: python
     region: oregon  # free tier hanya oregon; upgrade $7/bln untuk singapore
     branch: main
-    buildCommand: |
-      apt-get update && apt-get install -y libmupdf-dev && pip install -r requirements.txt
-    startCommand: gunicorn backend.server:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    # PyMuPDF butuh libmupdf-dev di runtime image.
+    buildCommand: >
+      apt-get update && apt-get install -y --no-install-recommends libmupdf-dev
+      && pip install --no-cache-dir -r requirements.txt
+    # Server berbasis http.server (bukan Flask) -> jalankan langsung.
+    # PORT dibaca dari env oleh backend/server.py (mode CLOUD: hanya HTTP).
+    startCommand: python backend/server.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
       # API Keys di-set manual di dashboard Environment Variables (lebih aman):
-      # GEMINI_API_KEYS = ["key1","key2",...] (JSON array)
-      # NVIDIA_API_KEY = nvapi-xxx
-    healthCheckPath: /api/variable/list
+      #   GEMINI_API_KEYS = ["key1","key2",...] (JSON array)
+      #   NVIDIA_API_KEY  = nvapi-xxx
+    healthCheckPath: /api/healthz
     autoDeploy: true
     # Persistent Disk untuk variable_library (butuh upgrade $7/bln)
     # disk:
     #   name: variable-library
     #   mountPath: /opt/render/project/src/backend/variable_library
     #   sizeGB: 1
-
-# Database PostgreSQL (gratis 90 hari, lalu $7/bln)
-# databases:
-#   - name: autotesis-db
-#     databaseName: autotesis
-#     user: autotesis
-#     plan: free

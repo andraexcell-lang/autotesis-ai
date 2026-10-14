@@ -48,6 +48,54 @@ MODEL_CHAIN = [
     "nvidia/nemotron-3-ultra-550b-a55b",
 ]
 
+# ============================================================================
+# #4 EXTRACT_CHAIN — Nemotron DIDAHULUKAN untuk tugas EKSTRAKSI
+# ============================================================================
+# Alasan (dipilih, bukan asal):
+#   * Nemotron = GRATIS (tidak menggerus kuota Gemini 15 key).
+#   * Uji 14 Okt: ekstraksi Indonesia 5/5 kutipan literal COCOK.
+#   * Latensi ~1 dtk vs 4.5 dtk jeda rate-limit Gemini.
+#   * Bila NIM sibuk/503 -> pemutus sirkuit menandai sibuk 60 dtk lalu
+#     TURUN ke model Gemini secara otomatis (tidak memblokir).
+# Dipakai untuk: ekstraksi dimensi/indikator per paper, ontologi, teori.
+# TIDAK dipakai untuk: parse judul & tulis Bab 1.1 (kualitas prosa kritis,
+# hanya 1 panggilan -> lebih baik memakai Gemini).
+# ============================================================================
+EXTRACT_CHAIN = [
+    "nvidia/nemotron-3-ultra-550b-a55b",   # GRATIS, prioritas #1
+    "gemini-flash-lite-latest",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-flash-latest",
+]
+
+
+def extract_chain():
+    """Rantai model untuk tugas EKSTRAKSI (Nemotron didahulukan — #4).
+
+    Sengaja TIDAK memakai cfg["models"]: config umum tetap diurutkan untuk
+    kualitas prosa (tulis bab / parse judul), sedangkan ekstraksi butuh
+    banyak panggilan -> hemat kuota Gemini.
+
+    Override lewat env EXTRACT_MODELS (JSON array ATAU dipisah koma):
+      EXTRACT_MODELS='["nvidia/nemotron-3-ultra-550b-a55b","gemini-flash-lite-latest"]'
+    """
+    raw = str(os.environ.get("EXTRACT_MODELS") or "").strip()
+    if raw:
+        if raw.startswith("["):
+            try:
+                parsed = json.loads(raw)
+                out = [str(m).strip() for m in parsed if str(m).strip()]
+                if out:
+                    return out
+            except (json.JSONDecodeError, TypeError):
+                pass
+        else:
+            out = [m.strip() for m in raw.split(",") if m.strip()]
+            if out:
+                return out
+    return list(EXTRACT_CHAIN)
+
 DEFAULT_TIMEOUT = 12  # detik per panggilan model
 
 PROMPT_TEMPLATE = """Anda adalah parser akademik untuk judul tesis Magister Manajemen (S2) Indonesia.

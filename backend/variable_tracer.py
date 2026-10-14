@@ -26,8 +26,8 @@ import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from llm_ontology_researcher import _call_gemini_json, _call_gemini_matrix, _validate_llm_ontology
-from llm_title_parser import load_config, MODEL_CHAIN, gemini_keys
+from llm_ontology_researcher import _call_gemini_json, _call_gemini_matrix, _validate_llm_ontology, last_matrix_model
+from llm_title_parser import load_config, MODEL_CHAIN, EXTRACT_CHAIN, extract_chain, gemini_keys
 import variable_library as VL
 import doc_text_extract as DTE
 
@@ -720,13 +720,14 @@ def _extract_dims_from_text(var_name, role, source_text, config, doi=None):
     # 2. Ekstrak via LLM (matriks)
     full_text = _focus_window(source_text, var_name=var_name)
     prompt = PROMPT_EXTRACT.format(var_name=var_name, role=role, sumber=full_text)
-    chain = [m for m in config.get("models", []) if m] or MODEL_CHAIN
+    chain = extract_chain()   # #4 Nemotron didahulukan (hemat kuota Gemini)
     timeout = max(int(config.get("timeout_seconds", 12)) * 3, 60)
     keys = gemini_keys(config)
     try:
         raw = _call_gemini_matrix(keys, chain, prompt, timeout)
         cand = _validate_llm_ontology(raw, var_name=var_name)
         if cand and cand.get("dimensi"):
+            cand["_model"] = last_matrix_model()   # provenance: nemotron/gemini
             # 3. Simpan ke cache jika DOI tersedia
             if doi:
                 cache = _load_extraction_cache()
@@ -739,6 +740,126 @@ def _extract_dims_from_text(var_name, role, source_text, config, doi=None):
     except Exception as e:
         print(f"[tracer] ekstraksi matriks gagal: {type(e).__name__} {str(e)[:60]}")
     return None
+
+
+# ---------------------------------------------------------------------------
+# #5 BATCH EXTRACTION — beberapa sumber dalam SATU panggilan LLM
+# ---------------------------------------------------------------------------
+# Sebelumnya: 1 paper = 1 panggilan LLM (8 kandidat = 8 panggilan).
+# Sekarang  : 3 paper = 1 panggilan  -> panggilan turun ~60-70%, hemat kuota.
+# JAMINAN ANTI-HALLUCINATION tetap sama: setiap kutipan indikator masih
+# diverifikasi literal terhadap TEKS PAPER BERSANGKUTAN oleh pemanggil,
+# jadi kalau model mencampur kutipan antar paper, hasilnya terbuang otomatis.
+# ---------------------------------------------------------------------------
+
+TRACE_BATCH_SIZE = 3       # jumlah sumber per panggilan LLM
+
+PROMPT_EXTRACT_BATCH = """Anda adalah ahli metodologi penelitian kuantitatif Manajemen. Ekstrak DIMENSI dan INDIKATOR untuk variabel "{var_name}" (peran: {role} dalam model X1, X2 -> M -> Y) dari {n} SUMBER TERPISAH.
+
+Petunjuk KERAS:
+1. Tiap sumber punya nomor (SUMBER 0, SUMBER 1, ...). Untuk SUMBER bernomor i, hasilkan HANYA dari teks SUMBER i. DILARANG mencampur atau meminjam kutipan antar sumber.
+2. Setiap indikator adalah KUTIPAN LITERAL (persis kata-kata) yang ada di teks sumber bersangkutan, bukan parafrase.
+3. Bila satu sumber TIDAK memuat dimensi/indikator variabel itu, balas "dimensi": [] untuk nomor tersebut. Jangan mengarang.
+4. Per sumber hasilkan 3-4 dimensi; tiap dimensi 2-3 indikator (total minimal 8 butir) bila memungkinkan.
+5. Sertakan juga definisi, grand_theory, dan tokoh_ahli yang benar-benar tertulis di sumber bersangkutan (kosongkan bila tidak ada).
+6. HANYA balas JSON valid tanpa teks lain.
+
+=== DAFTAR SUMBER ===
+{sumber_list}
+
+=== KELUARAN JSON ===
+{{
+  "hasil": [
+    {{"id": 0, "dimensi": [{{"nama": "Nama dimensi (bila ada di teks)", "indikator": ["kutipan literal 1", "kutipan literal 2"]}}], "definisi": "", "grand_theory": "", "tokoh_ahli": ""}},
+    {{"id": 1, "dimensi": []}}
+  ]
+}}
+"""
+
+
+def _parse_batch_items(raw):
+    """Ubah JSON batch menjadi {id: item}. Bila model membalas format tunggal
+    (mengabaikan struktur batch), kembalikan {0: objek} agar tetap terpakai."""
+    if not isinstance(raw, dict):
+        return {}
+    items = {}
+    hasil = raw.get("hasil")
+    if isinstance(hasil, list):
+        for i, it in enumerate(hasil):
+            if isinstance(it, dict) and "dimensi" in it:
+                try:
+                    items[int(it.get("id", i))] = it
+                except (TypeError, ValueError):
+                    items[i] = it
+    elif "dimensi" in raw:
+        items[0] = raw
+    return items
+
+
+def _extract_dims_batch(var_name, role, papers, config):
+    """
+    #5 Ekstraksi BATCH: beberapa sumber dalam SATU panggilan LLM.
+
+    papers : list of (idx, text) — idx adalah nomor urut kandidat asli.
+    Mengembalikan dict {idx: cand | None} (cand tervalidasi _validate_llm_ontology).
+    Verifikasi kutipan literal TETAP dilakukan pemanggil terhadap teks masing-masing.
+    """
+    out = {}
+    if not papers:
+        return out
+
+    # Satu sumber saja -> pakai jalur tunggal yang sudah teruji.
+    if len(papers) == 1:
+        idx, text = papers[0]
+        out[idx] = _extract_dims_from_text(var_name, role, text, config)
+        return out
+
+    # PENTING: prune tiap paper dulu (sama seperti jalur tunggal) supaya
+    # 3 paper x 15.000 char tidak membanjiri konteks model.
+    blocks = [f"=== SUMBER {idx} (potongan) ===\n"
+              f"{_focus_window(text, var_name=var_name)}"
+              for idx, text in papers]
+    prompt = PROMPT_EXTRACT_BATCH.format(
+        var_name=var_name, role=role, n=len(papers),
+        sumber_list="\n\n".join(blocks))
+    chain = extract_chain()   # #4 Nemotron didahulukan
+    timeout = max(int(config.get("timeout_seconds", 12)) * 4, 90)
+    keys = gemini_keys(config)
+
+    try:
+        raw = _call_gemini_matrix(keys, chain, prompt, timeout, max_tokens=3072)
+    except Exception as e:
+        # Batch gagal -> jangan buang kandidat: coba per-sumber seperti biasa.
+        print(f"[tracer] batch {len(papers)} sumber gagal: {type(e).__name__} "
+              f"{str(e)[:60]} -> fallback per-sumber")
+        for idx, text in papers:
+            out[idx] = _extract_dims_from_text(var_name, role, text, config)
+        return out
+
+    items = _parse_batch_items(raw)
+    if not items:
+        print("[tracer] batch: JSON batch kosong -> fallback per-sumber")
+        for idx, text in papers:
+            out[idx] = _extract_dims_from_text(var_name, role, text, config)
+        return out
+
+    for idx, _text in papers:
+        item = items.get(idx)
+        if item is None:
+            out[idx] = None          # model tidak menjawab nomor ini
+            continue
+        try:
+            # PENTING: item sudah berupa dict -> kirim LANGSUNG.
+            # (JSON string ditolak _validate_llm_ontology -> selalu None.)
+            cand = _validate_llm_ontology(item, var_name=var_name)
+        except Exception:
+            cand = None
+        if cand:
+            cand["_model"] = last_matrix_model()   # provenance: nemotron/gemini
+        if cand and not cand.get("dimensi"):
+            cand = None
+        out[idx] = cand
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -791,18 +912,61 @@ def trace_variable(var_name, role="X", judul="", instansi="", force=False):
     target = uniq[:TRACE_MAX_CANDIDATES]
     texts = _download_all(target)
 
+    # Kandidat siap-proses (teks berhasil diunduh), tetap urut relevansi.
+    ready = []
     for idx, cand in enumerate(target):
         report["tried"] += 1
         text = texts.get(idx)
         if text is None:
             report["dropped"].append(f"{cand['title'][:50]} (teks gagal diunduh)")
             continue
-        dims = _extract_dims_from_text(var_name, role, text, config, doi=cand.get("doi"))
-        if not dims:
-            report["dropped"].append(f"{cand['title'][:50]} (tidak memuat dimensi/indikator)")
-            continue
-        clean, vrep = VL.verify_indicators(dims.get("dimensi", []), text)
-        if _check_pass(clean, vrep):
+        ready.append((idx, cand, text))
+
+    cache = _load_extraction_cache()   # snapshot; disimpan ulang tiap ada hasil baru
+
+    # #5 Proses per BLOK (TRACE_BATCH_SIZE sumber per panggilan LLM) dan
+    # berhenti segera setelah satu sumber lolos verifikasi.
+    for start in range(0, len(ready), TRACE_BATCH_SIZE):
+        chunk = ready[start:start + TRACE_BATCH_SIZE]
+
+        # a) Ambil dari cache dulu (TANPA LLM) bila DOI+variabel pernah diekstrak.
+        dims_map = {}
+        pending = []        # [(idx, cand, text)] yang butuh panggilan LLM
+        for idx, cand, text in chunk:
+            doi = cand.get("doi")
+            key = _cache_key(doi, var_name) if doi else None
+            if key and key in cache:
+                print(f"[cache] HIT: {key} -> pakai cache (hemat LLM)")
+                dims_map[idx] = cache[key]
+            else:
+                pending.append((idx, cand, text))
+
+        # b) Sisa kandidat: SATU panggilan LLM untuk seluruh blok.
+        if pending:
+            print(f"[tracer] batch '{var_name}': {len(pending)} sumber dalam 1 panggilan")
+            new_dims = _extract_dims_batch(
+                var_name, role, [(i, t) for i, _c, t in pending], config)
+            for idx, cand, _text in pending:
+                dims = new_dims.get(idx)
+                dims_map[idx] = dims
+                doi = cand.get("doi")
+                key = _cache_key(doi, var_name) if doi else None
+                if dims and key:
+                    cache[key] = dims
+                    print(f"[cache] SAVE: {key}")
+            if any(new_dims.values()):
+                _save_extraction_cache(cache)
+
+        # c) Verifikasi kutipan literal terhadap TEKS paper masing-masing.
+        for idx, cand, text in chunk:
+            dims = dims_map.get(idx)
+            if not dims:
+                report["dropped"].append(f"{cand['title'][:50]} (tidak memuat dimensi/indikator)")
+                continue
+            clean, vrep = VL.verify_indicators(dims.get("dimensi", []), text)
+            if not _check_pass(clean, vrep):
+                report["dropped"].append(f"{cand['title'][:50]} (kutipan indikator tidak cocok)")
+                continue
             # Bangun entri pustaka
             entri_apa, italic = _build_apa(cand)
             entry = {
@@ -823,7 +987,7 @@ def trace_variable(var_name, role="X", judul="", instansi="", force=False):
                 "definisi": dims.get("definisi", ""),
                 "dimensi": clean,
                 "verified_at": datetime.datetime.now().isoformat(timespec="seconds"),
-                "engine": "gemini:" + (dims.get("_model") or "unknown"),
+                "engine": "llm:" + (dims.get("_model") or "unknown"),
             }
             try:
                 path = VL.save_entry(entry)
@@ -857,7 +1021,8 @@ def trace_from_upload(file_path, var_name, role="X", judul="", instansi="", disp
         return {"status": "needs_review", "entry": None,
                 "report": {"note": "Berkas gagal dibaca atau terlalu pendek."}}
 
-    dims = _extract_dims_from_text(var_name, role, text, config, doi=cand.get("doi"))
+    # Unggahan pengguna tidak punya DOI -> tanpa cache, langsung ekstrak.
+    dims = _extract_dims_from_text(var_name, role, text, config, doi=None)
     if not dims:
         return {"status": "needs_review", "entry": None,
                 "report": {"note": "Model tidak menemukan dimensi/indikator di berkas."}}
@@ -886,7 +1051,7 @@ def trace_from_upload(file_path, var_name, role="X", judul="", instansi="", disp
         "definisi": dims.get("definisi", ""),
         "dimensi": clean,
         "verified_at": datetime.datetime.now().isoformat(timespec="seconds"),
-        "engine": "gemini:" + (dims.get("_model") or "unknown"),
+        "engine": "llm:" + (dims.get("_model") or "unknown"),
     }
     try:
         path = VL.save_entry(entry)

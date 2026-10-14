@@ -27,7 +27,7 @@ import time
 import urllib.error
 import urllib.request
 
-from llm_title_parser import load_config, MODEL_CHAIN, GEMINI_BASE, gemini_keys
+from llm_title_parser import load_config, MODEL_CHAIN, EXTRACT_CHAIN, extract_chain, GEMINI_BASE, gemini_keys
 
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 ONTO_CACHE_FILE = os.path.join(BACKEND_DIR, "cache_llm_ontology.json")
@@ -46,6 +46,7 @@ _last_gemini_ts = 0.0       # timestamp panggilan Gemini terakhir (modul-level)
 # lewat awalan "nvidia/" pada nama model di llm_config.json.
 NVIDIA_BASE = "https://integrate.api.nvidia.com/v1"
 NVIDIA_MIN_INTERVAL = 1.5   # detik minimal antar panggilan NVIDIA
+NVIDIA_BACKOFF = 2.0        # #4 detik; backoff pendek agar gagal CEPAT lalu jatuh ke Gemini
 _last_nvidia_ts = 0.0
 
 # Circuit breaker kuota Gemini: saat 429 berbunyi "exceeded your current quota",
@@ -388,7 +389,8 @@ def _call_nvidia_json(model, prompt, timeout, max_tokens=2048):
             _last_nvidia_ts = time.time()
             last_err = e
             if e.code in (429, 503) and attempt < GEMINI_MAX_RETRY:
-                backoff = GEMINI_BACKOFF * (2 ** attempt)
+                # #4 backoff pendek: kalau NIM sibuk, cepat menyerah -> fallback Gemini
+                backoff = NVIDIA_BACKOFF * (2 ** attempt)
                 print(f"[nvidia] {model} HTTP {e.code} -> tunggu {backoff:.0f}s, ulang ({attempt+1}/{GEMINI_MAX_RETRY})")
                 time.sleep(backoff)
                 continue
@@ -423,6 +425,21 @@ GEMINI_QUOTA_DEAD_SEC = 600.0    # 10 menit; reset asli bisa lebih lama
 _gemini_busy_matrix = {}         # {model: {key_idx: epoch_until}}
 GEMINI_BUSY_DEAD_SEC = 120.0     # 2 menit
 
+# #4 Pemutus sirkuit Nemotron (NIM). Satu-satunya "key", jadi dilacak per model.
+# Kalau NIM 503 -> tandai sibuk sebentar, lanjut ke model Gemini berikutnya
+# (sebelumnya fungsi ini RETURN saat Nemotron gagal -> seluruh ekstraksi batal).
+_nvidia_busy_until = {}          # {model: epoch_until}
+NVIDIA_BUSY_SEC = 60.0           # detik; NIM biasanya pulih cepat
+
+# Provenance: model yang TERAKHIR berhasil dipakai matriks. Dipakai pemanggil
+# untuk kolom "engine" di pustaka, agar ketahuan hasil dari Nemotron/Gemini.
+_last_matrix_model = ""
+
+
+def last_matrix_model():
+    """Nama model terakhir yang sukses pada _call_gemini_matrix (atau "")."""
+    return _last_matrix_model
+
 
 def _call_gemini_matrix(keys, models, prompt, timeout, max_tokens=2048):
     """
@@ -438,7 +455,7 @@ def _call_gemini_matrix(keys, models, prompt, timeout, max_tokens=2048):
           # semua key habis untuk model ini -> lanjut ke model berikutnya
       raise last_error
     """
-    global _last_gemini_ts, _gemini_quota_dead_matrix, _gemini_busy_matrix
+    global _last_gemini_ts, _gemini_quota_dead_matrix, _gemini_busy_matrix, _nvidia_busy_until, _last_matrix_model
     from llm_title_parser import load_config, GEMINI_BASE
     import ssl
     
@@ -447,8 +464,24 @@ def _call_gemini_matrix(keys, models, prompt, timeout, max_tokens=2048):
     
     for model in models:
         if str(model).startswith("nvidia/"):
-            # NVIDIA tidak punya banyak key -> gunakan dispatcher lama
-            return _call_nvidia_json(model, prompt, timeout, max_tokens)
+            # #4 NIM (Nemotron): GRATIS & didahulukan pada rantai ekstraksi.
+            # PENTING: kalau gagal, JANGAN return/raise -> lanjut ke model
+            # berikutnya (Gemini), supaya ekstraksi tetap jalan.
+            if _nvidia_busy_until.get(model, 0) > time.time():
+                left = int(_nvidia_busy_until[model] - time.time())
+                print(f"[matrix]   model '{model}' dilewati (pemutus sirkuit NIM, sisa {left}s)")
+                continue
+            try:
+                print(f"[matrix] === MODEL: {model} (NIM gratis, tanpa key) ===", flush=True)
+                out = _call_nvidia_json(model, prompt, timeout, max_tokens)
+                _last_matrix_model = model
+                return out
+            except Exception as e:
+                last_err = e
+                _nvidia_busy_until[model] = time.time() + NVIDIA_BUSY_SEC
+                print(f"[matrix]   [X] {model} gagal: {type(e).__name__} {str(e)[:70]}"
+                      f" -> tandai sibuk {NVIDIA_BUSY_SEC:.0f}s, lanjut model berikutnya", flush=True)
+                continue
         
         # Lewati model jika SEMUA key sudah diketahui mati kuota (per model)
         dead_keys = _gemini_quota_dead_matrix.get(model, {})
@@ -499,6 +532,7 @@ def _call_gemini_matrix(keys, models, prompt, timeout, max_tokens=2048):
                     _last_gemini_ts = time.time()
                     text = body["candidates"][0]["content"]["parts"][0]["text"]
                     print(f"[matrix]   [OK] SUKSES key #{key_idx+1} pada {model}", flush=True)
+                    _last_matrix_model = model
                     return json.loads(text)
                 except urllib.error.HTTPError as e:
                     _last_gemini_ts = time.time()
@@ -724,7 +758,7 @@ def research_variable_llm(var_name, role="X", judul="", instansi=""):
     import variable_library as VL
     import variable_tracer
 
-    chain = [m for m in cfg.get("models", []) if m] or MODEL_CHAIN
+    chain = extract_chain()   # #4 Nemotron didahulukan (hemat kuota Gemini)
     timeout = max(int(cfg.get("timeout_seconds", ONTO_TIMEOUT)), ONTO_TIMEOUT)
 
     entry = VL.load_entry(var_name)

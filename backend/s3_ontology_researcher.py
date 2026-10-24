@@ -17,6 +17,7 @@ dari Bab I s/d Lampiran Kuesioner Doktoral.
 import os
 import sys
 import json
+import re
 import hashlib
 from typing import Dict, Any, List, Optional
 from concurrent.futures import ThreadPoolExecutor
@@ -405,3 +406,57 @@ def research_doctoral_ontology(
 
     save_s3_ontology(blueprint, title)
     return blueprint
+
+
+def build_s3_kuesioner_items(ontology: Dict[str, Any]) -> List[Dict[str, str]]:
+    """
+    Menyusun butir-butir item kuesioner nyata dari seluruh variabel doktoral
+    (X1..Xn, M, Z, Y) beserta kode item (misal TL01, IK01, SE01, MK01, BO01, KP01)
+    dan pernyataan kuesioner operasional Likert 1-5.
+    """
+    items = []
+    variables = (ontology or {}).get("variables", {})
+    if not variables:
+        return items
+
+    def _make_prefix(name: str, fallback_role: str) -> str:
+        words = [w for w in re.split(r'[^a-zA-Z0-9]+', name) if w]
+        if len(words) >= 2:
+            return (words[0][0] + words[1][0]).upper()
+        elif len(words) == 1 and len(words[0]) >= 2:
+            return words[0][:2].upper()
+        return fallback_role.upper()
+
+    used_prefixes = set()
+
+    for code, var_data in variables.items():
+        role = var_data.get("role", code).upper()
+        var_name = var_data.get("nama_resmi") or var_data.get("input_name", code)
+        base_pref = _make_prefix(var_name, role)
+        prefix = base_pref
+        cnt = 1
+        while prefix in used_prefixes:
+            prefix = f"{base_pref[:1]}{cnt}"
+            cnt += 1
+        used_prefixes.add(prefix)
+
+        item_num = 1
+        dims = var_data.get("dimensi", [])
+        for d in dims:
+            dim_name = d.get("nama", "Dimensi")
+            inds = d.get("indikator", [])
+            for ind in inds:
+                pernyataan = ind.strip()
+                if not pernyataan.endswith("."):
+                    pernyataan += "."
+                items.append({
+                    "role": role,
+                    "variabel": var_name,
+                    "kode": f"{prefix}{item_num:02d}",
+                    "dimensi": dim_name,
+                    "pernyataan": pernyataan
+                })
+                item_num += 1
+
+    return items
+

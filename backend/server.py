@@ -1170,6 +1170,43 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                     "ontology": onto_s3
                 }
 
+            elif path == "/api/s3/generate-gform-script":
+                try:
+                    title_input = body.get("title") or body.get("judul") or ""
+                    inst_input = body.get("instansi") or "Instansi Terkait"
+                    tahun_input = body.get("tahun") or "2026"
+                    onto_s3 = s3_ontology_researcher.load_s3_ontology(title_input)
+                    if not onto_s3:
+                        onto_s3 = s3_ontology_researcher.research_doctoral_ontology(
+                            title=title_input,
+                            x_vars=body.get("x_vars", []),
+                            m_vars=body.get("m_vars", []),
+                            z_vars=body.get("z_vars", []),
+                            y_var=body.get("y_var") or body.get("y") or "Kinerja Pegawai",
+                            instansi=inst_input,
+                            force_refresh=False
+                        )
+                    items = s3_ontology_researcher.build_s3_kuesioner_items(onto_s3)
+                    if not items:
+                        raise RuntimeError("Kuesioner S3 belum dapat dibangun. Lakukan riset dimensi & indikator terlebih dahulu.")
+                    
+                    script = generate_google_apps_script_from_items(
+                        items,
+                        judul=title_input,
+                        instansi=inst_input,
+                        tahun=tahun_input
+                    )
+                    response_data = {
+                        "status": "success",
+                        "script": script,
+                        "total_butir": len(items),
+                        "judul": title_input,
+                        "pesan": "Skrip Google Apps Script untuk Disertasi Doktor S3 berhasil dibuat."
+                    }
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": f"Pembuatan skrip Google Form S3 gagal: {ex}"}
+
             # =========================================================================
             # DYNAMIC RESEARCH GRAPH ENGINE (V3.0) - MULTI-X, MODERASI & MEDIASI TERMODERASI
             # (Modul Terpisah - 100% Tidak Mengganggu Mesin Master)

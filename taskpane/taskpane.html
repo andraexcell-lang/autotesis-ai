@@ -1089,6 +1089,7 @@
           <div id="s3-ontology-preview-box" style="display: none; margin-top: 8px; font-size: 11px; color: #1e293b; background: #ffffff; border: 1px solid #e9d5ff; border-radius: 4px; padding: 8px;">
             <!-- Container Hasil Riset Dimensi & Indikator Doktoral -->
           </div>
+          <button class="btn btn-primary" id="btn-s3-save-config" style="width: 100%; margin-top: 10px;">💾 Simpan & Terapkan Variabel</button>
         </div>
       </section>
 
@@ -1097,168 +1098,670 @@
       <!-- ========================================================================= -->
       <section id="panel-s3-chapters" class="tab-panel">
         <div class="card">
-          <h2 class="card-title">Generator Bab Disertasi Doktor (Model Hibrida Dinamis)</h2>
-          <p class="hint">Naskah dihasilkan secara otomatis berdasar Graph Hipotesis S3 yang telah dikompilasi, lengkap dengan sitasi mutakhir (2022-2026), formulasi matematis, dan pembahasan 4-alinea baku pascasarjana.</p>
+          <div class="pipeline-header-title">
+            <h2 class="card-title">⚡ Hierarchical Sub-Chapter Pipeline (Disertasi Doktor S3)</h2>
+            <span class="badge-mini" style="background: #f3e8ff; color: #7e22ce;">Doktoral Multi-X & Moderasi</span>
+          </div>
 
-          <div class="pipeline-chapter-card" style="margin-bottom: 10px;">
-            <div class="chapter-accordion-header" style="background: #faf5ff;">
-              <div class="chapter-header-left">
-                <span class="chapter-badge" style="background: #7c3aed;">BAB I</span>
-                <div class="chapter-title-group">
-                  <h3>BAB I: Pendahuluan Disertasi</h3>
-                  <span class="subchapter-count">Rumusan Masalah & Tujuan Berbasis N-Hipotesis</span>
-                </div>
-              </div>
-            </div>
-            <div class="subchapter-list" style="display: block;">
-              <div class="subchapter-row">
-                <div class="sub-info">
-                  <span class="sub-badge">1.2</span>
-                  <div class="sub-text">
-                    <strong>Perumusan Masalah Doktoral</strong>
-                    <span class="sub-meta">🎯 Sinkron otomatis dengan butir pertanyaan kausalitas, mediasi, dan moderasi</span>
-                  </div>
-                </div>
-                <div class="sub-actions">
-                  <button type="button" class="btn btn-primary btn-xs btn-s3-write" data-sub="sub_1_2">✍️ Tulis</button>
-                  <button type="button" class="btn btn-outline btn-xs btn-s3-docx" data-sub="sub_1_2">📄 .docx</button>
-                </div>
-              </div>
-              <div class="subchapter-row">
-                <div class="sub-info">
-                  <span class="sub-badge">1.3</span>
-                  <div class="sub-text">
-                    <strong>Tujuan Penelitian Doktoral</strong>
-                    <span class="sub-meta">🎯 Sinkron otomatis dengan butir tujuan pembuktian statistik empiris</span>
-                  </div>
-                </div>
-                <div class="sub-actions">
-                  <button type="button" class="btn btn-primary btn-xs btn-s3-write" data-sub="sub_1_3">✍️ Tulis</button>
-                  <button type="button" class="btn btn-outline btn-xs btn-s3-docx" data-sub="sub_1_3">📄 .docx</button>
-                </div>
-              </div>
+          <div class="mode-select-box mb-3">
+            <label><strong>Mode Pengetikan ke Word:</strong></label>
+            <div class="radio-row">
+              <label><input type="radio" name="write-mode-s3" value="officejs" checked> 📄 Langsung ke Dokumen Aktif (Office.js)</label>
+              <label><input type="radio" name="write-mode-s3" value="native"> ⚡ Background Process (Native COM)</label>
             </div>
           </div>
 
-          <div class="pipeline-chapter-card" style="margin-bottom: 10px;">
-            <div class="chapter-accordion-header" style="background: #faf5ff;">
-              <div class="chapter-header-left">
-                <span class="chapter-badge" style="background: #7c3aed;">BAB II</span>
-                <div class="chapter-title-group">
-                  <h3>BAB II: Kajian Teori & Kerangka Konseptual</h3>
-                  <span class="subchapter-count">Model Kontingensi & Hipotesis Hibrida</span>
-                </div>
-              </div>
-            </div>
-            <div class="subchapter-list" style="display: block;">
-              <div class="subchapter-row">
-                <div class="sub-info">
-                  <span class="sub-badge">2.3</span>
-                  <div class="sub-text">
-                    <strong>Kerangka Konseptual & Model Hipotesis Hibrida</strong>
-                    <span class="sub-meta">🎯 Perumusan H1 s.d Hm lengkap dengan landasan teoretis Grand Theory</span>
-                  </div>
-                </div>
-                <div class="sub-actions">
-                  <button type="button" class="btn btn-primary btn-xs btn-s3-write" data-sub="sub_2_3">✍️ Tulis</button>
-                  <button type="button" class="btn btn-outline btn-xs btn-s3-docx" data-sub="sub_2_3">📄 .docx</button>
-                </div>
-              </div>
-            </div>
+          <div class="pipeline-alert" style="background: #faf5ff; border-color: #d8b4fe; color: #581c87;">
+            <strong>✅ Solusi Arsitektur Hierarkis Aktif:</strong> Memecah disertasi doktor menjadi 36 unit sub-bab/sub-sub-bab mandiri (termasuk Bagian Awal / Front Matter) untuk menjamin elaborasi ilmiah mendalam (150-250 halaman) tanpa batas token LLM, tanpa terpotong, dan anti-summarization. Anda dapat mengeksekusi per sub-bab atau menjalankan eksekusi berantai otomatis (Run Chain).
           </div>
 
-          <div class="pipeline-chapter-card" style="margin-bottom: 10px;">
-            <div class="chapter-accordion-header" style="background: #faf5ff;">
-              <div class="chapter-header-left">
-                <span class="chapter-badge" style="background: #7c3aed;">BAB III</span>
-                <div class="chapter-title-group">
-                  <h3>BAB III: Metodologi & Model Struktural PLS-SEM</h3>
-                  <span class="subchapter-count">Persamaan Regresi Bertingkat & Efek Interaksi</span>
-                </div>
-              </div>
-            </div>
-            <div class="subchapter-list" style="display: block;">
-              <div class="subchapter-row">
-                <div class="sub-info">
-                  <span class="sub-badge">3.5</span>
-                  <div class="sub-text">
-                    <strong>Rancangan Analisis Data PLS-SEM & Persamaan Struktural</strong>
-                    <span class="sub-meta">🎯 Persamaan matematis sub-struktural dan utama + prosedur bootstrapping</span>
-                  </div>
-                </div>
-                <div class="sub-actions">
-                  <button type="button" class="btn btn-primary btn-xs btn-s3-write" data-sub="sub_3_5">✍️ Tulis</button>
-                  <button type="button" class="btn btn-outline btn-xs btn-s3-docx" data-sub="sub_3_5">📄 .docx</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- POHON HIERARKI SUB-BAB DISERTASI S3 -->
+          <div class="pipeline-section">
 
-          <div class="pipeline-chapter-card" style="margin-bottom: 10px;">
-            <div class="chapter-accordion-header" style="background: #faf5ff;">
-              <div class="chapter-header-left">
-                <span class="chapter-badge" style="background: #7c3aed;">BAB IV</span>
-                <div class="chapter-title-group">
-                  <h3>BAB IV: Hasil & Pembahasan Komprehensif</h3>
-                  <span class="subchapter-count">Evaluasi PLS-SEM & 4 Alinea Baku per Hipotesis</span>
+            <!-- BAGIAN AWAL (FRONT MATTER) -->
+            <div class="pipeline-chapter-card" id="card-s3-ch-0">
+              <div class="chapter-accordion-header" data-toggle="list-s3-ch-0">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #7c3aed;">AWAL</span>
+                  <div class="chapter-title-group">
+                    <h3>Bagian Awal (Front Matter)</h3>
+                    <span class="subchapter-count">1 Unit • Est. 8-10 Halaman • Disisipkan di Awal Dokumen</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-accordion-toggle">▼</button>
+                </div>
+              </div>
+              <div class="subchapter-list" id="list-s3-ch-0">
+                <div class="subchapter-row" id="row-s3-sub_bagian_awal">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">Awal</span>
+                    <div class="sub-text">
+                      <strong>Bagian Awal (Front Matter Doktoral)</strong>
+                      <span class="sub-meta">🎯 8-10 Hlm | Halaman Judul, Lembar Persetujuan Komisi Promotor &amp; Penguji, Kata Pengantar, Abstrak, Riwayat Hidup, Daftar Isi/Tabel/Gambar/Lampiran</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_bagian_awal">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_bagian_awal">📄 .docx</button>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="subchapter-list" style="display: block;">
-              <div class="subchapter-row">
-                <div class="sub-info">
-                  <span class="sub-badge">4.2</span>
-                  <div class="sub-text">
-                    <strong>Hasil Evaluasi Model Pengukuran & Struktural</strong>
-                    <span class="sub-meta">🎯 Tabel Validitas Konstruk, R², Path Coefficients, Simple Slope, & ModMed</span>
-                  </div>
-                </div>
-                <div class="sub-actions">
-                  <button type="button" class="btn btn-primary btn-xs btn-s3-write" data-sub="sub_4_2">✍️ Tulis</button>
-                  <button type="button" class="btn btn-outline btn-xs btn-s3-docx" data-sub="sub_4_2">📄 .docx</button>
-                </div>
-              </div>
-              <div class="subchapter-row">
-                <div class="sub-info">
-                  <span class="sub-badge">4.4</span>
-                  <div class="sub-text">
-                    <strong>Pembahasan Hasil Penelitian (4 Alinea Baku per Poin)</strong>
-                    <span class="sub-meta">🎯 Bukti Empiris + Grand Theory + Riset Terdahulu + Implikasi Strategis</span>
-                  </div>
-                </div>
-                <div class="sub-actions">
-                  <button type="button" class="btn btn-primary btn-xs btn-s3-write" data-sub="sub_4_4">✍️ Tulis</button>
-                  <button type="button" class="btn btn-outline btn-xs btn-s3-docx" data-sub="sub_4_4">📄 .docx</button>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div class="pipeline-chapter-card">
-            <div class="chapter-accordion-header" style="background: #faf5ff;">
-              <div class="chapter-header-left">
-                <span class="chapter-badge" style="background: #7c3aed;">BAB V</span>
-                <div class="chapter-title-group">
-                  <h3>BAB V: Kesimpulan Doktoral</h3>
-                  <span class="subchapter-count">Rangkuman Kausalitas, Mediasi & Moderasi</span>
-                </div>
-              </div>
-            </div>
-            <div class="subchapter-list" style="display: block;">
-              <div class="subchapter-row">
-                <div class="sub-info">
-                  <span class="sub-badge">5.1</span>
-                  <div class="sub-text">
-                    <strong>Kesimpulan Doktoral Berbasis Statistik</strong>
-                    <span class="sub-meta">🎯 Menjawab seluruh hipotesis formal secara 1-ke-1 dengan angka beta, T-stat, & p-value</span>
+            <!-- BAB I -->
+            <div class="pipeline-chapter-card" id="card-s3-ch-1">
+              <div class="chapter-accordion-header" data-toggle="list-s3-ch-1">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #7c3aed;">BAB I</span>
+                  <div class="chapter-title-group">
+                    <h3>BAB I: Pendahuluan</h3>
+                    <span class="subchapter-count">6 Sub-Bab (1.1 s/d 1.6) • Est. 12-18 Halaman</span>
                   </div>
                 </div>
-                <div class="sub-actions">
-                  <button type="button" class="btn btn-primary btn-xs btn-s3-write" data-sub="sub_5_1">✍️ Tulis</button>
-                  <button type="button" class="btn btn-outline btn-xs btn-s3-docx" data-sub="sub_5_1">📄 .docx</button>
+                <div class="chapter-header-actions">
+                  <button class="btn-chain btn-s3-chain" data-chapter="1">⚡ Run Chain Bab I</button>
+                  <button class="btn-accordion-toggle">▼</button>
+                </div>
+              </div>
+              <div class="subchapter-list" id="list-s3-ch-1">
+                <div class="subchapter-row" id="row-s3-sub_1_1">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">1.1</span>
+                    <div class="sub-text">
+                      <strong>Latar Belakang Masalah</strong>
+                      <span class="sub-meta">🎯 5-8 Hlm | Evaluasi Kinerja (Tabel 1.1), Fenomena Empiris Mediasi & Moderasi (Tabel 1.2), Research Gap, State of the Art</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_1_1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_1_1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_1_2">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">1.2</span>
+                    <div class="sub-text">
+                      <strong>Identifikasi Masalah</strong>
+                      <span class="sub-meta">🎯 1-2 Hlm | 6-8 butir masalah fenomena empiris & kesenjangan riset doktoral</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_1_2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_1_2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_1_3">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">1.3</span>
+                    <div class="sub-text">
+                      <strong>Pembatasan Masalah</strong>
+                      <span class="sub-meta">🎯 1 Hlm | Fokus ruang lingkup variabel model doktoral (Xn, M, Z, Y)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_1_3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_1_3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_1_4">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">1.4</span>
+                    <div class="sub-text">
+                      <strong>Perumusan Masalah</strong>
+                      <span class="sub-meta">🎯 1-2 Hlm | Butir rumusan masalah kausalitas langsung, mediasi, & moderasi</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_1_4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_1_4">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_1_5">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">1.5</span>
+                    <div class="sub-text">
+                      <strong>Tujuan Penelitian</strong>
+                      <span class="sub-meta">🎯 1-2 Hlm | Butir tujuan pembuktian statistik PLS-SEM & model kontingensi</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_1_5">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_1_5">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_1_6">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">1.6</span>
+                    <div class="sub-text">
+                      <strong>Kegunaan Penelitian</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | Manfaat Teoretis (Novelty Doktoral) & Praktis Kebijakan Strategis Instansi</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_1_6">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_1_6">📄 .docx</button>
+                  </div>
                 </div>
               </div>
             </div>
+
+            <!-- BAB II -->
+            <div class="pipeline-chapter-card" id="card-s3-ch-2">
+              <div class="chapter-accordion-header" data-toggle="list-s3-ch-2">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #7c3aed;">BAB II</span>
+                  <div class="chapter-title-group">
+                    <h3>BAB II: Kajian Pustaka & Hipotesis</h3>
+                    <span class="subchapter-count">7 Sub-Bab • Est. 30-45 Halaman</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-chain btn-s3-chain" data-chapter="2">⚡ Run Chain Bab II</button>
+                  <button class="btn-accordion-toggle">▼</button>
+                </div>
+              </div>
+              <div class="subchapter-list" id="list-s3-ch-2">
+                <div class="subchapter-row" id="row-s3-sub_2_1_1">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">2.1.1</span>
+                    <div class="sub-text">
+                      <strong>Kajian Teoritis Variabel Terikat (Y)</strong>
+                      <span class="sub-meta">🎯 6-8 Hlm | Pengertian para ahli + Faktor-faktor Yang Mempengaruhi + Dimensi & Indikator</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_1_1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_1_1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_2_1_2">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">2.1.2</span>
+                    <div class="sub-text">
+                      <strong>Kajian Teoritis Variabel Mediasi (M)</strong>
+                      <span class="sub-meta">🎯 5-7 Hlm | Pengertian para ahli terkini + Dimensi & Indikator (otomatis mengikuti judul)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_1_2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_1_2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_2_1_3">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">2.1.3</span>
+                    <div class="sub-text">
+                      <strong>Kajian Teoritis Variabel Bebas (X1, X2... Xn)</strong>
+                      <span class="sub-meta">🎯 6-9 Hlm | Teori para ahli terkini + Dimensi & Indikator seluruh variabel bebas</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_1_3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_1_3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_2_1_4">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">2.1.4</span>
+                    <div class="sub-text">
+                      <strong>Kajian Teoritis Variabel Moderasi (Z)</strong>
+                      <span class="sub-meta">🎯 5-7 Hlm | Landasan Contingency Theory + Dimensi & Indikator variabel pemoderasi</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_1_4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_1_4">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_2_2">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">2.2</span>
+                    <div class="sub-text">
+                      <strong>Hasil Penelitian Yang Relevan</strong>
+                      <span class="sub-meta">🎯 7-10 Hlm | Tabel 2.1 Matriks Komparasi 15-25 Jurnal Bereputasi Internasional Scopus/Sinta 2022-2026</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_2_3">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">2.3</span>
+                    <div class="sub-text">
+                      <strong>Kerangka Berpikir & Gambar 2.1</strong>
+                      <span class="sub-meta">🎯 5-7 Hlm | Alur Logika Mediasi Termoderasi + Bagan Gambar 2.1 Kerangka Konseptual</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_2_4">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">2.4</span>
+                    <div class="sub-text">
+                      <strong>Hipotesis Penelitian (H1 s/d Hn)</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | Perumusan seluruh hipotesis formal kausalitas, mediasi, dan moderasi berarah</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_4">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BAB III -->
+            <div class="pipeline-chapter-card" id="card-s3-ch-3">
+              <div class="chapter-accordion-header" data-toggle="list-s3-ch-3">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #7c3aed;">BAB III</span>
+                  <div class="chapter-title-group">
+                    <h3>BAB III: Metode Penelitian</h3>
+                    <span class="subchapter-count">6 Sub-Bab • Est. 20-30 Halaman</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-chain btn-s3-chain" data-chapter="3">⚡ Run Chain Bab III</button>
+                  <button class="btn-accordion-toggle">▼</button>
+                </div>
+              </div>
+              <div class="subchapter-list" id="list-s3-ch-3">
+                <div class="subchapter-row" id="row-s3-sub_3_1">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">3.1</span>
+                    <div class="sub-text">
+                      <strong>Tempat & Waktu Penelitian</strong>
+                      <span class="sub-meta">🎯 1-2 Hlm | Tabel 3.1 Jadwal Riset Doktoral 6 Bulan</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_3_2">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">3.2</span>
+                    <div class="sub-text">
+                      <strong>Populasi & Sampel</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | Identifikasi Populasi & Penentuan Sampel (Slovin / Sensus)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_3_3">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">3.3</span>
+                    <div class="sub-text">
+                      <strong>Variabel, Definisi & Kisi-Kisi Instrumen</strong>
+                      <span class="sub-meta">🎯 7-10 Hlm | Definisi Konseptual + Operasional + Tabel 3.2-3.6 Kisi-Kisi Instrumen Doktoral</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_3_4">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">3.4</span>
+                    <div class="sub-text">
+                      <strong>Instrumen & Skala Likert 1-5</strong>
+                      <span class="sub-meta">🎯 1-2 Hlm | Tabel Scoring bobot opsi jawaban ordinal Likert 1-5</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_4">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_3_5">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">3.5</span>
+                    <div class="sub-text">
+                      <strong>Teknik Analisis Data PLS-SEM</strong>
+                      <span class="sub-meta">🎯 5-6 Hlm | Inventaris uji rinci: outer/inner model, f², Q², SRMR, VIF, bootstrapping & efek mediasi/moderasi</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_5">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_5">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_3_6">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">3.6</span>
+                    <div class="sub-text">
+                      <strong>Pengujian Hipotesis Bootstrapping</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | Tabel Kriteria keputusan t > 1,96 & p < 0,05 (5.000 subsampel)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_6">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_6">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BAB IV -->
+            <div class="pipeline-chapter-card" id="card-s3-ch-4">
+              <div class="chapter-accordion-header" data-toggle="list-s3-ch-4">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #7c3aed;">BAB IV</span>
+                  <div class="chapter-title-group">
+                    <h3>BAB IV: Hasil & Pembahasan</h3>
+                    <span class="subchapter-count">12 Sub-Bab • Est. 40-60 Halaman</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-chain btn-s3-chain" data-chapter="4">⚡ Run Chain Bab IV</button>
+                  <button class="btn-accordion-toggle">▼</button>
+                </div>
+              </div>
+              <div class="subchapter-list" id="list-s3-ch-4">
+                <div class="subchapter-row" id="row-s3-sub_4_1_1">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.1.1</span>
+                    <div class="sub-text">
+                      <strong>Deskripsi Karakteristik Responden</strong>
+                      <span class="sub-meta">🎯 4-5 Hlm | Tabel Gender, Usia, Pendidikan + narasi AI</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_1_1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_1_1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_1_2">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.1.2</span>
+                    <div class="sub-text">
+                      <strong>Analisis Statistik Deskriptif Variabel</strong>
+                      <span class="sub-meta">🎯 3-4 Hlm | Tabel Interval & Kategori Rata-rata + narasi AI</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_1_2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_1_2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_1_3">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.1.3</span>
+                    <div class="sub-text">
+                      <strong>Analisis Outer Model</strong>
+                      <span class="sub-meta">🎯 6-8 Hlm | Outer Loadings, AVE/CA/CR, Fornell-Larcker, HTMT, VIF + narasi AI</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_1_3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_1_3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_1_4">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.1.4</span>
+                    <div class="sub-text">
+                      <strong>Analisis Inner Model</strong>
+                      <span class="sub-meta">🎯 3-4 Hlm | Tabel f-Square, R-Square, Q-Square & SRMR + narasi AI</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_1_4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_1_4">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_1_5">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.1.5</span>
+                    <div class="sub-text">
+                      <strong>Pengujian Hipotesis</strong>
+                      <span class="sub-meta">🎯 3-4 Hlm | Rekapitulasi Hipotesis, Indirect Effect & Moderasi + narasi AI</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_1_5">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_1_5">📄 .docx</button>
+                  </div>
+                </div>
+
+                <!-- 4.2 PEMBAHASAN PER POIN H1 s/d H7 -->
+                <div class="subchapter-row" id="row-s3-sub_4_2_poin_1">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.1</span>
+                    <div class="sub-text">
+                      <strong>Pembahasan H1: X1 &rarr; M</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_2_poin_2">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.2</span>
+                    <div class="sub-text">
+                      <strong>Pembahasan H2: X2 &rarr; M</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_2_poin_3">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.3</span>
+                    <div class="sub-text">
+                      <strong>Pembahasan H3: X1 &rarr; Y</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_2_poin_4">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.4</span>
+                    <div class="sub-text">
+                      <strong>Pembahasan H4: X2 &rarr; Y</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_4">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_2_poin_5">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.5</span>
+                    <div class="sub-text">
+                      <strong>Pembahasan H5: M &rarr; Y</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_5">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_5">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_2_poin_6">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.6</span>
+                    <div class="sub-text">
+                      <strong>Pembahasan H6: X1 &rarr; M &rarr; Y (Mediasi)</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_6">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_6">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_2_poin_7">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.7</span>
+                    <div class="sub-text">
+                      <strong>Pembahasan H7: X2 &rarr; M &rarr; Y (Mediasi)</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_7">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_7">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BAB V -->
+            <div class="pipeline-chapter-card" id="card-s3-ch-5">
+              <div class="chapter-accordion-header" data-toggle="list-s3-ch-5">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #7c3aed;">BAB V</span>
+                  <div class="chapter-title-group">
+                    <h3>BAB V: Kesimpulan, Implikasi & Dapus</h3>
+                    <span class="subchapter-count">4 Sub-Bab • Est. 12-18 Halaman</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-chain btn-s3-chain" data-chapter="5">⚡ Run Chain Bab V</button>
+                  <button class="btn-accordion-toggle">▼</button>
+                </div>
+              </div>
+              <div class="subchapter-list" id="list-s3-ch-5">
+                <div class="subchapter-row" id="row-s3-sub_5_1">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">5.1</span>
+                    <div class="sub-text">
+                      <strong>Kesimpulan Doktoral</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | Menjawab seluruh hipotesis tegas memuat angka beta, t-stat, p-value</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_5_1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_5_1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_5_2">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">5.2</span>
+                    <div class="sub-text">
+                      <strong>Implikasi Kebijakan Manajerial & Novelty Teoretis</strong>
+                      <span class="sub-meta">🎯 3-4 Hlm | Pilar kebijakan strategis disesuaikan variabel & instansi</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_5_2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_5_2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_5_3">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">5.3</span>
+                    <div class="sub-text">
+                      <strong>Saran Praktis & Akademis</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | Rekomendasi manajerial & agenda riset lanjutan</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_5_3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_5_3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_dapus">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">Dapus</span>
+                    <div class="sub-text">
+                      <strong>Daftar Pustaka APA 7th Edition</strong>
+                      <span class="sub-meta">🎯 4-5 Hlm | Sitasi nyata yang benar-benar dipakai (Hanging Indent 1.27 cm)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_dapus">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_dapus">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- LAMPIRAN -->
+            <div class="pipeline-chapter-card" id="card-s3-ch-6">
+              <div class="chapter-accordion-header" data-toggle="list-s3-ch-6">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #7c3aed;">LAMPIRAN</span>
+                  <div class="chapter-title-group">
+                    <h3>Lampiran: Kuesioner Penelitian</h3>
+                    <span class="subchapter-count">1 Sub-Bab • Est. 4-6 Halaman</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-chain btn-s3-chain" data-chapter="6">⚡ Run Chain Lampiran</button>
+                  <button class="btn-accordion-toggle">▼</button>
+                </div>
+              </div>
+              <div class="subchapter-list" id="list-s3-ch-6">
+                <div class="subchapter-row" id="row-s3-sub_lampiran">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">Lampiran</span>
+                    <div class="sub-text">
+                      <strong>Lampiran Kuesioner Doktoral Seluruh Variabel</strong>
+                      <span class="sub-meta">🎯 4-6 Hlm | Identitas responden, petunjuk, butir Likert 1-5 dengan kode item</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_lampiran">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_lampiran">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
@@ -1268,30 +1771,88 @@
       <!-- ========================================================================= -->
       <section id="panel-s3-analysis" class="tab-panel">
         <div class="card">
-          <h2 class="card-title">Wizard Analisis Data PLS-SEM Doktoral (SmartPLS 4 Standar)</h2>
-          <p class="hint">Menghitung outer loading, AVE (>0,50), Composite Reliability (>0,70), Cronbach's Alpha, VIF (<3,0), R², Q², pengujian signifikansi bootstrapping 5.000, Simple Slope Moderasi, dan Conditional Indirect Effects (Hayes PROCESS).</p>
+          <h2 class="card-title">Wizard Olah Data PLS-SEM (Disertasi Doktor S3)</h2>
+          <p class="hint">Jalur utama: impor respons Google Form nyata (langsung dari link Google Sheets atau berkas ekspor). Data hasil pembangkitan mesin hanya dipakai bila peneliti secara sadar memilihnya. Analisis memakai mesin PLS-SEM Doktoral (Path, 300 iterasi, stop 1e-7, bootstrap 5.000) agar angka Bab IV/V konsisten dengan sumber data yang tercatat.</p>
 
           <div class="form-row">
             <div class="form-group half">
-              <label for="input-s3-sample-size">Jumlah Sampel (N)</label>
-              <input type="number" id="input-s3-sample-size" value="110">
+              <label for="input-s3-responden">Jumlah Sampel (N) — khusus data hasil pembangkitan mesin</label>
+              <input type="number" id="input-s3-responden" value="110">
             </div>
             <div class="form-group half">
-              <label for="input-s3-subsamples">Subsamples Bootstrapping</label>
-              <input type="number" id="input-s3-subsamples" value="5000" disabled>
+              <label for="input-s3-bootstrapping">Subsamples</label>
+              <input type="number" id="input-s3-bootstrapping" value="5000" disabled>
             </div>
           </div>
 
-          <button type="button" class="btn btn-accent btn-large" id="btn-s3-run-pls">
-            ⚙️ Olah Data PLS-SEM Doktoral Sekarang
-          </button>
+          <!-- Langkah 1 -->
+          <div class="wizard-step">
+            <div class="wizard-head"><span class="wizard-no">1</span> Kuesioner (Lampiran &amp; Google Form)</div>
+            <button class="btn btn-secondary" id="btn-s3-generate-gform">📋 Buat Google Form + Spreadsheet Respons (Salin Apps Script)</button>
+            <p class="hint">Pastikan Bab III (3.3) &amp; Lampiran sudah dibuat agar butir kuesioner nyata tersedia. Skrip membuat Form dan Spreadsheet respons sekaligus.</p>
 
-          <div id="s3-pls-result-box" class="hidden mt-3" style="background: #f0fdf4; border: 1px solid #86efac; padding: 12px; border-radius: 6px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <h3 style="font-size: 12px; font-weight: 700; color: #166534; margin: 0;">✅ Hasil Analisis PLS-SEM Doktoral:</h3>
-              <span id="badge-s3-pls-status" style="font-size: 10px; background: #dcfce7; color: #15803d; font-weight: 700; padding: 2px 8px; border-radius: 10px;">Semua Jalur Signifikan</span>
+            <div id="s3-gform-result" class="hidden mt-2">
+              <p class="gform-ok" id="s3-gform-ok"></p>
+              <textarea id="s3-gform-script" class="gform-script" rows="6" readonly spellcheck="false"></textarea>
+              <div class="upload-row">
+                <button class="btn btn-secondary" id="btn-s3-copy-gform">📋 Salin Ulang Skrip</button>
+                <button class="btn btn-secondary" id="btn-s3-download-gform">📥 Unduh Skrip (.gs)</button>
+              </div>
+              <p class="hint">Cara pakai: buka <strong>script.google.com</strong> → buat proyek baru → tempel skrip → <strong>Run</strong>. Google Form dan Spreadsheet respons akan terbentuk otomatis di Google Drive.</p>
+              <p class="hint">Setelah <strong>Run</strong>, buka <strong>Execution log</strong>. Di sana tercatat <strong>URL Spreadsheet respons</strong> (dengan <code>#gid=...</code>). Bagikan Spreadsheet sebagai <strong>Pelihat — siapa saja yang memiliki link</strong>, lalu tempel link-nya di Langkah 2.</p>
+              <p class="hint">Jangan bagikan sebagai Editor. Respons dapat memuat identitas; hapus kolom identitas sebelum membagikan link bila perlu.</p>
             </div>
-            <div id="s3-pls-summary-tables" style="max-height: 280px; overflow-y: auto; background: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #bbf7d0;"></div>
+          </div>
+
+          <!-- Langkah 2 -->
+          <div class="wizard-step" id="s3-wizard-step-2">
+            <div class="wizard-head"><span class="wizard-no">2</span> Siapkan Data Jawaban</div>
+
+            <p class="hint"><strong>Jalur utama (a):</strong> tempel link Spreadsheet respons Google Form. Server membaca respons terbaru langsung dari sheet; tidak perlu ekspor manual.</p>
+            <div class="upload-row mt-2">
+              <input type="url" id="input-s3-sheet-url" aria-label="Link Spreadsheet respons Google Form" placeholder="https://docs.google.com/spreadsheets/d/.../edit#gid=0">
+              <button class="btn btn-primary" id="btn-s3-import-sheet">🔗 (a) Impor dari Link Google Sheets</button>
+            </div>
+            <p class="hint">Spreadsheet harus dibagikan sebagai <strong>Pelihat — siapa saja yang memiliki link</strong> atau dipublikasikan ke web. Sertakan <code>#gid=...</code> bila sheet memiliki beberapa tab.</p>
+            <label class="confirm-line">
+              <input type="checkbox" id="input-s3-konfirmasi-gform" aria-label="Konfirmasi Spreadsheet berisi respons Google Form responden nyata">
+              <span>Saya menyatakan Spreadsheet ini berisi respons Google Form yang diisi responden nyata, bukan data hasil pembangkitan mesin.</span>
+            </label>
+
+            <p class="hint mt-2"><strong>Cadangan (b):</strong> unggah berkas ekspor Google Form/Sheets atau berkas data lain.</p>
+            <div class="upload-row mt-2">
+              <select id="input-s3-sumber-upload" title="Sumber berkas yang diimpor" aria-label="Sumber berkas data jawaban">
+                <option value="google_form">Respons Google Form</option>
+                <option value="upload">Berkas data lain</option>
+              </select>
+              <input type="file" id="input-s3-upload-jawaban" accept=".csv,.txt,.xlsx" aria-label="Berkas data jawaban (.xlsx atau .csv)">
+              <button class="btn btn-secondary" id="btn-s3-upload-data">📤 (b) Impor Berkas (.xlsx / .csv)</button>
+            </div>
+            <p class="hint">Format: baris pertama = judul kolom. Untuk ekspor Google Form, header boleh berbentuk <code>1. KODE01. Pernyataan...</code>; sistem mengambil kode butirnya. Kolom jenis kelamin/usia/pendidikan opsional (dipakai Tabel 4.1–4.3).</p>
+
+            <p class="hint mt-2"><strong>Fallback eksplisit (c):</strong> hanya bila peneliti memilih data hasil pembangkitan mesin.</p>
+            <button class="btn btn-secondary" id="btn-s3-generate-data">🤖 (c) Bangkitkan Data (mesin)</button>
+            <p class="hint">Jalur (c) TIDAK boleh disebut data primer/responden. Angka Bab IV/V akan diberi label “data hasil pembangkitan mesin”.</p>
+          </div>
+
+          <!-- Langkah 3 -->
+          <div class="wizard-step">
+            <div class="wizard-head"><span class="wizard-no">3</span> Olah Data Sekarang</div>
+            <button class="btn btn-accent" id="btn-s3-run-pls">⚙️ Olah Data Sekarang (PLS-SEM penuh)</button>
+            <p class="hint">Menghitung outer loading, AVE, CR, HTMT, VIF, R², Q², SRMR, dan pengujian hipotesis (bootstrap 5.000).</p>
+          </div>
+
+          <div id="s3-smartpls-src-note" class="src-note hidden"></div>
+
+          <div id="s3-smartpls-download-box" class="hidden mt-2">
+            <a href="#" class="btn btn-success" id="link-s3-download-excel" target="_blank">📥 Unduh Data (.xlsx)</a>
+            <a href="#" class="btn btn-secondary mt-2 hidden" id="link-s3-download-panduan" target="_blank">📄 Unduh Panduan Olah Data SmartPLS 4</a>
+          </div>
+
+          <div id="s3-smartpls-preview" class="results-box hidden mt-3">
+            <h4>Ringkasan Hasil Olah Data:</h4>
+            <div class="metric-grid" id="s3-smartpls-metrics"></div>
+            <p class="stat-status" id="s3-smartpls-status"></p>
           </div>
         </div>
       </section>
@@ -1301,27 +1862,26 @@
       <!-- ========================================================================= -->
       <section id="panel-s3-full" class="tab-panel">
         <div class="card highlight-card">
-          <h2 class="card-title">1 Unduh Lengkap Disertasi Doktor (.docx Standar By SkripsiPlg)</h2>
-          <p>Rangkai seluruh naskah Disertasi S3 model hibrida (Rumusan Masalah, Tujuan, Kerangka Teoretis, Model Struktural, Hasil PLS-SEM dengan tabel full-grid terbuka, Pembahasan 4-Alinea Baku, dan Kesimpulan) langsung ke lembar kerja Word.</p>
+          <h2 class="card-title">1 Unduh Lengkap (.docx Standar By SkripsiPlg)</h2>
+          <p>Rangkai seluruh naskah Disertasi Doktor utuh (Cover Luar/Dalam, Persetujuan Komisi Promotor &amp; Penguji, Pengesahan, Abstrak, Daftar Isi, Bab I s.d Bab V, Tabel Akademik, dan Daftar Pustaka) langsung ke lembar kerja Word.</p>
 
           <div class="specs-box">
             <ul>
               <li><strong>Ukuran Kertas:</strong> A4, Margin Atas 4cm, Kiri 4cm, Bawah 3cm, Kanan 3cm</li>
               <li><strong>Tipografi:</strong> Times New Roman 12 pt, Line Spacing 1.5, Indent 1.27 cm</li>
               <li><strong>Tabel Akademik:</strong> Format Standar Pascasarjana (Full Grid Terbuka)</li>
-              <li><strong>Model:</strong> Multi-X, Moderasi & Mediasi Termoderasi (Hayes PROCESS & SmartPLS 4)</li>
+              <li><strong>Model:</strong> Multi-Variabel, Mediasi & Moderasi Doktoral</li>
             </ul>
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-            <button type="button" class="btn btn-accent btn-large" id="btn-s3-write-full-word">
-              ✍️ Ketik Naskah Utuh Langsung ke Microsoft Word Aktif
-            </button>
-            <button type="button" class="btn btn-success btn-large" id="btn-s3-download-full">
-              📥 Unduh File Dokumen Utuh (.docx Standar)
-            </button>
+          <div style="display: flex; gap: 8px; margin-top: 15px;">
+            <button class="btn btn-primary" id="btn-s3-write-full-word" style="flex: 1; padding: 10px; font-weight: 700;">✍️ Tulis Dokumen Penuh ke Word (Native COM)</button>
+            <button class="btn btn-success" id="btn-s3-download-full" style="flex: 1; padding: 10px; font-weight: 700;">📥 Unduh Berkas Disertasi (.docx)</button>
           </div>
-          <div id="s3-full-status" style="margin-top: 8px; font-size: 11px; font-weight: 600; text-align: center;"></div>
+          <div id="s3-full-download-link" class="hidden mt-3">
+            <a href="#" class="btn btn-success" id="link-s3-download" target="_blank">📥 Unduh File Dokumen (.docx)</a>
+          </div>
+          <p class="hint" style="margin-top: 10px;">Tips: Anda juga dapat menggunakan generator per sub-bab di Tab 2 untuk menulis bab secara terpisah atau berantai.</p>
         </div>
       </section>
 

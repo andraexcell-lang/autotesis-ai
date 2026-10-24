@@ -794,6 +794,8 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 )
 
                 if is_s3:
+                    import importlib
+                    importlib.reload(s3_hierarchical_engine)
                     fn, fp = s3_hierarchical_engine.build_s3_subchapter_doc(sub_id, config, include_dapus=False)
                     native_written = False
                     if mode == "native":
@@ -880,6 +882,8 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 )
 
                 if is_s3:
+                    import importlib
+                    importlib.reload(s3_hierarchical_engine)
                     response_data = s3_hierarchical_engine.run_s3_chained_pipeline(chapter_num, config, mode=mode)
                 else:
                     _ok, _problems, _summary, _judul = (True, [], {}, "")
@@ -1296,6 +1300,8 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                         }
                     sub_id = body.get("sub_id", "all")
 
+                    import importlib
+                    importlib.reload(s3_hierarchical_engine)
                     if sub_id == "all":
                         out_name, saved = s3_hierarchical_engine.build_s3_full_dissertation_doc(config)
                     else:
@@ -1332,6 +1338,8 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                             "is_s3": True
                         }
 
+                    import importlib
+                    importlib.reload(s3_hierarchical_engine)
                     if sub_id == "all":
                         written = s3_hierarchical_engine.write_s3_full_dissertation_native(config)
                     else:

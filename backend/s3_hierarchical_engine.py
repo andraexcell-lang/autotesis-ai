@@ -102,22 +102,22 @@ S3_SUBCHAPTER_CATALOG = {
     "sub_2_1_1": {
         "chapter": 2, "code": "A.2",
         "title": "A.2 2. Kajian Teoritis Variabel Terikat (Y)",
-        "desc": "Kajian mendalam hakikat variabel dependen, 10 definisi ahli terkini, Tabel Matriks Komparasi 10 Definisi, sintesis peneliti, serta Tabel Dimensi dan Indikator Operasional Baku."
+        "desc": "Kajian mendalam hakikat variabel dependen, telaah naratif 10 definisi ahli terkini, sintesis peneliti, serta dimensi dan indikator operasional teks hierarkis murni tanpa tabel."
     },
     "sub_2_1_2": {
         "chapter": 2, "code": "A.3",
         "title": "A.3 3. Kajian Teoritis Variabel Mediasi (M)",
-        "desc": "Kajian mendalam variabel intervening mediasi, teori transmisi psikologis, 10 definisi ahli, Tabel Matriks Komparasi, sintesis peneliti, serta Tabel Dimensi dan Indikator Baku."
+        "desc": "Kajian mendalam variabel intervening mediasi, teori transmisi psikologis, telaah naratif 10 definisi ahli, sintesis peneliti, serta dimensi dan indikator teks hierarkis murni tanpa tabel."
     },
     "sub_2_1_4": {
         "chapter": 2, "code": "A.4",
         "title": "A.4 4. Kajian Teoritis Variabel Moderasi (Z)",
-        "desc": "Kajian mendalam variabel kontingensi moderasi, Contingency Theory, kondisi batas (boundary conditions), 10 definisi ahli, Tabel Matriks Komparasi, sintesis peneliti, serta Tabel Dimensi Indikator Baku."
+        "desc": "Kajian mendalam variabel kontingensi moderasi, Contingency Theory, kondisi batas (boundary conditions), telaah naratif 10 definisi ahli, sintesis peneliti, serta dimensi dan indikator teks hierarkis murni tanpa tabel."
     },
     "sub_2_1_3": {
         "chapter": 2, "code": "A.5",
         "title": "A.5 5. Kajian Teoritis Variabel Bebas (X1, X2... Xn)",
-        "desc": "Kajian mendalam seluruh pilar variabel bebas eksogen, teori kapasitas organisasi, 10 definisi per variabel, Tabel Matriks Komparasi, serta Tabel Dimensi dan Indikator Baku."
+        "desc": "Kajian mendalam seluruh pilar variabel bebas eksogen, teori kapasitas organisasi, telaah naratif 10 definisi per variabel, sintesis peneliti, serta dimensi dan indikator teks hierarkis murni tanpa tabel."
     },
     "sub_2_2": {
         "chapter": 2, "code": "B",
@@ -750,7 +750,7 @@ DESKRIPSI KONTEN: {meta['desc']}
 === PEDOMAN SUBSTANSI AKADEMIK DOKTORAL BERDASARKAN JUDUL ===
 1. Keterikatan Judul & Variabel: Seluruh argumentasi, logika kausalitas, dan elaborasi teoretis WAJIB merujuk secara konsisten pada variabel-variabel di dalam judul ({y_var}, {m_vars_str}, {z_vars_str}, {x_vars_str}). Khusus untuk sub-bab 2.1 (kajian teori murni), kajian wajib universal tanpa menyebut nama instansi lokal.
 2. Kedalaman Teori Doktoral: Sertakan telaah Grand Theory yang relevan (Resource-Based View, Contingency Theory, Social Cognitive Theory, Transformational Leadership Theory, Goal Setting Theory), Middle Range Theory, dan Applied Theory.
-3. Telaah Variabel Kajian Pustaka: Setiap variabel penelitian (Variabel Terikat Y, Mediasi M, Bebas Utama X1, Moderasi Z, serta Bebas Lainnya X2 & X3) WAJIB memuat minimal 10 (sepuluh) definisi konseptual dari pakar terkemuka, tabel matriks komparasi definisi, rumusan sintesis konseptual peneliti, serta dimensi operasional dan indikator terukurnya secara lengkap.
+3. Telaah Variabel Kajian Pustaka: Setiap variabel penelitian (Variabel Terikat Y, Mediasi M, Moderasi Z, serta Bebas Eksogen X1..Xn) WAJIB memuat 10 (sepuluh) definisi konseptual dari pakar terkemuka dalam paragraf naratif mengalir, rumusan sintesis konseptual peneliti, serta dimensi operasional dan indikator terukurnya dalam format teks hirarkis bertingkat (100% tanpa tabel).
 4. Standar Kebaruan Pustaka (2022-2026) & Format Sitasi Teori Lama:
    • Seluruh buku dan artikel jurnal ilmiah yang dirujuk WAJIB diterbitkan dalam kurun waktu 5 tahun terakhir (2022–2026).
    • Jika merujuk pada teori lama/klasik (sebelum 2022), WAJIB menggunakan format kutipan sekunder persis seperti formula ini:

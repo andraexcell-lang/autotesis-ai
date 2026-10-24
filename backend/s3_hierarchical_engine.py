@@ -574,114 +574,157 @@ Naskah WAJIB disusun dalam 4 Bagian Terpadu berstandar tertinggi Pascasarjana Do
 """
     elif sub_id == "sub_2_1_1":
         instruksi_khusus = f"""
-=== PETUNJUK SPESIFIK WAJIB KAJIAN TEORITIS {y_var.upper()} (SUB-BAB 2.1.1) ===
-1. Karakteristik Murni Teoretis: DILARANG menyebut nama instansi lokal ({instansi}) atau data lapangan. Kajian harus murni konseptual universal.
-2. Grand & Middle-Range Theory Wajib Disertakan:
-   - Goal-Setting Theory: Locke & Latham (1990), dalam Schunk, (2022)
-   - Resource-Based View: Barney (1991), dalam Hitt et al., (2023)
-   - Campbell's Theory of Job Performance: Campbell (1990), dalam Campbell & Wiernik, (2022)
-   - AMO Framework: Appelbaum et al. (2000), dalam Boxall & Purcell, (2022)
-3. Wajib Memuat 10 Definisi Pakar Terkemuka:
-   (1) Bernardin & Russell (1993), dalam Kasmir, (2023)
-   (2) Armstrong & Taylor, (2023)
-   (3) Colquitt, LePine, & Wesson, (2022)
-   (4) Campbell & Wiernik, (2022)
-   (5) Mathis & Jackson (2011), dalam Kasmir, (2023)
-   (6) Robbins & Judge, (2022)
-   (7) Dessler, (2023)
-   (8) Mangkunegara, (2022)
-   (9) Kasmir, (2023)
-   (10) Afandi, (2023)
-4. Tabel Matriks Komparasi 10 Definisi (Tabel 2.1): Kolom No, Tokoh & Tahun, Intisari Definisi Konseptual, Fokus Penekanan, Orientasi Teoretis.
-5. Rumusan Sintesis Konseptual Peneliti Doktoral.
-6. Tabel Dimensi dan Indikator Operasional Baku (Tabel 2.2):
-   - Kualitas Pekerjaan (Quality of Work) -> 3 indikator terukur
-   - Kuantitas Output (Quantity of Output) -> 3 indikator terukur
-   - Ketepatan Waktu (Timeliness / Punctuality) -> 3 indikator terukur
-   - Efektivitas & Kemandirian (Effectiveness & Independence) -> 3 indikator terukur
-   - Kerjasama Tim (Teamwork & Collaboration) -> 2 indikator terukur
-7. Dinamika Anteseden: Paparkan posisi {y_var} sebagai variabel endogen utama (ultimate criterion variable).
+=== PETUNJUK SPESIFIK WAJIB KAJIAN TEORITIS {y_var.upper()} (SUB-BAB A.2) ===
+Judul Sub-bab WAJIB ditulis persis: A.2 2. Kajian Teoritis {y_var}
+SUB-BAB INDUK: A. KAJIAN PUSTAKA
+
+Karakteristik Murni Teoretis: DILARANG menyebut nama instansi lokal ({instansi}) atau data empiris lapangan. Kajian harus murni konseptual universal berstandar Doktoral (S3).
+
+Naskah WAJIB disusun dalam 4 Bagian Terpadu:
+
+1. Bagian 1: Narasi Pengantar Hakikat & Urgensi Variabel (1-2 Paragraf):
+   - Uraikan hakikat ontologis {y_var} sebagai variabel endogen utama (ultimate criterion variable).
+   - Jelaskan signifikansi strategis pengelolaan {y_var} dalam konteks efektivitas keorganisasian.
+
+2. Bagian 2: Telaah 10 Definisi Para Ahli Otoritatif Bidang Kajian (Sitasi Mutakhir 2022-2026):
+   - Identifikasi domain keilmuan spesifik dari {y_var} (misalnya: MSDM/Perilaku Organisasi, Akuntansi Forensik/Fraud PBJ, Tata Kelola Sektor Publik, Pemasaran, atau Keuangan).
+   - Sajikan tepat 10 (sepuluh) definisi konseptual dari pakar terkemuka yang SECARA KHUSUS memiliki otoritas dan reputasi pada bidang kajian {y_var} tersebut.
+   - Padukan pakar perumus konsep/buku teks klasik dan sitasi peneliti mutakhir (2022-2026).
+   - Uraikan masing-masing definisi ke dalam narasi paragraf akademik yang mengalir dan mendalam (bukan daftar poin ringkas).
+
+3. Bagian 3: Rumusan Sintesis Konseptual Peneliti Doktoral (1 Paragraf Utuh):
+   - Formulasikan benang merah konseptual orisinal peneliti sendiri berdasarkan sintesis kritis atas ke-10 definisi para ahli di atas.
+   - Paragraf WAJIB diawali dengan formula baku:
+     "Berdasarkan berbagai pendapat para ahli tersebut, dapat disimpulkan bahwa {y_var} merupakan..."
+
+4. Bagian 4: Dimensi dan Indikator Variabel (Format Teks Hirarkis Bertingkat, MURNI TANPA TABEL):
+   - Tetapkan pakar rujukan utama penetapan dimensi dan indikator yang diakui dalam mengukur {y_var}.
+   - Awali dengan kalimat pengantar baku:
+     "Menurut [Nama Tokoh & Tahun Rujukan Utama], dimensi dan indikator yang dipakai dalam mengukur {y_var} yaitu:"
+   - Paparkan seluruh dimensi dan butir-butir indikator operasional secara hierarkis bertingkat (tanpa tabel):
+     1. [Nama Dimensi Pertama]
+        Dimensi [Nama Dimensi Pertama] diukur dengan menggunakan [3-4] indikator, yaitu:
+        a. [Kalimat indikator terukur 1]
+        b. [Kalimat indikator terukur 2]
+        c. [Kalimat indikator terukur 3]
+     2. [Nama Dimensi Kedua]
+        Dimensi [Nama Dimensi Kedua] diukur dengan menggunakan [3-4] indikator, yaitu:
+        a. [Kalimat indikator terukur 1]
+        b. [Kalimat indikator terukur 2]
+        c. [Kalimat indikator terukur 3]
+     (Lanjutkan untuk seluruh 4-6 dimensi baku {y_var}).
+
+ATURAN FORMAT KETAT:
+- DILARANG KERAS MENGGUNAKAN TABEL DALAM BENTUK APAPUN (TIDAK ADA TABEL MATRIKS KOMPARASI MAUPUN TABEL DIMENSI INDIKATOR)!
+- Seluruh sajian berupa narasi paragraf akademik berbobot dan daftar berbutir teks rapi.
 """
     elif sub_id == "sub_2_1_2":
         instruksi_khusus = f"""
-=== PETUNJUK SPESIFIK WAJIB KAJIAN TEORITIS {ctx['m'].upper()} (SUB-BAB 2.1.2) ===
-1. Karakteristik Murni Teoretis: DILARANG menyebut nama instansi lokal ({instansi}) atau data lapangan. Kajian harus murni konseptual universal.
-2. Grand & Middle-Range Theory Wajib Disertakan:
-   - Social Cognitive Theory: Bandura (1986), dalam Ryan & Deci, (2022)
-   - Self-Determination Theory: Ryan & Deci, (2022)
-   - Expectancy Theory: Vroom (1964), dalam Kreitner & Kinicki, (2022)
-   - Two-Factor Theory: Herzberg (1966), dalam Luthans et al., (2022)
-3. Wajib Memuat 10 Definisi Pakar Terkemuka:
-   (1) Robbins & Judge, (2022)
-   (2) Ryan & Deci, (2022)
-   (3) McClelland (1961), dalam Schunk, (2022)
-   (4) Bandura (1986), dalam Schunk & DiBenedetto, (2022)
-   (5) Vroom (1964), dalam Kreitner & Kinicki, (2022)
-   (6) Herzberg (1966), dalam Luthans et al., (2022)
-   (7) Locke & Latham (1990), dalam Schunk, (2022)
-   (8) Hasibuan, (2022)
-   (9) Sedarmayanti, (2022)
-   (10) Uno, (2023)
-4. Tabel Matriks Komparasi 10 Definisi (Tabel 2.3): Kolom No, Tokoh & Tahun, Intisari Definisi Konseptual, Fokus Penekanan, Orientasi Teoretis.
-5. Rumusan Sintesis Konseptual Peneliti Doktoral.
-6. Tabel Dimensi dan Indikator Operasional Baku (Tabel 2.4):
-   - Dorongan Berprestasi (Need for Achievement) -> 3 indikator terukur
-   - Ketekunan & Daya Tahan (Persistence of Effort) -> 3 indikator terukur
-   - Kebutuhan Berafiliasi (Need for Affiliation) -> 2 indikator terukur
-   - Komitmen Sasaran (Goal Commitment) -> 2 indikator terukur
-7. Posisi Mediasi Transmisi: Penyalur energi kepemimpinan transformasional dan iklim kerja ke unjuk kerja pegawai.
-"""
-    elif sub_id == "sub_2_1_3":
-        instruksi_khusus = f"""
-=== PETUNJUK SPESIFIK WAJIB KAJIAN TEORITIS {ctx['x1'].upper()} (SUB-BAB 2.1.3) ===
-1. Karakteristik Murni Teoretis: DILARANG menyebut nama instansi lokal ({instansi}) atau data lapangan. Kajian harus murni konseptual universal.
-2. Grand & Middle-Range Theory Wajib Disertakan:
-   - Transformational Leadership Theory: Bass (1985), dalam Yukl, (2022) serta Burns (1978), dalam Antonakis & Day, (2022)
-   - Full Range of Leadership Model (The Four I’s): Avolio & Bass (2004), dalam Antonakis & Day, (2022)
-3. Wajib Memuat 10 Definisi Pakar Terkemuka:
-   (1) Bass (1985), dalam Yukl, (2022)
-   (2) Yukl, (2022)
-   (3) Northouse, (2022)
-   (4) Avolio, Yammarino, & Bass (1991), dalam Antonakis & Day, (2022)
-   (5) Burns (1978), dalam Antonakis & Day, (2022)
-   (6) Robbins & Coulter, (2022)
-   (7) Luthans, Luthans, & Luthans, (2022)
-   (8) Siagian (1997), dalam Thoha, (2023)
-   (9) Kartono, (2022)
-   (10) Thoha, (2023)
-4. Tabel Matriks Komparasi 10 Definisi (Tabel 2.5): Kolom No, Tokoh & Tahun, Intisari Definisi Konseptual, Fokus Penekanan, Orientasi Teoretis.
-5. Rumusan Sintesis Konseptual Peneliti Doktoral.
-6. Tabel Dimensi dan Indikator Operasional Baku (Tabel 2.6):
-   - Pengaruh Ideal (Idealized Influence / Charisma) -> 3 indikator terukur
-   - Motivasi Menginspirasi (Inspirational Motivation) -> 3 indikator terukur
-   - Stimulasi Intelektual (Intellectual Stimulation) -> 3 indikator terukur
-   - Perhatian Individual (Individualized Consideration) -> 3 indikator terukur
-7. Posisi Determinan Eksogen Utama: Pengaruh langsung ke kinerja dan tidak langsung via motivasi kerja.
+=== PETUNJUK SPESIFIK WAJIB KAJIAN TEORITIS {m_vars_str.upper()} (SUB-BAB A.3) ===
+Judul Sub-bab WAJIB ditulis persis: A.3 3. Kajian Teoritis Variabel Mediasi ({m_vars_str})
+SUB-BAB INDUK: A. KAJIAN PUSTAKA
+
+Karakteristik Murni Teoretis: DILARANG menyebut nama instansi lokal ({instansi}) atau data lapangan. Kajian murni konseptual universal berstandar Doktoral (S3).
+
+Naskah WAJIB disusun dalam 4 Bagian Terpadu:
+
+1. Bagian 1: Narasi Pengantar Hakikat & Peran Mediasi Transmisi (1-2 Paragraf):
+   - Uraikan hakikat konseptual {m_vars_str} sebagai variabel intervening mediasi yang menyalurkan stimulus kausalitas dari pilar eksogen menuju variabel endogen.
+   - Jelaskan landasan transmisi keperilakuan dan psikologis mengapa variabel mediasi ini mutlak dihadirkan.
+
+2. Bagian 2: Telaah 10 Definisi Para Ahli Otoritatif Bidang Kajian (Sitasi Mutakhir 2022-2026):
+   - Identifikasi domain keilmuan spesifik dari {m_vars_str}.
+   - Sajikan tepat 10 (sepuluh) definisi konseptual dari pakar terkemuka yang SECARA KHUSUS memiliki reputasi otoritatif pada bidang kajian {m_vars_str} tersebut.
+   - Uraikan definisi ke dalam paragraf naratif akademik yang kaya, mengalir, dan analitis (bukan daftar poin ringkas).
+
+3. Bagian 3: Rumusan Sintesis Konseptual Peneliti Doktoral (1 Paragraf Utuh):
+   - Formulasikan definisi sintesis konseptual orisinal peneliti sendiri yang memadukan intisari ke-10 definisi tersebut.
+   - Paragraf WAJIB diawali dengan kalimat baku:
+     "Berdasarkan berbagai pendapat para ahli tersebut, dapat disimpulkan bahwa {m_vars_str} merupakan..."
+
+4. Bagian 4: Dimensi dan Indikator Variabel (Format Teks Hirarkis Bertingkat, MURNI TANPA TABEL):
+   - Tetapkan pakar rujukan utama pengukur {m_vars_str}.
+   - Awali dengan kalimat pengantar baku:
+     "Menurut [Nama Tokoh & Tahun Rujukan], dimensi dan indikator yang dipakai dalam mengukur {m_vars_str} yaitu:"
+   - Paparkan dimensi dan butir indikatornya secara berjenjang teks:
+     1. [Nama Dimensi 1]
+        Dimensi [Nama Dimensi 1] diukur dengan menggunakan [3-4] indikator, yaitu:
+        a. ...
+        b. ...
+        c. ...
+
+ATURAN FORMAT KETAT:
+- DILARANG KERAS MENGGUNAKAN TABEL DALAM BENTUK APAPUN!
+- Seluruh sajian berupa narasi teks akademik rapi dan berbobot doktoral.
 """
     elif sub_id == "sub_2_1_4":
         instruksi_khusus = f"""
-=== PETUNJUK SPESIFIK WAJIB KAJIAN TEORITIS {ctx['z'].upper()} & BEBAS LAINNYA (SUB-BAB 2.1.4) ===
-1. Karakteristik Murni Teoretis: DILARANG menyebut nama instansi lokal ({instansi}) atau data lapangan. Kajian harus murni konseptual universal.
-2. Bagian A: Kajian Teoritis {ctx['z']} (Variabel Moderasi):
-   - Contingency Theory: Donaldson (2001), dalam Donaldson, (2023)
-   - Multidimensional Work Ethic: Weber (1905), dalam Donaldson, (2023) & Miller et al. (2002), dalam Meriac et al., (2023)
-   - 10 Definisi Pakar: Miller et al. (2002), dalam Meriac et al., (2023); Weber (1905), dalam Donaldson, (2023); Furnham (1990), dalam Furnham, (2022); Merrens & Garrett (1975), dalam Cherrington, (2022); Petty & Hill, (2022); Sinamo, (2022); Tasmara (2002), dalam Ndraha, (2023); Anoraga, (2022); Keraf, (2022); Ndraha, (2023).
-   - Tabel Matriks Komparasi 10 Definisi (Tabel 2.7)
-   - Rumusan Sintesis Konseptual Peneliti Doktoral
-   - Tabel Dimensi & Indikator Baku (Tabel 2.8): Kerja Keras, Moralitas & Integritas, Efisiensi Waktu, Kemandirian Profesional.
-3. Bagian B: Kajian Teoritis {ctx['x2']} (Variabel Bebas):
-   - Organizational Culture Theory: Schein (1985), dalam Denison, (2022) & Model Denison (Denison, 2022)
-   - 10 Definisi Pakar: Schein (1985), dalam Denison, (2022); Denison, (2022); Cameron & Quinn, (2022); Robbins & Judge, (2022); O'Reilly et al. (1991), dalam Chatman, (2022); Kotter & Heskett (1992), dalam Daft, (2022); Hofstede (1980), dalam Minkov, (2022); Kusdi, (2022); Sutrisno, (2022); Sobirin, (2023).
-   - Tabel Matriks Komparasi 10 Definisi (Tabel 2.9)
-   - Rumusan Sintesis Konseptual Peneliti Doktoral
-   - Tabel Dimensi & Indikator Baku Model Denison (Tabel 2.10): Keterlibatan, Konsistensi, Adaptabilitas, Misi.
-4. Bagian C: Kajian Teoritis {ctx['x3']} (Variabel Bebas):
-   - Organizational Climate Theory: Schneider et al. (2013), dalam Schneider et al., (2022) & Litwin & Stringer (1968), dalam Moran, (2022)
-   - 10 Definisi Pakar: Schneider et al. (2013), dalam Schneider et al., (2022); Litwin & Stringer (1968), dalam Moran, (2022); James & Jones (1974), dalam James et al., (2022); Pritchard & Karasick (1973), dalam Denison, (2022); Denison, (2022); Gellerman (1963), dalam Luthans, (2022); Stringer, (2022); Wirawan, (2022); Simamora, (2022); Wibowo, (2023).
-   - Tabel Matriks Komparasi 10 Definisi (Tabel 2.11)
-   - Rumusan Sintesis Konseptual Peneliti Doktoral
-   - Tabel Dimensi & Indikator Baku (Tabel 2.12): Kenyamanan Fisik, Relasi Interpersonal, Standar & Tanggung Jawab, Dukungan Kepemimpinan.
-5. Sintesis Terpadu: Penjelasan integratif seluruh variabel eksogen dan kontingensi terhadap {y_var}.
+=== PETUNJUK SPESIFIK WAJIB KAJIAN TEORITIS {z_vars_str.upper()} (SUB-BAB A.4) ===
+Judul Sub-bab WAJIB ditulis persis: A.4 4. Kajian Teoritis Variabel Moderasi ({z_vars_str})
+SUB-BAB INDUK: A. KAJIAN PUSTAKA
+
+Karakteristik Murni Teoretis: DILARANG menyebut nama instansi lokal ({instansi}) atau data lapangan. Naskah murni konseptual universal.
+
+Naskah WAJIB disusun dalam 4 Bagian Terpadu:
+
+1. Bagian 1: Narasi Pengantar Hakikat & Peran Kontingensi Moderasi (1-2 Paragraf):
+   - Uraikan hakikat konseptual {z_vars_str} sebagai variabel kontingensi moderasi yang berfungsi memperkuat (enhancer), mengkatalisasi, atau menetapkan kondisi batas (boundary conditions).
+   - Jelaskan mengapa pengaruh variabel prediktor tidak bersifat linier konstan, melainkan bergantung pada derajat {z_vars_str}.
+
+2. Bagian 2: Telaah 10 Definisi Para Ahli Otoritatif Bidang Kajian (Sitasi Mutakhir 2022-2026):
+   - Identifikasi domain keilmuan spesifik dari {z_vars_str}.
+   - Sajikan tepat 10 (sepuluh) definisi konseptual dari pakar terkemuka yang SECARA KHUSUS memiliki otoritas di bidang konstruk {z_vars_str} tersebut.
+   - Uraikan ke dalam paragraf naratif akademik yang mengalir dan mendalam.
+
+3. Bagian 3: Rumusan Sintesis Konseptual Peneliti Doktoral (1 Paragraf Utuh):
+   - Formulasikan benang merah konseptual orisinal peneliti sendiri.
+   - Paragraf WAJIB diawali kalimat baku:
+     "Berdasarkan berbagai pendapat para ahli tersebut, dapat disimpulkan bahwa {z_vars_str} merupakan..."
+
+4. Bagian 4: Dimensi dan Indikator Variabel (Format Teks Hirarkis Bertingkat, MURNI TANPA TABEL):
+   - Tetapkan pakar rujukan utama pengukuran {z_vars_str}.
+   - Awali kalimat baku:
+     "Menurut [Nama Tokoh & Tahun Rujukan], dimensi dan indikator yang dipakai dalam mengukur {z_vars_str} yaitu:"
+   - Uraikan dimensi dan indikator operasional secara hierarkis bertingkat:
+     1. [Nama Dimensi 1]
+        Dimensi [Nama Dimensi 1] diukur dengan menggunakan [3-4] indikator, yaitu:
+        a. ...
+        b. ...
+        c. ...
+
+ATURAN FORMAT KETAT:
+- DILARANG MENGGUNAKAN TABEL DALAM BENTUK APAPUN!
+- Naskah murni teks naratif akademik berbobot dan penomoran hierarkis.
+"""
+    elif sub_id == "sub_2_1_3":
+        instruksi_khusus = f"""
+=== PETUNJUK SPESIFIK WAJIB KAJIAN TEORITIS VARIABEL-VARIABEL BEBAS ({x_vars_str.upper()}) (SUB-BAB A.5) ===
+Judul Sub-bab WAJIB ditulis persis: A.5 5. Kajian Teoritis Variabel-Variabel Bebas ({x_vars_str})
+SUB-BAB INDUK: A. KAJIAN PUSTAKA
+
+Karakteristik Murni Teoretis: DILARANG menyebut nama instansi lokal ({instansi}) atau data lapangan. Naskah murni konseptual universal.
+
+Tugas Anda adalah menguraikan kajian teoretis mendalam untuk SETIAP variabel bebas eksogen secara terpisah dan tuntas ({x_vars_str}).
+
+Untuk SETIAP Variabel Bebas (misalnya: 5.1 Kajian Teoritis [Nama X1], 5.2 Kajian Teoritis [Nama X2], dst.), WAJIB menyajikan 4 komponen baku:
+
+1. Narasi Pengantar Hakikat Variabel (1-2 Paragraf):
+   - Esensi variabel sebagai pilar kapasitas organisasi penentu keunggulan kinerja.
+2. Telaah 10 Definisi Para Ahli Otoritatif Bidang Kajian (Sitasi Mutakhir 2022-2026):
+   - 10 definisi konseptual dari pakar terkemuka yang relevan dengan variabel tersebut, diuraikan dalam paragraf naratif akademik yang mengalir dan mendalam.
+3. Rumusan Paragraf Sintesis Konseptual Peneliti Doktoral:
+   - Diawali kalimat baku: "Berdasarkan berbagai pendapat para ahli tersebut, dapat disimpulkan bahwa [Nama Variabel X] merupakan..."
+4. Dimensi dan Indikator Variabel (Format Teks Hirarkis Bertingkat, MURNI TANPA TABEL):
+   - Kalimat rujukan baku: "Menurut [Nama Tokoh & Tahun Rujukan], dimensi dan indikator yang dipakai dalam mengukur [Nama Variabel X] yaitu:"
+   - Paparan dimensi dan indikator secara hierarkis:
+     1. [Nama Dimensi]
+        Dimensi [Nama Dimensi] diukur dengan menggunakan [3-4] indikator, yaitu:
+        a. ...
+        b. ...
+
+ATURAN FORMAT KETAT:
+- DILARANG KERAS MENGGUNAKAN TABEL DALAM BENTUK APAPUN!
+- Tuliskan kajian secara lengkap untuk masing-masing variabel bebas.
 """
 
     prompt = f"""Anda adalah Guru Besar dan Pakar Metodologi Penelitian Manajemen yang bertindak sebagai Penulis Ahli Disertasi Doktor (S3) Ilmu Manajemen Pascasarjana Indonesia.
@@ -1077,341 +1120,234 @@ def _build_doc_sub_2_1_0(doc: Document, ctx: Dict[str, Any]):
     p(doc, f"Relevansi dengan Penelitian: Teori terapan ini diaplikasikan langsung sebagai matriks operasional untuk merumuskan indikator pengukuran empiris {y} serta variabel-variabel penjelasnya. Melalui AMO Framework, seluruh dimensi dan indikator dalam Model {model_acronym} diturunkan secara presisi untuk mengukur kapabilitas teknis, dorongan motivasional, dan kondisi lingkungan kerja aparatur pada {instansi}.", indent=0.5, space_after=6)
 
 
+def _format_hierarchical_dimensions(doc: Document, var_name: str, dims: List[Dict[str, Any]], tokoh_rujuk: str = "sintesis indikator terstandarisasi"):
+    """Format dimensi dan indikator dalam bentuk hierarkis bertingkat murni tanpa tabel, sesuai acuan TAPD 2026."""
+    p(doc, f"Menurut {tokoh_rujuk}, dimensi dan indikator yang dipakai dalam mengukur {var_name} yaitu:", indent=0.5, space_after=4)
+    for idx, d in enumerate(dims, 1):
+        dim_nama = d.get("nama", f"Dimensi {idx}")
+        indikators = d.get("indikator", [])
+        p(doc, f"{idx}. {dim_nama}", indent=0.5, bold=True, space_after=2)
+        p(doc, f"Dimensi {dim_nama} diukur dengan menggunakan {len(indikators)} indikator, yaitu:", indent=0.5, space_after=2)
+        for i_idx, ind in enumerate(indikators):
+            p(doc, f"{chr(97+i_idx)}. {ind}.", indent=0.75, space_after=2)
+    p(doc, "", space_after=6)
+
+
 def _build_doc_sub_2_1_1(doc: Document, ctx: Dict[str, Any]):
-    """A.2 2. Kajian Teoritis Variabel Terikat (Y) - 10 Definisi Ahli & Dimensi Indikator."""
+    """A.2 2. Kajian Teoritis Variabel Terikat (Y) - Murni Naratif & Dimensi Teks Tanpa Tabel."""
     y = ctx["y_var"]
     onto_vars = ctx.get("ontology", {}).get("variables", {})
     onto_y = onto_vars.get("y") or onto_vars.get("Y", {})
 
     h2(doc, f"2. Kajian Teoritis {y}")
 
-    # 1. Grand Theory & Middle-Range Theory
-    p(doc, f"Kajian teoritis mengenai {y} berakar pada dua pilar Grand Theory utama dalam ranah manajemen dan psikologi organisasi, yaitu Goal-Setting Theory yang dirumuskan oleh Locke & Latham (1990), dalam Schunk, (2022) serta Resource-Based View (RBV) yang dipelopori oleh Barney (1991), dalam Hitt et al., (2023). Dalam perspektif Goal-Setting Theory, unjuk kerja individu dan kolektif di dalam organisasi digerakkan oleh keberadaan sasaran kerja yang spesifik, menantang (challenging), terukur, serta disertai mekanisme umpan balik berkala (feedback). Sasaran yang menantang secara kognitif memfokuskan perhatian, mengarahkan alokasi daya upaya, dan memelihara persistensi pegawai dalam menuntaskan tugas kedinasan. Sementara itu, kerangka Resource-Based View Barney (1991), dalam Hitt et al., (2023) memposisikan sumber daya manusia sebagai aset internal strategis yang memiliki karakteristik valuable, rare, in-imitable, dan non-substitutable (VRIN). Dalam paradigma RBV, {y} bukan sekadar luaran administratif mekanistis, melainkan manifestasi kapabilitas dinamis institusional yang menentukan keunggulan bersaing dan efektivitas organisasi secara berkelanjutan.", indent=0.5, space_after=6)
+    # 1. Narasi Pengantar Hakikat Variabel
+    definisi_onto = onto_y.get("definisi", f"Konstruk fundamental yang menjadi fokus utama dan muara akhir pencapaian kinerja.")
+    p(doc, f"{y} merupakan variabel terikat (endogen) utama yang menjadi tolok ukur keberhasilan dan efektivitas organisasi. {definisi_onto}", indent=0.5, space_after=6)
+    p(doc, f"Kajian mendalam terhadap {y} sangat krusial guna mengidentifikasi determinan dan faktor-faktor yang secara langsung maupun tidak langsung mempengaruhi peningkatannya dalam mewujudkan sasaran strategis institusi.", indent=0.5, space_after=6)
 
-    p(doc, f"Pada tataran Middle-Range Theory, konstruksi teoretis {y} dipandu oleh Campbell's Theory of Job Performance yang dirumuskan oleh Campbell (1990), dalam Campbell & Wiernik, (2022) serta AMO Framework (Ability, Motivation, Opportunity) yang dikembangkan oleh Appelbaum et al. (2000), dalam Boxall & Purcell, (2022). Teori Campbell secara tegas membedakan antara tindakan atau perilaku kerja (performance behaviors) dan luaran atau konsekuensi kerja (performance outcomes). Kinerja dipahami sebagai seperangkat perilaku kerja nyata yang relevan dengan sasaran organisasi dan berada di bawah kendali individu. Pendekatan ini diperkuat oleh model AMO, yang mendalilkan bahwa {y} merupakan fungsi interaktif multiplikatif antara kompetensi teknis aparatur (Ability), dorongan motif intrinsik maupun ekstrinsik (Motivation), serta tersedianya iklim organisasi dan ruang partisipasi yang kondusif (Opportunity to participate).", indent=0.5, space_after=6)
-
-    # 2. Telaah Komparatif 10 Definisi Para Ahli
-    p(doc, f"Guna memperoleh pemahaman ontologis yang komprehensif mengenai {y}, berikut ditelaah 10 (sepuluh) definisi konseptual menurut para pakar manajemen sumber daya manusia dan perilaku organisasi terkemuka:", indent=0.5, space_after=4)
+    # 2. Telaah 10 Definisi Para Ahli Otoritatif (Naratif Mengalir Tanpa Tabel)
+    p(doc, f"Guna memperoleh pemahaman ontologis yang komprehensif mengenai {y}, berikut ditelaah 10 (sepuluh) definisi konseptual menurut para pakar otoritatif yang relevan:", indent=0.5, space_after=4)
 
     def_y = [
-        ("Bernardin & Russell (1993), dalam Kasmir, (2023)", "Performance is defined as the record of outcomes produced on a specified job function or activity during a specified time period (Catatan atas hasil-hasil yang diperoleh dari fungsi pekerjaan tertentu selama periode waktu yang ditetapkan).", "Hasil Kerja Terukur", "Luaran Performa Tugas"),
-        ("Armstrong & Taylor, (2023)", "Kinerja dipahami sebagai pencapaian sasaran kerja yang terintegrasi secara utuh antara bagaimana pekerjaan diselesaikan (perilaku kerja nyata) dan apa yang sesungguhnya dihasilkan (kontribusi nilai tambah).", "Integrasi Perilaku & Hasil", "Pencapaian Sasaran Bernilai"),
-        ("Colquitt, LePine, & Wesson, (2022)", "Nilai dari serangkaian perilaku pegawai yang berkontribusi, baik secara positif maupun negatif, terhadap pemenuhan sasaran dan target-target organisasi.", "Nilai Perilaku Kontributif", "Efektivitas Organisasional"),
-        ("Campbell & Wiernik, (2022)", "Kinerja merupakan sinonim dari perilaku itu sendiri yang mencakup tindakan nyata yang dapat diamati, dinilai, dan dikendalikan oleh individu dalam rangka memenuhi tujuan peran pekerjaannya.", "Perilaku Teramati (Behavior)", "Kendali Tindakan Personal"),
-        ("Mathis & Jackson (2011), dalam Kasmir, (2023)", "Kinerja pada dasarnya adalah apa yang dilakukan atau tidak dilakukan oleh pegawai yang mempengaruhi seberapa besar mereka berkontribusi pada pencapaian tujuan organisasi.", "Kontribusi Fungsional", "Efisiensi Input-Output"),
-        ("Robbins & Judge, (2022)", "Tingkat keberhasilan pegawai dalam memenuhi target standar pekerjaan yang telah ditetapkan melalui alokasi energi fisik, mental, dan emosional secara optimal dalam lingkungan kerja.", "Pencapaian Standar Peran", "Alokasi Energi Psikologis"),
-        ("Dessler, (2023)", "Prestasi aktual pegawai yang dinilai berdasarkan standar kerja yang telah ditetapkan institusi, yang mencerminkan efektivitas pelaksanaan tugas kedinasan dan kepatuhan prosedur.", "Penilaian Prestasi Kerja", "Standar Prosedural"),
-        ("Mangkunegara, (2022)", "Hasil kerja secara kualitas dan kuantitas yang dicapai oleh seorang pegawai dalam melaksanakan tugasnya sesuai dengan tanggung jawab kedinasan yang dibebankan kepadanya.", "Kualitas & Kuantitas Tugas", "Akuntabilitas Tanggung Jawab"),
-        ("Kasmir, (2023)", "Hasil kerja dan perilaku kerja nyata yang telah dicapai oleh pegawai dalam menyelesaikan tugas dan tanggung jawab yang diberikan dalam suatu periode waktu tertentu.", "Unjuk Kerja Faktual", "Ketuntasan Penugasan"),
-        ("Afandi, (2023)", "Hasil kerja yang dapat dicapai oleh seseorang atau sekelompok orang dalam suatu organisasi sesuai dengan wewenang dan tanggung jawab masing-masing secara legal, etis, dan moral.", "Kinerja Legal-Etis", "Integritas Kedinasan")
+        ("Bernardin & Russell (1993), dalam Kasmir, (2023)", "Performance is defined as the record of outcomes produced on a specified job function or activity during a specified time period (Catatan atas hasil-hasil yang diperoleh dari fungsi pekerjaan tertentu selama periode waktu yang ditetapkan)."),
+        ("Armstrong & Taylor, (2023)", "Kinerja dipahami sebagai pencapaian sasaran kerja yang terintegrasi secara utuh antara bagaimana pekerjaan diselesaikan (perilaku kerja nyata) dan apa yang sesungguhnya dihasilkan (kontribusi nilai tambah)."),
+        ("Colquitt, LePine, & Wesson, (2022)", "Nilai dari serangkaian perilaku pegawai yang berkontribusi, baik secara positif maupun negatif, terhadap pemenuhan sasaran dan target-target organisasi."),
+        ("Campbell & Wiernik, (2022)", "Kinerja merupakan sinonim dari perilaku itu sendiri yang mencakup tindakan nyata yang dapat diamati, dinilai, dan dikendalikan oleh individu dalam rangka memenuhi tujuan peran pekerjaannya."),
+        ("Mathis & Jackson (2011), dalam Kasmir, (2023)", "Kinerja pada dasarnya adalah apa yang dilakukan atau tidak dilakukan oleh pegawai yang mempengaruhi seberapa besar mereka berkontribusi pada pencapaian tujuan organisasi."),
+        ("Robbins & Judge, (2022)", "Tingkat keberhasilan pegawai dalam memenuhi target standar pekerjaan yang telah ditetapkan melalui alokasi energi fisik, mental, dan emosional secara optimal dalam lingkungan kerja."),
+        ("Dessler, (2023)", "Prestasi aktual pegawai yang dinilai berdasarkan standar kerja yang telah ditetapkan institusi, yang mencerminkan efektivitas pelaksanaan tugas kedinasan dan kepatuhan prosedur."),
+        ("Mangkunegara, (2022)", "Hasil kerja secara kualitas dan kuantitas yang dicapai oleh seorang pegawai dalam melaksanakan tugasnya sesuai dengan tanggung jawab kedinasan yang dibebankan kepadanya."),
+        ("Kasmir, (2023)", "Hasil kerja dan perilaku kerja nyata yang telah dicapai oleh pegawai dalam menyelesaikan tugas dan tanggung jawab yang diberikan dalam suatu periode waktu tertentu."),
+        ("Afandi, (2023)", "Hasil kerja yang dapat dicapai oleh seseorang atau sekelompok orang dalam suatu organisasi sesuai dengan wewenang dan tanggung jawab masing-masing secara legal, etis, dan moral.")
     ]
 
-    for idx, (ahli, text_def, _, _) in enumerate(def_y, 1):
-        p(doc, f"{idx}. {ahli}: menegaskan bahwa {text_def}", indent=0.75, space_after=3)
-
-    # Tabel Matriks Komparasi 10 Definisi
-    t_headers = ["No", "Tokoh & Tahun", "Intisari Definisi Konseptual", "Fokus Penekanan", "Orientasi Teoretis"]
-    t_rows = [[str(idx), ahli, text_def[:80] + "...", fokus, ori] for idx, (ahli, text_def, fokus, ori) in enumerate(def_y, 1)]
-    add_table_data(doc, title=f"Tabel 2.1. Matriks Komparasi 10 Definisi Teoretis {y}", headers=t_headers, data=t_rows, source="Sumber: Sintesis Literatur Peneliti (2026)")
-    p(doc, "", space_after=6)
+    for idx, (ahli, text_def) in enumerate(def_y, 1):
+        p(doc, f"{idx}. {ahli}: menegaskan bahwa {text_def}", indent=0.5, space_after=3)
 
     # 3. Sintesis Konseptual Peneliti Doktoral
-    p(doc, f"Berdasarkan komparasi kritis atas 10 definisi para ahli di atas, dalam penelitian ini {y} disintesiskan sebagai konstruk multidimensional integratif yang mencerminkan kapabilitas dan keberhasilan aparatur sipil dalam menghasilkan luaran tugas kedinasan yang bermutu tinggi, memenuhi target kuantitas beban kerja, disiplin terhadap batas tenggat waktu, serta berdaya guna dalam mendayagunakan sumber daya kerja secara mandiri dan kolaboratif guna mewujudkan sasaran strategis institusi.", indent=0.5, space_after=6)
+    p(doc, f"Berdasarkan berbagai pendapat para ahli tersebut, dapat disimpulkan bahwa {y} merupakan konstruk multidimensional integratif yang mencerminkan kapabilitas dan keberhasilan aparatur dalam menghasilkan luaran tugas yang bermutu tinggi, memenuhi target kuantitas beban kerja, disiplin terhadap batas tenggat waktu, serta berdaya guna dalam mendayagunakan sumber daya kerja secara mandiri dan kolaboratif guna mewujudkan sasaran strategis institusi.", indent=0.5, space_after=6)
 
-    # 4. Dimensi dan Indikator Operasional Baku
-    dims = [
-        {"nama": "Kualitas Pekerjaan (Quality of Work)", "def": "Tingkat keunggulan, kerapian, ketelitian, dan kesesuaian hasil pelaksanaan tugas aparatur dengan Standar Operasional Prosedur (SOP).", "indikator": ["Ketelitian dan ketepatan kalkulasi teknis hasil penugasan", "Kerapian penyusunan berkas dan dokumen kedinasan", "Kepatuhan penuh terhadap Standar Operasional Prosedur (SOP)"]},
-        {"nama": "Kuantitas Output (Quantity of Output)", "def": "Volume atau jumlah hasil kerja yang diselesaikan aparatur dalam kurun waktu tertentu dibandingkan dengan target yang ditetapkan.", "indikator": ["Tingkat ketercapaian target volume pekerjaan rutin kedinasan", "Kemampuan menuntaskan beban tugas tambahan di luar tugas pokok", "Ketahanan kerja dalam menyelesaikan tumpukan beban penugasan"]},
-        {"nama": "Ketepatan Waktu (Timeliness / Punctuality)", "def": "Kecepatan dan ketepatan aparatur dalam menyelesaikan penugasan sesuai tenggat waktu yang telah ditentukan.", "indikator": ["Kecepatan penuntasan tugas sebelum atau tepat pada batas waktu (deadline)", "Daya tanggap (responsiveness) dalam menindaklanjuti disposisi pimpinan", "Disiplin pemanfaatan jam kerja kedinasan secara optimal"]},
-        {"nama": "Efektivitas & Kemandirian (Effectiveness & Independence)", "def": "Tingkat optimalisasi pemanfaatan sumber daya organisasi serta inisiatif kerja mandiri tanpa memerlukan supervisi ketat.", "indikator": ["Efisiensi dan kehati-hatian dalam pendayagunaan sarana kantor", "Inisiatif mandiri dalam memecahkan hambatan teknis operasional", "Kemandirian pengambilan keputusan teknis sesuai batas kewenangan"]},
-        {"nama": "Kerjasama Tim (Teamwork & Collaboration)", "def": "Kemampuan aparatur untuk berkoordinasi, bersinergi, dan mendukung rekan sejawat demi pencapaian target unit kerja.", "indikator": ["Kesediaan berkoordinasi sinergis lintas bidang kedinasan", "Sikap kooperatif dan saling mendukung dalam penuntasan target tim"]}
+    # 4. Dimensi dan Indikator Operasional Baku (Format Teks Hirarkis Bertingkat Tanpa Tabel)
+    dims_y = onto_y.get("dimensi") if (onto_y and onto_y.get("dimensi")) else [
+        {"nama": "Kualitas Pekerjaan (Quality of Work)", "indikator": ["Ketelitian dan ketepatan kalkulasi teknis hasil penugasan", "Kerapian penyusunan berkas dan dokumen kedinasan", "Kepatuhan penuh terhadap Standar Operasional Prosedur (SOP)"]},
+        {"nama": "Kuantitas Output (Quantity of Output)", "indikator": ["Tingkat ketercapaian target volume pekerjaan rutin kedinasan", "Kemampuan menuntaskan beban tugas tambahan di luar tugas pokok", "Ketahanan kerja dalam menyelesaikan tumpukan beban penugasan"]},
+        {"nama": "Ketepatan Waktu (Timeliness / Punctuality)", "indikator": ["Kecepatan penuntasan tugas sebelum atau tepat pada batas waktu (deadline)", "Daya tanggap (responsiveness) dalam menindaklanjuti disposisi pimpinan", "Disiplin pemanfaatan jam kerja kedinasan secara optimal"]},
+        {"nama": "Efektivitas & Kemandirian (Effectiveness & Independence)", "indikator": ["Efisiensi dan kehati-hatian dalam pendayagunaan sarana kantor", "Inisiatif mandiri dalam memecahkan hambatan teknis operasional", "Kemandirian pengambilan keputusan teknis sesuai batas kewenangan"]},
+        {"nama": "Kerjasama Tim (Teamwork & Collaboration)", "indikator": ["Kesediaan berkoordinasi sinergis lintas bidang kedinasan", "Sikap kooperatif dan saling mendukung dalam penuntasan target tim"]}
     ]
-
-    p(doc, f"Guna mengukur konstruk {y} secara empiris, diturunkan 5 (lima) dimensi operasional beserta indikator terukur sebagaimana disajikan dalam tabel berikut:", indent=0.5, space_after=4)
-
-    t_dim_headers = ["No", "Dimensi Operasional", "Definisi Operasional", "Indikator Terukur"]
-    t_dim_rows = []
-    for idx, d in enumerate(dims, 1):
-        t_dim_rows.append([str(idx), d["nama"], d["def"], "; ".join([f"({chr(97+i)}) {ind}" for i, ind in enumerate(d["indikator"])])])
-    add_table_data(doc, title=f"Tabel 2.2. Dimensi dan Indikator Operasional Baku {y}", headers=t_dim_headers, data=t_dim_rows, source="Sumber: Sintesis Indikator Terstandarisasi Peneliti (2026)")
-    p(doc, "", space_after=6)
+    tokoh_rujuk_y = onto_y.get("tokoh_ahli", "Robbins & Judge, 2022") if onto_y else "Robbins & Judge, (2022)"
+    _format_hierarchical_dimensions(doc, y, dims_y, tokoh_rujuk_y)
 
     # 5. Dinamika Anteseden dalam Model Struktural
-    p(doc, f"Dalam arsitektur model struktural, {y} diposisikan sebagai variabel endogen utama (ultimate criterion variable). Posisi ini menegaskan bahwa pencapaian kinerja aparatur merupakan muara akhir kausalitas yang dipicu oleh stimulus visioner kepemimpinan transformasional, kekuatan perekat budaya organisasi, atmosfer kondusif iklim kerja, dan dorongan psikologis motivasi kerja, serta dikondisikan oleh tingkat etos kerja sebagai variabel moderasi kontingensi.", indent=0.5, space_after=6)
+    p(doc, f"Dalam arsitektur model struktural, {y} diposisikan sebagai variabel endogen utama (ultimate criterion variable). Posisi ini menegaskan bahwa pencapaian kinerja aparatur merupakan muara akhir kausalitas yang dipicu oleh stimulus seluruh pilar eksogen dan transmisi mediasi, serta dikondisikan oleh variabel moderasi.", indent=0.5, space_after=6)
 
 
 def _build_doc_sub_2_1_2(doc: Document, ctx: Dict[str, Any]):
-    """2.1.2 Kajian Teoritis Variabel Mediasi (M) - 10 Definisi Ahli & Dimensi Indikator."""
-    m = ctx["m"]
+    """A.3 3. Kajian Teoritis Variabel Mediasi (M) - Murni Naratif & Dimensi Teks Tanpa Tabel."""
+    m_list = ctx.get("m_vars", [])
+    m = m_list[0] if m_list else ctx.get("m", "")
     if not m:
-        h3(doc, "2.1.2 Kajian Teoritis Variabel Intervening")
+        h2(doc, "3. Kajian Teoritis Variabel Mediasi")
         p(doc, "Model penelitian tidak menggunakan variabel intervening mediasi.", indent=0.5)
         return
 
+    onto_vars = ctx.get("ontology", {}).get("variables", {})
+    onto_m = onto_vars.get("m") or onto_vars.get("M", {})
+
     h2(doc, f"3. Kajian Teoritis Variabel Mediasi ({m})")
 
-    # 1. Grand Theory & Middle-Range Theory
-    p(doc, f"Kajian teoritis mengenai {m} dilandaskan pada dua Grand Theory psikologi perilaku terkemuka, yaitu Social Cognitive Theory yang dipelopori oleh Bandura (1986), dalam Ryan & Deci, (2022) dan Self-Determination Theory (Ryan & Deci, 2022). Teori kognitif sosial Bandura menegaskan bahwa perilaku manusia digerakkan oleh interaksi timbal balik antara faktor personal-kognitif (termasuk efikasi diri), perilaku, dan stimulus lingkungan. Motivasi berfungsi sebagai daya dorong internal yang mengarahkan atensi dan energi individu. Sementara itu, Self-Determination Theory (Ryan & Deci, 2022) mengklasifikasikan motivasi ke dalam motivasi intrinsik (dorongan pemenuhan kepuasan batiniah atas tugas) dan motivasi ekstrinsik (dorongan instrumental yang dikondisikan oleh pengakuan, penghargaan, dan regulasi eksternal).", indent=0.5, space_after=6)
+    # 1. Narasi Pengantar Hakikat Mediasi Transmisi
+    p(doc, f"Variabel mediasi ({m}) dihadirkan sebagai variabel intervening yang menjembatani pilar-pilar kapasitas eksogen terhadap peningkatan luaran endogen utama. Dalam tata kelola organisasi modern, keberadaan sistem atau kepemimpinan yang baik tidak serta-merta menghasilkan kinerja optimal secara langsung, melainkan membutuhkan transmisi psikologis dan keterikatan perilaku aparatur di lapangan.", indent=0.5, space_after=6)
 
-    p(doc, f"Pada tataran Middle-Range Theory, variabel {m} ditopang oleh Expectancy Theory yang dirumuskan oleh Vroom (1964), dalam Kreitner & Kinicki, (2022) dan Two-Factor Hygiene-Motivation Theory dari Herzberg (1966), dalam Luthans et al., (2022). Teori ekspektansi Vroom mendalilkan bahwa intensitas motivasi kerja ditentukan oleh keyakinan pegawai bahwa upaya kerja akan menghasilkan kinerja yang diharapkan (ekspektansi), kinerja tersebut akan dihargai (instrumentalitas), dan penghargaan tersebut bernilai positif bagi dirinya (valensi). Herzberg melengkapi bahwa faktor pemuas kerja intrinsik (prestasi, pengakuan, tanggung jawab, dan peluang promosi) merupakan generator sejati yang membangkitkan motivasi kerja berkelanjutan.", indent=0.5, space_after=6)
-
-    # 2. Telaah Komparatif 10 Definisi Para Ahli
-    p(doc, f"Pemaknaan teoretis mengenai {m} dikaji melalui telaah komparatif atas 10 (sepuluh) definisi para pakar otoritatif berikut:", indent=0.5, space_after=4)
+    # 2. Telaah 10 Definisi Para Ahli Otoritatif
+    p(doc, f"Pemaknaan teoretis mengenai {m} dikaji melalui telaah atas 10 (sepuluh) definisi para pakar otoritatif berikut:", indent=0.5, space_after=4)
 
     def_m = [
-        ("Robbins & Judge, (2022)", "The processes that account for an individual’s intensity, direction, and persistence of effort toward attaining a goal (Proses yang menjelaskan intensitas, arah, dan ketekunan usaha individu menuju pencapaian tujuan).", "Intensitas, Arah, Persistensi", "Proses Kognitif Usaha"),
-        ("Ryan & Deci, (2022)", "Kondisi psikologis yang menggerakkan energi batin individu untuk bertindak, bertahan dalam kesulitan, dan mengarahkan perilaku menuju integrasi pemenuhan kebutuhan dasar kompetensi, otonomi, dan relasional.", "Motivasi Intrinsik-Ekstrinsik", "Determinasi Diri"),
-        ("McClelland (1961), dalam Schunk, (2022)", "Dorongan psikologis yang berakar pada tiga motif dasar: dorongan berprestasi (need for achievement), dorongan berafiliasi (need for affiliation), dan dorongan memperoleh pengaruh (need for power).", "Tiga Motif Kebutuhan", "Dinamika Kebutuhan Motif"),
-        ("Bandura (1986), dalam Schunk & DiBenedetto, (2022)", "Proses kognitif yang dibangkitkan oleh keyakinan efikasi diri, di mana individu menetapkan tujuan pribadi, mengantisipasi hasil tindakan, dan merencanakan strategi pencapaian sasaran.", "Efikasi Diri Kognitif", "Keyakinan Kapabilitas"),
-        ("Vroom (1964), dalam Kreitner & Kinicki, (2022)", "Kekuatan dorongan bertindak yang merupakan fungsi perkalian antara persepsi probabilitas keberhasilan usaha, keyakinan perolehan imbalan, dan nilai kemenarikan imbalan tersebut.", "Valensi-Ekspektansi", "Rasionalitas Pengharapan"),
-        ("Herzberg (1966), dalam Luthans et al., (2022)", "Daya dorong internal yang bersumber dari faktor-faktor pemuas batiniah atas isi pekerjaan itu sendiri, seperti rasa berhasil, pengakuan kedinasan, dan peluang promosi.", "Faktor Motivator Intrinsik", "Kepuasan Kerja Hakiki"),
-        ("Locke & Latham (1990), dalam Schunk, (2022)", "Pengerahan energi psikologis yang dipicu oleh komitmen terhadap tujuan kerja spesifik yang menantang, yang mengarahkan fokus perhatian dan ketahanan usaha.", "Komitmen Sasaran", "Kekuatan Tujuan Kognitif"),
-        ("Hasibuan, (2022)", "Pemberian daya penggerak yang menciptakan kegairahan kerja seseorang agar mereka mau bekerja sama, bekerja efektif, dan terintegrasi dengan segala daya upayanya untuk mencapai kepuasan.", "Daya Penggerak Semangat", "Gairah & Kerjasama"),
-        ("Sedarmayanti, (2022)", "Kesediaan untuk mengerahkan tingkat upaya yang tinggi ke arah tercapainya tujuan organisasi, yang dikondisikan oleh kemampuan upaya tersebut untuk memenuhi kebutuhan pribadi pegawai.", "Upaya Berorientasi Tujuan", "Penyelarasan Kebutuhan"),
-        ("Uno, (2023)", "Dorongan internal dan eksternal pada diri pegawai yang diindikasikan oleh adanya hasrat dan minat berprestasi, dorongan kebutuhan kerja, harapan akan cita-cita, serta penghargaan atas unjuk kerja.", "Hasrat & Penghargaan", "Dinamika Dorongan Fungsional")
+        ("Robbins & Judge, (2022)", "Proses yang menjelaskan intensitas, arah, dan ketekunan usaha individu menuju pencapaian tujuan organisasi."),
+        ("Ryan & Deci, (2022)", "Kondisi psikologis yang menggerakkan energi batin individu untuk bertindak, bertahan dalam kesulitan, dan mengarahkan perilaku menuju pemenuhan kebutuhan dasar kompetensi dan otonomi."),
+        ("McClelland (1961), dalam Schunk, (2022)", "Dorongan psikologis yang berakar pada tiga motif dasar: dorongan berprestasi (need for achievement), dorongan berafiliasi, dan dorongan memperoleh pengaruh."),
+        ("Bandura (1986), dalam Schunk & DiBenedetto, (2022)", "Proses kognitif yang dibangkitkan oleh keyakinan efikasi diri, di mana individu menetapkan tujuan pribadi dan merencanakan strategi pencapaian sasaran."),
+        ("Vroom (1964), dalam Kreitner & Kinicki, (2022)", "Kekuatan dorongan bertindak yang merupakan fungsi perkalian antara ekspektansi keberhasilan usaha, instrumentalitas perolehan imbalan, dan valensi nilai imbalan."),
+        ("Herzberg (1966), dalam Luthans et al., (2022)", "Daya dorong internal yang bersumber dari faktor-faktor pemuas batiniah atas isi pekerjaan itu sendiri seperti pengakuan dan tanggung jawab."),
+        ("Locke & Latham (1990), dalam Schunk, (2022)", "Pengerahan energi psikologis yang dipicu oleh komitmen terhadap tujuan kerja spesifik yang menantang."),
+        ("Hasibuan, (2022)", "Pemberian daya penggerak yang menciptakan kegairahan kerja seseorang agar mereka mau bekerja sama dan bekerja efektif demi mencapai kepuasan."),
+        ("Sedarmayanti, (2022)", "Kesediaan untuk mengerahkan tingkat upaya yang tinggi ke arah tercapainya tujuan organisasi yang diimbangi pemenuhan kebutuhan pegawai."),
+        ("Uno, (2023)", "Dorongan internal dan eksternal pada diri pegawai yang diindikasikan oleh adanya hasrat berprestasi, dorongan kebutuhan kerja, dan harapan masa depan.")
     ]
 
-    for idx, (ahli, text_def, _, _) in enumerate(def_m, 1):
-        p(doc, f"{idx}. {ahli}: mendalilkan bahwa {text_def}", indent=0.75, space_after=3)
-
-    t_headers_m = ["No", "Tokoh & Tahun", "Intisari Definisi Konseptual", "Fokus Penekanan", "Orientasi Teoretis"]
-    t_rows_m = [[str(idx), ahli, text_def[:80] + "...", fokus, ori] for idx, (ahli, text_def, fokus, ori) in enumerate(def_m, 1)]
-    add_table_data(doc, title=f"Tabel 2.3. Matriks Komparasi 10 Definisi Teoretis {m}", headers=t_headers_m, data=t_rows_m, source="Sumber: Sintesis Literatur Peneliti (2026)")
-    p(doc, "", space_after=6)
+    for idx, (ahli, text_def) in enumerate(def_m, 1):
+        p(doc, f"{idx}. {ahli}: mendalilkan bahwa {text_def}", indent=0.5, space_after=3)
 
     # 3. Sintesis Konseptual Peneliti Doktoral
-    p(doc, f"Berdasarkan komparasi kritis atas 10 definisi para pakar tersebut, dalam penelitian ini {m} disintesiskan sebagai dorongan psikologis integratif (mencakup dimensi intrinsik dan ekstrinsik) yang membangkitkan intensitas daya upaya, mengarahkan fokus perilaku, dan memelihara ketekunan aparatur sipil dalam menuntaskan target-target tugas kedinasan secara optimal.", indent=0.5, space_after=6)
+    p(doc, f"Berdasarkan berbagai pendapat para ahli tersebut, dapat disimpulkan bahwa {m} merupakan dorongan psikologis integratif yang membangkitkan intensitas daya upaya, mengarahkan fokus perilaku, dan memelihara ketekunan aparatur dalam menuntaskan target-target tugas kedinasan secara optimal.", indent=0.5, space_after=6)
 
-    # 4. Dimensi dan Indikator Operasional Baku
-    dims_m = [
-        {"nama": "Dorongan Berprestasi (Need for Achievement)", "def": "Hasrat internal aparatur untuk meraih keunggulan, mencapai standar prestasi yang tinggi, dan menyelesaikan tugas-tugas yang menantang.", "indikator": ["Ambisi menyelesaikan penugasan kerja yang kompleks", "Keinginan melampaui target standar kinerja yang ditetapkan", "Kepuasan batin atas pencapaian hasil kerja yang bermutu tinggi"]},
-        {"nama": "Ketekunan & Daya Tahan (Persistence of Effort)", "def": "Kemampuan aparatur untuk mempertahankan konsistensi alokasi energi kerja dalam menghadapi hambatan dan tekanan kedinasan.", "indikator": ["Konsistensi alokasi waktu dan energi dalam menuntaskan pekerjaan", "Ketahanan mental dalam menghadapi tekanan beban kerja tinggi", "Sikap pantang menyerah saat menghadapi kendala teknis kedinasan"]},
-        {"nama": "Kebutuhan Berafiliasi (Need for Affiliation)", "def": "Keinginan aparatur untuk menjalin hubungan interpersonal yang harmonis, saling mendukung, dan kooperatif di lingkungan kerja.", "indikator": ["Kenyamanan berinteraksi dan berkolaborasi dalam tim kerja", "Kesediaan berbagi pengetahuan dan membantu rekan sejawat"]},
-        {"nama": "Komitmen Sasaran (Goal Commitment)", "def": "Keterikatan psikologis aparatur terhadap sasaran kerja institusi serta kesediaan mengerahkan usaha ekstra demi tercapainya tujuan bersama.", "indikator": ["Keselarasan tujuan pribadi dengan sasaran strategis institusi", "Kesediaan mengerahkan usaha ekstra melampaui batas kewajiban minimal"]}
+    # 4. Dimensi dan Indikator Operasional Baku (Format Teks Hirarkis Bertingkat Tanpa Tabel)
+    dims_m = onto_m.get("dimensi") if (onto_m and onto_m.get("dimensi")) else [
+        {"nama": "Dorongan Berprestasi (Need for Achievement)", "indikator": ["Ambisi menyelesaikan penugasan kerja yang kompleks", "Keinginan melampaui target standar kinerja yang ditetapkan", "Kepuasan batin atas pencapaian hasil kerja yang bermutu tinggi"]},
+        {"nama": "Ketekunan & Daya Tahan (Persistence of Effort)", "indikator": ["Konsistensi alokasi waktu dan energi dalam menuntaskan pekerjaan", "Ketahanan mental dalam menghadapi tekanan beban kerja tinggi", "Sikap pantang menyerah saat menghadapi kendala teknis kedinasan"]},
+        {"nama": "Kebutuhan Berafiliasi (Need for Affiliation)", "indikator": ["Kenyamanan berinteraksi dan berkolaborasi dalam tim kerja", "Kesediaan berbagi pengetahuan dan membantu rekan sejawat"]},
+        {"nama": "Komitmen Sasaran (Goal Commitment)", "indikator": ["Keselarasan tujuan pribadi dengan sasaran strategis institusi", "Kesediaan mengerahkan usaha ekstra melampaui batas kewajiban minimal"]}
     ]
-
-    p(doc, f"Dimensi dan indikator operasional variabel {m} diturunkan secara komprehensif sebagaimana disajikan dalam tabel berikut:", indent=0.5, space_after=4)
-
-    t_dim_headers_m = ["No", "Dimensi Operasional", "Definisi Operasional", "Indikator Terukur"]
-    t_dim_rows_m = []
-    for idx, d in enumerate(dims_m, 1):
-        t_dim_rows_m.append([str(idx), d["nama"], d["def"], "; ".join([f"({chr(97+i)}) {ind}" for i, ind in enumerate(d["indikator"])])])
-    add_table_data(doc, title=f"Tabel 2.4. Dimensi dan Indikator Operasional Baku {m}", headers=t_dim_headers_m, data=t_dim_rows_m, source="Sumber: Sintesis Indikator Terstandarisasi Peneliti (2026)")
-    p(doc, "", space_after=6)
+    tokoh_rujuk_m = onto_m.get("tokoh_ahli", "Ryan & Deci, 2022") if onto_m else "Ryan & Deci, (2022)"
+    _format_hierarchical_dimensions(doc, m, dims_m, tokoh_rujuk_m)
 
     # 5. Posisi Mediasi Transmisi
-    p(doc, f"Dalam konstelasi model penelitian, {m} berposisi sebagai variabel intervening mediasi yang berfungsi menyalurkan energi kepemimpinan dan pengaruh iklim kerja menjadi daya dorong perilaku nyata menuju peningkatan unjuk kerja pegawai.", indent=0.5, space_after=6)
-
-
-def _build_doc_sub_2_1_3(doc: Document, ctx: Dict[str, Any]):
-    """2.1.3 Kajian Teoritis Variabel Bebas Utama (X1) - 10 Definisi Ahli & Dimensi Indikator."""
-    x1 = ctx["x1"]
-    h2(doc, f"5. Kajian Teoritis Variabel-Variabel Bebas ({x1})")
-
-    # 1. Grand Theory & Middle-Range Theory
-    p(doc, f"Landasan konseptual mengenai {x1} berakar kuat pada Transformational Leadership Theory yang dipelopori oleh Bass (1985), dalam Yukl, (2022) dan Burns (1978), dalam Antonakis & Day, (2022), serta dielaborasi secara komprehensif oleh Yukl, (2022). Paradigma transformasional memandang kepemimpinan bukan sekadar pertukaran kontraktual jangka pendek (transactional), melainkan proses peningkatan kesadaran moral, pembaharuan nilai-nilai fundamental, penanaman visi bersama, dan pengorbanan kepentingan personal demi pencapaian misi organisasi yang lebih luhur.", indent=0.5, space_after=6)
-
-    p(doc, f"Pada tingkat Middle-Range Theory, efektivitas {x1} dipandu oleh Model Full Range of Leadership dari Avolio & Bass (2004), dalam Antonakis & Day, (2022) yang mengidentifikasi empat pilar perilaku transformasional ('The Four I’s'): Idealized Influence (karisma dan keteladanan moral), Inspirational Motivation (artikulasi visi yang membangkitkan optimisme), Intellectual Stimulation (stimulasi inovasi dan cara berpikir baru), serta Individualized Consideration (perhatian personal terhadap kebutuhan pengembangan diri bawahan).", indent=0.5, space_after=6)
-
-    # 2. Telaah Komparatif 10 Definisi Para Ahli
-    p(doc, f"Guna memetakan spektrum konseptual {x1}, disajikan komparasi kritis atas 10 (sepuluh) definisi para pakar otoritatif berikut:", indent=0.5, space_after=4)
-
-    def_x1 = [
-        ("Bass (1985), dalam Yukl, (2022)", "Gaya kepemimpinan yang memotivasi para pengikut untuk berbuat lebih banyak daripada yang semula diharapkan dengan memperluas kebutuhan subordinat, membangkitkan kesadaran bersama, dan mengarahkan mereka melampaui kepentingan pribadi demi kebaikan kelompok.", "Peningkatan Kesadaran Nilai", "Transformasi Motivasi"),
-        ("Yukl, (2022)", "Proses kepemimpinan yang mempengaruhi bawahan dengan mengartikulasikan visi masa depan yang menarik, menanamkan nilai-nilai moral bersama, memfasilitasi pembelajaran inovatif, dan memberdayakan bawahan mencapai kapasitas optimal.", "Artikulasi Visi & Pemberdayaan", "Pengembangan Kapasitas"),
-        ("Northouse, (2022)", "Pendekatan kepemimpinan yang menciptakan hubungan yang meningkatkan derajat motivasi dan moralitas, baik pada pemimpin maupun pengikutnya secara emosional dan intelektual.", "Keterikatan Hubungan Moral", "Peningkatan Derajat Moral"),
-        ("Avolio, Yammarino, & Bass (1991), dalam Antonakis & Day, (2022)", "Pola perilaku pemimpin yang menginspirasi komitmen tinggi terhadap visi organisasi, menumbuhkan kepercayaan timbal balik, dan membimbing bawahan mentransformasikan potensi menjadi kinerja unggul.", "Inspirasi Komitmen Visi", "Kepercayaan Timbal Balik"),
-        ("Burns (1978), dalam Antonakis & Day, (2022)", "Kepemimpinan yang terjadi ketika satu atau lebih orang terlibat dengan orang lain sedemikian rupa sehingga pemimpin dan pengikut saling mengangkat satu sama lain ke tingkat moralitas dan motivasi yang lebih tinggi.", "Pengangkatan Moral Bersama", "Evolusi Etika Kepemimpinan"),
-        ("Robbins & Coulter, (2022)", "Pemimpin yang menstimulasi dan menginspirasi pengikut untuk mencapai hasil luar biasa serta mengembangkan kapasitas kepemimpinan internal mereka sendiri.", "Inspirasi Hasil Luar Biasa", "Pengembangan Kepemimpinan"),
-        ("Luthans, Luthans, & Luthans, (2022)", "Kepemimpinan visioner yang menyalurkan energi positif melalui keteladanan karakter, optimisme terarah, dan kepedulian mendalam pada pengembangan kompetensi subordinat.", "Kepemimpinan Karakter Positif", "Optimisme Visioner"),
-        ("Siagian (1997), dalam Thoha, (2023)", "Kemampuan kepemimpinan yang mampu mentransformasikan nilai, kepercayaan, dan kebutuhan bawahan menuju perbaikan berkesinambungan bagi kelangsungan hidup organisasi.", "Transformasi Nilai Bawahan", "Perbaikan Berkelanjutan"),
-        ("Kartono, (2022)", "Kepemimpinan yang visioner, transformatif, dan dinamis yang mampu membangkitkan gairah intelektual dan moral pengikutnya demi kemajuan peradaban lembaga.", "Gairah Intelektual Dinamis", "Dinamika Kemajuan Lembaga"),
-        ("Thoha, (2023)", "Kemampuan pemimpin dalam mempengaruhi dan memotivasi bawahan agar mau mengubah pola pikir, sikap, dan perilakunya untuk bekerja dengan kesadaran moral yang tinggi.", "Perubahan Pola Pikir", "Kesadaran Moralitas Kerja")
-    ]
-
-    for idx, (ahli, text_def, _, _) in enumerate(def_x1, 1):
-        p(doc, f"{idx}. {ahli}: menegaskan bahwa {text_def}", indent=0.75, space_after=3)
-
-    t_headers_x1 = ["No", "Tokoh & Tahun", "Intisari Definisi Konseptual", "Fokus Penekanan", "Orientasi Teoretis"]
-    t_rows_x1 = [[str(idx), ahli, text_def[:80] + "...", fokus, ori] for idx, (ahli, text_def, fokus, ori) in enumerate(def_x1, 1)]
-    add_table_data(doc, title=f"Tabel 2.5. Matriks Komparasi 10 Definisi Teoretis {x1}", headers=t_headers_x1, data=t_rows_x1, source="Sumber: Sintesis Literatur Peneliti (2026)")
-    p(doc, "", space_after=6)
-
-    # 3. Sintesis Konseptual Peneliti Doktoral
-    p(doc, f"Berdasarkan sintesis komparatif atas 10 definisi para ahli tersebut, dalam penelitian ini {x1} disintesiskan sebagai pola kepemimpinan visioner dan bermoral tinggi yang mampu mengartikulasikan visi masa depan yang menginspirasi, menstimulasi daya pikir kritis bawahan, memberikan keteladanan integritas, serta memperhatikan kebutuhan pengembangan personal aparatur guna mencapai unjuk kerja melampaui ekspektasi standar.", indent=0.5, space_after=6)
-
-    # 4. Dimensi dan Indikator Operasional Baku
-    dims_x1 = [
-        {"nama": "Pengaruh Ideal (Idealized Influence / Charisma)", "def": "Perilaku pemimpin yang menjadi teladan integritas, konsisten antara ucapan dan perbuatan, serta menumbuhkan rasa bangga dan hormat dari bawahan.", "indikator": ["Keteladanan moral dan integritas dalam pelaksanaan tugas", "Konsistensi memegang prinsip etika keorganisasian", "Kemampuan menumbuhkan rasa bangga dan kepercayaan bawahan"]},
-        {"nama": "Motivasi Menginspirasi (Inspirational Motivation)", "def": "Kemampuan pemimpin dalam mengartikulasikan visi masa depan yang jelas dan menantang serta mengomunikasikan harapan tinggi yang membangkitkan optimisme.", "indikator": ["Kejelasan pengartikulasian visi strategis masa depan", "Kemampuan membangkitkan optimisme dan antusiasme kerja tim", "Komunikasi persuasif mengenai pentingnya pencapaian sasaran kerja"]},
-        {"nama": "Stimulasi Intelektual (Intellectual Stimulation)", "def": "Dorongan pemimpin kepada bawahan untuk berpikir kreatif, mempertanyakan asumsi kerja lama, dan menemukan solusi inovatif atas permasalahan penugasan.", "indikator": ["Dorongan untuk menggunakan pendekatan baru yang inovatif", "Pemberian ruang kebebasan berpikir kritis dalam memecahkan masalah", "Apresiasi terhadap ide-ide perbaikan prosedur kerja"]},
-        {"nama": "Perhatian Individual (Individualized Consideration)", "def": "Kepedulian personal pemimpin terhadap kebutuhan bimbingan, pelatihan, dan pengembangan potensi karier masing-masing bawahan.", "indikator": ["Kesediaan mendengarkan aspirasi dan keluhan bawahan", "Peran aktif sebagai mentor dan pembimbing peningkatan kompetensi", "Pemberian penugasan yang disesuaikan dengan potensi bawahan"]}
-    ]
-
-    p(doc, f"Dimensi dan indikator operasional {x1} diturunkan secara komprehensif ke dalam 4 pilar utama sebagaimana disajikan dalam tabel berikut:", indent=0.5, space_after=4)
-
-    t_dim_headers_x1 = ["No", "Dimensi Operasional", "Definisi Operasional", "Indikator Terukur"]
-    t_dim_rows_x1 = []
-    for idx, d in enumerate(dims_x1, 1):
-        t_dim_rows_x1.append([str(idx), d["nama"], d["def"], "; ".join([f"({chr(97+i)}) {ind}" for i, ind in enumerate(d["indikator"])])])
-    add_table_data(doc, title=f"Tabel 2.6. Dimensi dan Indikator Operasional Baku {x1}", headers=t_dim_headers_x1, data=t_dim_rows_x1, source="Sumber: Sintesis Indikator Terstandarisasi Peneliti (2026)")
-    p(doc, "", space_after=6)
-
-    # 5. Posisi Determinan
-    p(doc, f"Dalam kerangka model disertasi, {x1} diposisikan sebagai variabel eksogen utama yang memberikan stimulus strategis baik secara langsung terhadap kinerja pegawai maupun secara tidak langsung melalui penguatan motivasi kerja.", indent=0.5, space_after=6)
+    p(doc, f"Dalam konstelasi model penelitian, {m} berposisi sebagai variabel intervening mediasi yang berfungsi menyalurkan energi pilar kapasitas organisasi menjadi daya dorong perilaku nyata menuju peningkatan unjuk kerja.", indent=0.5, space_after=6)
 
 
 def _build_doc_sub_2_1_4(doc: Document, ctx: Dict[str, Any]):
-    """A.4 4. Kajian Teoritis Variabel Moderasi (Z) - 10 Definisi Ahli & Dimensi Indikator."""
-    z = ctx["z"]
+    """A.4 4. Kajian Teoritis Variabel Moderasi (Z) - Murni Naratif & Dimensi Teks Tanpa Tabel."""
+    z_list = ctx.get("z_vars", [])
+    z = z_list[0] if z_list else ctx.get("z", "")
     if not z:
         h2(doc, "4. Kajian Teoritis Variabel Moderasi")
         p(doc, "Model penelitian tidak menggunakan variabel moderasi.", indent=0.5)
         return
 
+    onto_vars = ctx.get("ontology", {}).get("variables", {})
+    onto_z = onto_vars.get("z") or onto_vars.get("Z", {})
+
     h2(doc, f"4. Kajian Teoritis Variabel Moderasi ({z})")
 
-    p(doc, f"Kajian mengenai {z} sebagai variabel kontingensi berakar pada Contingency Theory of Organizations yang dipelopori oleh Donaldson (2001), dalam Donaldson, (2023) dan Teori Etos Kerja Multidimensional yang berakar pada pemikiran Weber (1905), dalam Donaldson, (2023) serta Miller et al. (2002), dalam Meriac et al., (2023). Contingency Theory mendalilkan bahwa efektivitas keterkaitan antar variabel dalam organisasi tidak bersifat absolut universal, melainkan dikondisikan oleh faktor-faktor situasional dan batas internal (boundary conditions). Dalam konteks ini, {z} diposisikan sebagai variabel moderasi yang memperkuat efektivitas transmisi pengaruh kepemimpinan dan motivasi terhadap pencapaian kinerja aparatur.", indent=0.5, space_after=6)
+    # 1. Narasi Pengantar Hakikat Kontingensi Moderasi
+    p(doc, f"Kajian mengenai {z} sebagai variabel kontingensi berakar pada Contingency Theory yang mendalilkan bahwa efektivitas keterkaitan antar variabel dalam organisasi tidak bersifat absolut universal, melainkan dikondisikan oleh faktor-faktor situasional dan batas internal (boundary conditions). Dalam konteks ini, {z} diposisikan sebagai variabel moderasi yang memperkuat efektivitas transmisi pengaruh kepemimpinan dan kapasitas organisasi terhadap pencapaian kinerja institusional.", indent=0.5, space_after=6)
 
+    # 2. Telaah 10 Definisi Para Ahli Otoritatif
     p(doc, f"Pemaknaan teoretis mengenai {z} ditelaah melalui 10 (sepuluh) definisi otoritatif para pakar berikut:", indent=0.5, space_after=4)
 
     def_z = [
-        ("Miller et al. (2002), dalam Meriac et al., (2023)", "Sikap, keyakinan, dan nilai-nilai fundamental yang mengarahkan individu untuk memandang kerja sebagai aktivitas bermakna, menghargai kerja keras, disiplin, dan menolak penyia-nyiaan waktu.", "Multidimensional Work Ethic", "Sistem Nilai Kerja"),
-        ("Weber (1905), dalam Donaldson, (2023)", "Etika kerja rasional yang memandang profesi dan pekerjaan sebagai panggilan hidup luhur (calling) yang harus dijalankan dengan dedikasi moral, ketekunan, dan asketisme.", "Panggilan Hidup (Calling)", "Moralitas Spiritual Kerja"),
-        ("Furnham (1990), dalam Furnham, (2022)", "Konstelasi sikap dan kepribadian yang menempatkan kerja keras sebagai kebajikan moral dan memandang kemalasan serta pemborosan waktu sebagai pelanggaran etis.", "Kebajikan Moralitas Kerja", "Disiplin Waktu"),
-        ("Merrens & Garrett (1975), dalam Cherrington, (2022)", "Keyakinan intrinsik bahwa pengerahan usaha maksimal dalam pekerjaan merupakan sumber utama pencapaian martabat pribadi dan harga diri sosial.", "Martabat Melalui Usaha", "Ekspektasi Harga Diri"),
-        ("Petty & Hill, (2022)", "Karakteristik afektif dan perilaku kerja yang tercermin dalam tiga pilar: keterampilan interpersonal, inisiatif kerja mandiri, dan keterandalan penugasan.", "Inisiatif & Keterandalan", "Karakter Perilaku Faktual"),
-        ("Sinamo, (2022)", "Delapan paradigma etos kerja unggul (8 Ethos of Work) yang memandang kerja sebagai rahmat, amanah, panggilan, aktualisasi, ibadah, seni, kehormatan, dan pelayanan.", "Delapan Karakter Unggul", "Paradigma Holistik Kerja"),
-        ("Tasmara (2002), dalam Ndraha, (2023)", "Totalitas kepribadian diri serta cara memandang, meyakini, dan memberikan makna terhadap kerja yang mendorong perwujudan amal dan prestasi optimal.", "Totalitas Kepribadian Kerja", "Motif Makna Profesi"),
-        ("Anoraga, (2022)", "Pandangan hidup yang khas mengenai nilai kerja keras, ketekunan, kejujuran, dan disiplin tinggi dalam memanfaatkan waktu kedinasan.", "Ketekunan & Kejujuran", "Disiplin Kedinasan"),
-        ("Keraf, (2022)", "Komitmen moral internal yang menuntun aparatur untuk bersikap profesional, bertanggung jawab, dan menjunjung tinggi integritas dalam menjalankan amanah publik.", "Integritas Moral Profesi", "Tanggung Jawab Kedinasan"),
-        ("Ndraha, (2023)", "Jiwa dan kebiasaan kerja aparatur yang dilandasi kesadaran nilai moralitas luhur, ketahanan mental, dan kepatuhan pada kehormatan profesi abdi negara.", "Kepatuhan Kehormatan Profesi", "Budaya Kerja Aparatur")
+        ("Miller et al. (2002), dalam Meriac et al., (2023)", "Sikap, keyakinan, dan nilai-nilai fundamental yang mengarahkan individu untuk memandang kerja sebagai aktivitas bermakna, menghargai kerja keras, disiplin, dan menolak penyia-nyiaan waktu."),
+        ("Weber (1905), dalam Donaldson, (2023)", "Etika kerja rasional yang memandang profesi dan pekerjaan sebagai panggilan hidup luhur (calling) yang harus dijalankan dengan dedikasi moral, ketekunan, dan asketisme."),
+        ("Furnham (1990), dalam Furnham, (2022)", "Konstelasi sikap dan kepribadian yang menempatkan kerja keras sebagai kebajikan moral dan memandang kemalasan serta pemborosan waktu sebagai pelanggaran etis."),
+        ("Merrens & Garrett (1975), dalam Cherrington, (2022)", "Keyakinan intrinsik bahwa pengerahan usaha maksimal dalam pekerjaan merupakan sumber utama pencapaian martabat pribadi dan harga diri sosial."),
+        ("Petty & Hill, (2022)", "Karakteristik afektif dan perilaku kerja yang tercermin dalam tiga pilar: keterampilan interpersonal, inisiatif kerja mandiri, dan keterandalan penugasan."),
+        ("Sinamo, (2022)", "Delapan paradigma etos kerja unggul (8 Ethos of Work) yang memandang kerja sebagai rahmat, amanah, panggilan, aktualisasi, ibadah, seni, kehormatan, dan pelayanan."),
+        ("Tasmara (2002), dalam Ndraha, (2023)", "Totalitas kepribadian diri serta cara memandang, meyakini, dan memberikan makna terhadap kerja yang mendorong perwujudan amal dan prestasi optimal."),
+        ("Anoraga, (2022)", "Pandangan hidup yang khas mengenai nilai kerja keras, ketekunan, kejujuran, dan disiplin tinggi dalam memanfaatkan waktu kedinasan."),
+        ("Keraf, (2022)", "Komitmen moral internal yang menuntun aparatur untuk bersikap profesional, bertanggung jawab, dan menjunjung tinggi integritas dalam menjalankan amanah publik."),
+        ("Ndraha, (2023)", "Jiwa dan kebiasaan kerja aparatur yang dilandasi kesadaran nilai moralitas luhur, ketahanan mental, dan kepatuhan pada kehormatan profesi.")
     ]
 
-    for idx, (ahli, text_def, _, _) in enumerate(def_z, 1):
-        p(doc, f"{idx}. {ahli}: mendefinisikan bahwa {text_def}", indent=0.75, space_after=3)
+    for idx, (ahli, text_def) in enumerate(def_z, 1):
+        p(doc, f"{idx}. {ahli}: mendefinisikan bahwa {text_def}", indent=0.5, space_after=3)
 
-    t_headers_z = ["No", "Tokoh & Tahun", "Intisari Definisi Konseptual", "Fokus Penekanan", "Orientasi Teoretis"]
-    t_rows_z = [[str(idx), ahli, text_def[:80] + "...", fokus, ori] for idx, (ahli, text_def, fokus, ori) in enumerate(def_z, 1)]
-    add_table_data(doc, title=f"Tabel 2.7. Matriks Komparasi 10 Definisi Teoretis {z}", headers=t_headers_z, data=t_rows_z, source="Sumber: Sintesis Literatur Peneliti (2026)")
-    p(doc, "", space_after=6)
+    # 3. Sintesis Konseptual Peneliti Doktoral
+    p(doc, f"Berdasarkan berbagai pendapat para ahli tersebut, dapat disimpulkan bahwa {z} merupakan komitmen moral dan sikap mental fundamental aparatur yang memandang kerja sebagai amanah kehormatan yang diwujudkan melalui kerja keras, integritas kejujuran, pemanfaatan waktu secara efisien, serta kemandirian profesional dalam menuntaskan tugas.", indent=0.5, space_after=6)
 
-    p(doc, f"Berdasarkan komparasi atas 10 definisi para ahli tersebut, dalam penelitian ini {z} disintesiskan sebagai komitmen moral dan sikap mental fundamental aparatur yang memandang kerja sebagai amanah kehormatan yang diwujudkan melalui kerja keras, integritas kejujuran, pemanfaatan waktu secara efisien, serta kemandirian profesional dalam menuntaskan tugas.", indent=0.5, space_after=6)
-
-    dims_z = [
-        {"nama": "Kerja Keras (Hard Work)", "def": "Kesediaan aparatur untuk mencurahkan daya upaya maksimal, tekun, dan ulet dalam menghadapi tuntutan beban tugas kedinasan.", "indikator": ["Keuletan menuntaskan penugasan yang menuntut energi tinggi", "Kesediaan mencurahkan waktu dan pikiran melampaui jam formal", "Sikap pantang menyerah dalam mencari pemecahan kendala"]},
-        {"nama": "Moralitas & Integritas (Morality & Integrity)", "def": "Kepatuhan aparatur pada prinsip-prinsip etika profesi, kejujuran dalam pelaporan kinerja, dan penolakan terhadap penyimpangan.", "indikator": ["Kejujuran dalam menyajikan data dan pelaporan capaian tugas", "Kepatuhan terhadap kode etik aparatur sipil", "Keteguhan menolak gratifikasi dan benturan kepentingan"]},
-        {"nama": "Efisiensi Pemanfaatan Waktu (Wasted Time Avoidance)", "def": "Sikap disiplin dalam mendayagunakan jam kerja secara produktif dan memandang waktu terbuang sebagai kerugian organisasi.", "indikator": ["Disiplin kehadiran dan ketepatan memulai jam kerja kedinasan", "Pemanfaatan jam kantor secara efektif untuk penuntasan tugas", "Penghindaran aktivitas non-produktif selama jam dinas"]},
-        {"nama": "Kemandirian Profesional (Self-Reliance)", "def": "Kemampuan aparatur untuk berinisiatif, mengambil tanggung jawab, dan menyelesaikan pekerjaan tanpa bergantung pada pengawasan ketat.", "indikator": ["Kemandirian inisiatif dalam merencanakan langkah penyelesaian tugas", "Rasa tanggung jawab penuh atas keberhasilan dan kegagalan hasil kerja", "Kemampuan mengevaluasi mutu unjuk kerja diri sendiri secara kritis"]}
+    # 4. Dimensi dan Indikator Operasional Baku (Format Teks Hirarkis Bertingkat Tanpa Tabel)
+    dims_z = onto_z.get("dimensi") if (onto_z and onto_z.get("dimensi")) else [
+        {"nama": "Kerja Keras (Hard Work)", "indikator": ["Keuletan menuntaskan penugasan yang menuntut energi tinggi", "Kesediaan mencurahkan waktu dan pikiran melampaui jam formal", "Sikap pantang menyerah dalam mencari pemecahan kendala"]},
+        {"nama": "Moralitas & Integritas (Morality & Integrity)", "indikator": ["Kejujuran dalam menyajikan data dan pelaporan capaian tugas", "Kepatuhan terhadap kode etik aparatur sipil", "Keteguhan menolak gratifikasi dan benturan kepentingan"]},
+        {"nama": "Efisiensi Pemanfaatan Waktu (Wasted Time Avoidance)", "indikator": ["Disiplin kehadiran dan ketepatan memulai jam kerja kedinasan", "Pemanfaatan jam kantor secara efektif untuk penuntasan tugas", "Penghindaran aktivitas non-produktif selama jam dinas"]},
+        {"nama": "Kemandirian Profesional (Self-Reliance)", "indikator": ["Kemandirian inisiatif dalam merencanakan langkah penyelesaian tugas", "Rasa tanggung jawab penuh atas keberhasilan dan kegagalan hasil kerja", "Kemampuan mengevaluasi mutu unjuk kerja diri sendiri secara kritis"]}
     ]
+    tokoh_rujuk_z = onto_z.get("tokoh_ahli", "Sinamo, 2022") if onto_z else "Sinamo, (2022)"
+    _format_hierarchical_dimensions(doc, z, dims_z, tokoh_rujuk_z)
 
-    p(doc, f"Dimensi dan indikator operasional variabel {z} diturunkan secara komprehensif sebagaimana disajikan dalam tabel berikut:", indent=0.5, space_after=4)
+    # 5. Posisi Moderasi
+    p(doc, f"Dalam kerangka model disertasi, {z} diposisikan sebagai variabel moderasi kontingensi yang berfungsi memperkuat (catalyzer) hubungan antara anteseden kapasitas organisasi dengan kinerja, serta membentengi sistem dari degradasi integritas.", indent=0.5, space_after=6)
 
-    t_dim_headers_z = ["No", "Dimensi Operasional", "Definisi Operasional", "Indikator Terukur"]
-    t_dim_rows_z = []
-    for idx, d in enumerate(dims_z, 1):
-        t_dim_rows_z.append([str(idx), d["nama"], d["def"], "; ".join([f"({chr(97+i)}) {ind}" for i, ind in enumerate(d["indikator"])])])
-    add_table_data(doc, title=f"Tabel 2.8. Dimensi dan Indikator Operasional Baku {z}", headers=t_dim_headers_z, data=t_dim_rows_z, source="Sumber: Sintesis Indikator Terstandarisasi Peneliti (2026)")
-    p(doc, "", space_after=6)
 
-    # =========================================================================
-    # BAGIAN B: KAJIAN TEORITIS VARIABEL BEBAS LAINNYA (BUDAYA ORGANISASI)
-    # =========================================================================
-    h3(doc, f"2.1.4.2 Kajian Teoritis Variabel Bebas ({x2})")
+def _build_doc_sub_2_1_3(doc: Document, ctx: Dict[str, Any]):
+    """A.5 5. Kajian Teoritis Variabel-Variabel Bebas (X1, X2... Xn) - Murni Naratif & Dimensi Teks Tanpa Tabel."""
+    x_vars = ctx.get("x_vars", [])
+    if not x_vars:
+        x_vars = [ctx.get("x1", "Kepemimpinan Transformasional")]
 
-    p(doc, f"Kajian teoritis mengenai {x2} dilandaskan pada Organizational Culture Theory yang dikembangkan oleh Schein (1985), dalam Denison, (2022) dan Model Budaya Denison (Denison, 2022). Schein membedakan tiga tingkatan budaya organisasi: artefak (artefacts yang kasat mata), nilai-nilai yang dianut (espoused values), serta asumsi dasar yang mendasari (basic underlying assumptions). Budaya organisasi berfungsi sebagai perekat sosial yang menyatukan anggota organisasi dalam mencapai tujuan strategis.", indent=0.5, space_after=6)
+    x_vars_str = ", ".join(x_vars)
+    h2(doc, f"5. Kajian Teoritis Variabel-Variabel Bebas ({x_vars_str})")
 
-    p(doc, f"Spektrum konseptual {x2} dipetakan melalui telaah atas 10 (sepuluh) definisi para pakar otoritatif berikut:", indent=0.5, space_after=4)
+    p(doc, f"Variabel-variabel bebas eksogen ({x_vars_str}) diposisikan sebagai pilar-pilar kapasitas fundamental organisasi yang memberikan stimulus strategis langsung maupun tidak langsung terhadap keberhasilan institusional.", indent=0.5, space_after=6)
 
-    def_x2 = [
-        ("Schein (1985), dalam Denison, (2022)", "Pola asumsi dasar bersama yang dipelajari kelompok saat memecahkan masalah adaptasi eksternal dan integrasi internal, yang terbukti sahih dan diajarkan kepada anggota baru sebagai cara mempersepsikan dan merasakan masalah.", "Asumsi Dasar Bersama", "Integrasi & Adaptasi"),
-        ("Denison, (2022)", "Nilai-nilai, keyakinan, dan prinsip dasar yang menjadi fondasi bagi sistem manajemen organisasi serta serangkaian perilaku manajemen yang memperkuat prinsip tersebut.", "Prinsip Nilai Manajemen", "Fondasi Keberhasilan Kinerja"),
-        ("Cameron & Quinn, (2022)", "Atribut inti yang mencerminkan nilai dominan, gaya kepemimpinan, bahasa simbolik, dan definisi keberhasilan dalam kerangka Competing Values Framework.", "Competing Values Framework", "Pola Interaksi Nilai"),
-        ("Robbins & Judge, (2022)", "Sistem makna bersama (system of shared meaning) yang dianut oleh anggota organisasi yang membedakan organisasi tersebut dari organisasi-organisasi lainnya.", "Makna Bersama (Shared Meaning)", "Diferensiasi Identitas"),
-        ("O\'Reilly et al. (1991), dalam Chatman, (2022)", "Seperangkat nilai bersama yang mendefinisikan apa yang penting dan norma-norma yang memandu perilaku anggota organisasi secara konsisten.", "Nilai Inti & Norma Perilaku", "Konsistensi Perilaku Kerja"),
-        ("Kotter & Heskett (1992), dalam Daft, (2022)", "Perilaku bersama dan norma-norma keorganisasian yang mengondisikan komitmen strategis terhadap inovasi, keunggulan operasional, dan adaptasi lingkungan.", "Norma Strategis Perilaku", "Daya Adaptasi Organisasi"),
-        ("Hofstede (1980), dalam Minkov, (2022)", "Pemrograman kolektif pikiran (collective programming of the mind) yang membedakan anggota suatu organisasi dari organisasi lainnya.", "Pemrograman Kognitif Kolektif", "Karakteristik Budaya Lembaga"),
-        ("Kusdi, (2022)", "Nilai, norma, dan artefak simbolik yang diinternalisasikan oleh seluruh anggota organisasi sebagai pedoman bertindak dan berkoordinasi dalam organisasi.", "Pedoman Koordinasi Nilai", "Internalisasi Artefak"),
-        ("Sutrisno, (2022)", "Perangkat sistem nilai-nilai (values), keyakinan (beliefs), dan norma-norma yang disepakati bersama sebagai pedoman perilaku kerja aparatur.", "Sistem Keyakinan Bersama", "Kepatuhan Norma Kerja"),
-        ("Sobirin, (2023)", "Asumsi-asumsi dasar dan keyakinan-keyakinan yang dianut bersama oleh anggota organisasi untuk mengatasi tantangan adaptasi lingkungan dan integrasi internal.", "Asumsi Pemecahan Masalah", "Ketahanan Budaya Lembaga")
-    ]
+    onto_vars = ctx.get("ontology", {}).get("variables", {})
 
-    for idx, (ahli, text_def, _, _) in enumerate(def_x2, 1):
-        p(doc, f"{idx}. {ahli}: menegaskan bahwa {text_def}", indent=0.75, space_after=3)
+    # Iterasi untuk setiap variabel bebas secara tuntas
+    for x_idx, x_name in enumerate(x_vars, 1):
+        code_key = f"x{x_idx}"
+        onto_x = onto_vars.get(code_key) or {}
 
-    t_headers_x2 = ["No", "Tokoh & Tahun", "Intisari Definisi Konseptual", "Fokus Penekanan", "Orientasi Teoretis"]
-    t_rows_x2 = [[str(idx), ahli, text_def[:80] + "...", fokus, ori] for idx, (ahli, text_def, fokus, ori) in enumerate(def_x2, 1)]
-    add_table_data(doc, title=f"Tabel 2.9. Matriks Komparasi 10 Definisi Teoretis {x2}", headers=t_headers_x2, data=t_rows_x2, source="Sumber: Sintesis Literatur Peneliti (2026)")
-    p(doc, "", space_after=6)
+        h3(doc, f"5.{x_idx} Kajian Teoritis {x_name}")
 
-    p(doc, f"Berdasarkan komparasi atas 10 definisi di atas, dalam penelitian ini {x2} disintesiskan sebagai sistem nilai, keyakinan, dan norma bersama yang diinternalisasikan oleh aparatur yang mengarahkan pola pikir, sikap, dan tindakan profesional dalam berkoordinasi serta menuntaskan tugas kedinasan.", indent=0.5, space_after=6)
+        # 1. Narasi Pengantar Hakikat
+        p(doc, f"Kajian teoritis mengenai {x_name} berakar pada teori perilaku dan kapasitas organisasi yang menempatkan variabel ini sebagai pendorong fundamental kinerja aparatur dan efektivitas kelembagaan.", indent=0.5, space_after=6)
 
-    dims_x2 = [
-        {"nama": "Keterlibatan (Involvement)", "def": "Tingkat partisipasi aparatur, pemberdayaan wewenang, dan orientasi kerja tim dalam pengambilan keputusan kedinasan.", "indikator": ["Pemberdayaan wewenang aparatur dalam penugasan", "Tingkat kerjasama sinergis dalam unit kerja", "Pengembangan kapabilitas berkelanjutan pegawai"]},
-        {"nama": "Konsistensi (Consistency)", "def": "Kekuatan kesepakatan nilai-nilai inti, keselarasan tindakan dengan regulasi, dan koordinasi yang harmonis antar bidang.", "indikator": ["Kepatuhan pada nilai-nilai inti institusi", "Kesepakatan bersama dalam penyelesaian benturan kerja", "Koordinasi dan integrasi antar seksi kedinasan"]},
-        {"nama": "Adaptabilitas (Adaptability)", "def": "Kemampuan institusi dan aparatur dalam merespons perubahan lingkungan eksternal, teknologi, dan tuntutan pelayanan publik.", "indikator": ["Keterbukaan terhadap perubahan sistem kerja baru", "Orientasi pada kepuasan pemangku kepentingan", "Kemampuan belajar dari pengalaman kedinasan sebelumnya"]},
-        {"nama": "Misi (Mission)", "def": "Kejelasan arah strategis, visi masa depan, dan sasaran kuantitatif yang dipahami oleh seluruh jajaran aparatur.", "indikator": ["Kejelasan pemahaman atas visi dan misi organisasi", "Kejelasan sasaran strategis jangka menengah", "Penyelarasan rencana kerja individu dengan misi instansi"]}
-    ]
+        # 2. Telaah 10 Definisi Para Ahli Otoritatif
+        p(doc, f"Guna memetakan spektrum konseptual {x_name}, disajikan telaah atas 10 (sepuluh) definisi para pakar otoritatif berikut:", indent=0.5, space_after=4)
 
-    p(doc, f"Dimensi dan indikator operasional {x2} dijabarkan ke dalam model 4 pilar Denison sebagaimana disajikan dalam tabel berikut:", indent=0.5, space_after=4)
+        # Definisi berbasis ontologi / default berbobot
+        def_x = [
+            ("Bass (1985), dalam Yukl, (2022)", f"Kapasitas strategis yang memotivasi aparatur untuk berbuat lebih banyak daripada yang semula diharapkan dengan memperluas kebutuhan dan mengarahkan mereka melampaui kepentingan pribadi."),
+            ("Yukl, (2022)", f"Proses yang mempengaruhi anggota organisasi dengan mengartikulasikan visi masa depan yang menarik, menanamkan nilai-nilai moral bersama, dan memfasilitasi pembelajaran inovatif."),
+            ("Northouse, (2022)", f"Pendekatan keorganisasian yang menciptakan hubungan yang meningkatkan derajat motivasi dan moralitas secara emosional dan intelektual."),
+            ("Avolio, Yammarino, & Bass (1991), dalam Antonakis & Day, (2022)", f"Pola perilaku yang menginspirasi komitmen tinggi terhadap visi organisasi, menumbuhkan kepercayaan timbal balik, dan membimbing anggota mencapai kapasitas optimal."),
+            ("Burns (1978), dalam Antonakis & Day, (2022)", f"Kepemimpinan dan nilai organisasi yang terjadi ketika pemimpin dan pengikut saling mengangkat satu sama lain ke tingkat moralitas dan motivasi yang lebih tinggi."),
+            ("Robbins & Coulter, (2022)", f"Sistem dan tindakan yang menstimulasi dan menginspirasi bawahan untuk mencapai hasil luar biasa serta mengembangkan kapasitas internal mereka sendiri."),
+            ("Luthans, Luthans, & Luthans, (2022)", f"Penyaluran energi positif melalui keteladanan karakter, optimisme terarah, dan kepedulian mendalam pada pengembangan kompetensi aparatur."),
+            ("Schein (1985), dalam Denison, (2022)", f"Pola asumsi dan nilai bersama yang dipelajari saat memecahkan masalah adaptasi eksternal dan integrasi internal dalam organisasi."),
+            ("Denison, (2022)", f"Nilai-nilai, keyakinan, dan prinsip dasar yang menjadi fondasi bagi sistem manajemen organisasi dan memandu perilaku kerja sehari-hari."),
+            ("Thoha, (2023)", f"Kemampuan dalam mempengaruhi dan memotivasi aparatur agar mau mengubah pola pikir, sikap, dan perilakunya untuk bekerja dengan kesadaran moral yang tinggi.")
+        ]
 
-    t_dim_headers_x2 = ["No", "Dimensi Operasional", "Definisi Operasional", "Indikator Terukur"]
-    t_dim_rows_x2 = []
-    for idx, d in enumerate(dims_x2, 1):
-        t_dim_rows_x2.append([str(idx), d["nama"], d["def"], "; ".join([f"({chr(97+i)}) {ind}" for i, ind in enumerate(d["indikator"])])])
-    add_table_data(doc, title=f"Tabel 2.10. Dimensi dan Indikator Operasional Baku {x2}", headers=t_dim_headers_x2, data=t_dim_rows_x2, source="Sumber: Sintesis Indikator Terstandarisasi Peneliti (2026)")
-    p(doc, "", space_after=6)
+        for idx, (ahli, text_def) in enumerate(def_x, 1):
+            p(doc, f"{idx}. {ahli}: menegaskan bahwa {text_def}", indent=0.5, space_after=3)
 
-    # =========================================================================
-    # BAGIAN C: KAJIAN TEORITIS VARIABEL BEBAS LAINNYA (IKLIM KERJA)
-    # =========================================================================
-    h3(doc, f"2.1.4.3 Kajian Teoritis Variabel Bebas ({x3})")
+        # 3. Sintesis Konseptual Peneliti Doktoral
+        p(doc, f"Berdasarkan berbagai pendapat para ahli tersebut, dapat disimpulkan bahwa {x_name} merupakan pilar kapasitas strategis organisasi yang mencakup integritas kepemimpinan, internalisasi nilai-nilai kebersamaan, dan kejelasan arah visi yang secara konsisten membimbing aparatur sipil dalam melaksanakan tanggung jawab kedinasan.", indent=0.5, space_after=6)
 
-    p(doc, f"Kajian teoritis mengenai {x3} berakar pada Organizational Climate Theory yang dipelopori oleh Schneider et al. (2013), dalam Schneider et al., (2022) dan Model Perseptual Lingkungan Kerja dari Litwin & Stringer (1968), dalam Moran, (2022). Berbeda dengan budaya organisasi yang berakar pada nilai-nilai yang mendalam dan asumsi dasar, iklim kerja merupakan persepsi psikologis bersama yang lebih kasat mata mengenai praktik, kebijakan, prosedur kedinasan, dan pola interaksi sosial harian yang dirasakan langsung oleh pegawai di tempat kerja.", indent=0.5, space_after=6)
+        # 4. Dimensi dan Indikator Operasional Baku (Format Teks Hirarkis Bertingkat Tanpa Tabel)
+        dims_x = onto_x.get("dimensi") if (onto_x and onto_x.get("dimensi")) else [
+            {"nama": "Keteladanan Karakter & Integritas", "indikator": ["Keteladanan moral dan integritas dalam pelaksanaan tugas", "Konsistensi memegang prinsip etika keorganisasian", "Kemampuan menumbuhkan rasa bangga dan kepercayaan"]},
+            {"nama": "Artikulasi Visi & Motivasi", "indikator": ["Kejelasan pengartikulasian visi strategis masa depan", "Kemampuan membangkitkan optimisme dan antusiasme kerja tim", "Komunikasi persuasif mengenai pentingnya pencapaian sasaran"]},
+            {"nama": "Stimulasi Intelektual & Inovasi", "indikator": ["Dorongan untuk menggunakan pendekatan baru yang inovatif", "Pemberian ruang kebebasan berpikir kritis dalam memecahkan masalah", "Apresiasi terhadap ide-ide perbaikan prosedur kerja"]},
+            {"nama": "Pertimbangan Individual & Pembinaan", "indikator": ["Kesediaan mendengarkan aspirasi dan keluhan aparatur", "Peran aktif sebagai mentor dan pembimbing peningkatan kompetensi", "Pemberian penugasan yang disesuaikan dengan potensi individu"]}
+        ]
+        tokoh_rujuk_x = onto_x.get("tokoh_ahli", "Avolio & Bass, 2022") if onto_x else "Avolio & Bass, (2022)"
+        _format_hierarchical_dimensions(doc, x_name, dims_x, tokoh_rujuk_x)
 
-    p(doc, f"Penelaahan teoretis atas {x3} dipetakan melalui 10 (sepuluh) definisi para pakar otoritatif berikut:", indent=0.5, space_after=4)
+    # 5. Sintesis Terpadu
+    p(doc, f"Secara terpadu, seluruh pilar variabel bebas ({x_vars_str}) membentuk satu kesatuan sistem stimulus yang membangkitkan komitmen tugas melalui variabel mediasi serta dikawal oleh variabel moderasi guna mewujudkan keunggulan luaran akhir.", indent=0.5, space_after=6)
 
-    def_x3 = [
-        ("Schneider et al. (2013), dalam Schneider et al., (2022)", "Persepsi bersama anggota organisasi mengenai kebijakan, praktik, dan prosedur, baik formal maupun informal, serta perilaku yang dihargai, didukung, dan diharapkan dalam organisasi.", "Persepsi Kebijakan & Praktik", "Atmosfer Perseptual Bersama"),
-        ("Litwin & Stringer (1968), dalam Moran, (2022)", "Kualitas lingkungan internal organisasi yang dialami para anggotanya, mempengaruhi perilaku mereka, dan dapat dijelaskan melalui serangkaian atribut persepsi keorganisasian.", "Kualitas Lingkungan Internal", "Dampak Perilaku Aparatur"),
-        ("James & Jones (1974), dalam James et al., (2022)", "Representasi kognitif individu atas lingkungan kerja psikologis (psychological climate) yang merefleksikan makna dan signifikansi situasi kerja bagi kesejahteraan pribadi.", "Representasi Kognitif Psikologis", "Signifikansi Kesejahteraan"),
-        ("Pritchard & Karasick (1973), dalam Denison, (2022)", "Ciri khas yang membedakan suatu lingkungan kerja dari lingkungan kerja lainnya yang relatif bertahan lama dan mempengaruhi perilaku pegawai melalui norma perseptual.", "Karakteristik Unik Lingkungan", "Daya Pengaruh Perilaku"),
-        ("Denison, (2022)", "Situasi lingkungan kerja dan persepsi subjektif jangka pendek anggota organisasi terhadap dinamika kepemimpinan, komunikasi, dan ketersediaan fasilitas kerja.", "Situasi Perseptual Subjektif", "Dinamika Fasilitas Kerja"),
-        ("Gellerman (1963), dalam Luthans, (2022)", "Suasana psikologis atau 'kepribadian' organisasi yang tercipta dari interaksi antar anggota dan perlakuan manajemen terhadap sumber daya manusia.", "Kepribadian Organisasi", "Perlakuan Manajemen"),
-        ("Stringer, (2022)", "Suasana kerja yang terukur dari lingkungan kerja yang didasarkan pada persepsi kolektif orang-orang yang bekerja dan tinggal di lingkungan tersebut.", "Pengukuran Suasana Kerja", "Kolektivitas Persepsi"),
-        ("Wirawan, (2022)", "Persepsi anggota organisasi mengenai berbagai aspek lingkungan tempat kerja mereka yang mempengaruhi motivasi, unjuk kerja, dan kepuasan kerja aparatur.", "Aspek Tempat Kerja Faktual", "Pengaruh Kepuasan & Unjuk Kerja"),
-        ("Simamora, (2022)", "Lingkungan internal beserta kondisi psikologis organisasi yang mempengaruhi perilaku, motivasi, dan unjuk kerja sumber daya manusia di tempat tugas.", "Kondisi Psikologis Internal", "Responsivitas Sumber Daya"),
-        ("Wibowo, (2023)", "Kondisi, situasi, dan suasana kerja yang dirasakan oleh aparatur, yang mencakup hubungan relasional rekan kerja, fasilitas fisik, dukungan pimpinan, dan keadilan penugasan.", "Atmosfer Kerja Menyeluruh", "Keadilan & Fasilitas Kerja")
-    ]
-
-    for idx, (ahli, text_def, _, _) in enumerate(def_x3, 1):
-        p(doc, f"{idx}. {ahli}: mendalilkan bahwa {text_def}", indent=0.75, space_after=3)
-
-    t_headers_x3 = ["No", "Tokoh & Tahun", "Intisari Definisi Konseptual", "Fokus Penekanan", "Orientasi Teoretis"]
-    t_rows_x3 = [[str(idx), ahli, text_def[:80] + "...", fokus, ori] for idx, (ahli, text_def, fokus, ori) in enumerate(def_x3, 1)]
-    add_table_data(doc, title=f"Tabel 2.11. Matriks Komparasi 10 Definisi Teoretis {x3}", headers=t_headers_x3, data=t_rows_x3, source="Sumber: Sintesis Literatur Peneliti (2026)")
-    p(doc, "", space_after=6)
-
-    p(doc, f"Berdasarkan komparasi atas 10 definisi para ahli tersebut, dalam penelitian ini {x3} disintesiskan sebagai persepsi psikologis kolektif aparatur mengenai kenyamanan lingkungan fisik, keharmonisan relasi kerja interpersonal, kejelasan standar tanggung jawab, dan keadilan dukungan kepemimpinan dalam memfasilitasi pelaksanaan tugas kedinasan.", indent=0.5, space_after=6)
-
-    dims_x3 = [
-        {"nama": "Kenyamanan Lingkungan Fisik & Fasilitas", "def": "Persepsi aparatur mengenai kelayakan fasilitas kerja, sarana pendukung teknologi, dan kenyamanan tata ruang kantor.", "indikator": ["Kelayakan dan kelengkapan peralatan kerja kedinasan", "Kenyamanan tata ruang, pencahayaan, dan kebersihan kantor", "Ketersediaan dukungan teknologi informasi dalam penugasan"]},
-        {"nama": "Relasi Interpersonal & Kehangatan (Warmth)", "def": "Suasana keakraban, keterbukaan komunikasi, dan rasa saling percaya yang terjalin antar rekan sejawat dan pimpinan.", "indikator": ["Keharmonisan hubungan relasional antar sesama pegawai", "Keterbukaan komunikasi antara bawahan dan pimpinan", "Sikap saling percaya dan minimnya konflik destruktif"]},
-        {"nama": "Standar & Tanggung Jawab (Responsibility)", "def": "Kejelasan pemahaman atas standar capaian kerja serta otonomi yang diberikan dalam menjalankan kewenangan tugas.", "indikator": ["Kejelasan pembagian beban tugas dan tanggung jawab peran", "Otonomi dan keleluasaan dalam menentukan metode kerja", "Tingginya tuntutan mutu standar kerja yang diberlakukan"]},
-        {"nama": "Dukungan Kepemimpinan & Keadilan (Support)", "def": "Bantuan nyata, pengakuan, dan keadilan perlakuan yang dirasakan aparatur dari pimpinan unit kerja.", "indikator": ["Bantuan teknis dan dorongan moral dari pimpinan saat ada kendala", "Keadilan perlakuan pimpinan dalam pembagian beban penugasan", "Pemberian apresiasi atas keberhasilan penuntasan tugas"]}
-    ]
-
-    p(doc, f"Dimensi dan indikator operasional {x3} diturunkan ke dalam 4 pilar komprehensif sebagaimana disajikan dalam tabel berikut:", indent=0.5, space_after=4)
-
-    t_dim_headers_x3 = ["No", "Dimensi Operasional", "Definisi Operasional", "Indikator Terukur"]
-    t_dim_rows_x3 = []
-    for idx, d in enumerate(dims_x3, 1):
-        t_dim_rows_x3.append([str(idx), d["nama"], d["def"], "; ".join([f"({chr(97+i)}) {ind}" for i, ind in enumerate(d["indikator"])])])
-    add_table_data(doc, title=f"Tabel 2.12. Dimensi dan Indikator Operasional Baku {x3}", headers=t_dim_headers_x3, data=t_dim_rows_x3, source="Sumber: Sintesis Indikator Terstandarisasi Peneliti (2026)")
-    p(doc, "", space_after=6)
-
-    # Sintesis Terpadu Seluruh Variabel Bebas dan Moderasi
-    p(doc, f"Secara komprehensif, keterpaduan antara {x1}, {x2}, {x3}, {m}, dan {z} membentuk satu arsitektur teoritis yang kokoh dalam menjelaskan dinamika pencapaian {ctx['y_var']}. Kepemimpinan transformasional bertindak sebagai kompas pengarah visi, budaya organisasi menjadi perekat nilai bersama, iklim kerja menyediakan atmosfer lingkungan yang kondusif, motivasi kerja mengonversi energi menjadi daya dorong perilaku, dan etos kerja mengkondisikan batas ketahanan moral aparatur menuju kinerja institusional yang ekselen.", indent=0.5, space_after=6)
 
 def _build_doc_sub_2_2(doc: Document, ctx: Dict[str, Any]):
     """2.2 Penelitian Terdahulu (State of the Art & Research Gap)."""

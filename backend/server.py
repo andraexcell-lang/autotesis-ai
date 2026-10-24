@@ -48,6 +48,7 @@ import structural_graph_compiler
 import dynamic_pls_engine
 import engine_graph_dynamic
 import s3_title_parser
+import s3_ontology_researcher
 from provenance import (
     label_data_source,
     label_origin,
@@ -1130,6 +1131,44 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 except Exception as ex:
                     status_code = 400
                     response_data = {"status": "error", "message": f"Deteksi judul S3 gagal: {ex}"}
+
+            elif path == "/api/s3/research-ontology":
+                try:
+                    title_input = body.get("title") or body.get("judul") or ""
+                    x_list = body.get("x_vars", [])
+                    m_list = body.get("m_vars", [])
+                    z_list = body.get("z_vars", [])
+                    y_val = body.get("y_var", "Kinerja Pegawai")
+                    inst = body.get("instansi", "Instansi Terkait")
+                    sek = body.get("sektor", "")
+                    refresh = bool(body.get("force_refresh", False))
+
+                    onto_s3 = s3_ontology_researcher.research_doctoral_ontology(
+                        title=title_input,
+                        x_vars=x_list,
+                        m_vars=m_list,
+                        z_vars=z_list,
+                        y_var=y_val,
+                        instansi=inst,
+                        sektor=sek,
+                        force_refresh=refresh
+                    )
+                    response_data = {
+                        "status": "success",
+                        "title": title_input,
+                        "ontology": onto_s3
+                    }
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": f"Riset ontologi S3 gagal: {ex}"}
+
+            elif path == "/api/s3/get-ontology":
+                title_input = body.get("title") or body.get("judul") or ""
+                onto_s3 = s3_ontology_researcher.load_s3_ontology(title_input)
+                response_data = {
+                    "status": "success" if onto_s3 else "not_found",
+                    "ontology": onto_s3
+                }
 
             # =========================================================================
             # DYNAMIC RESEARCH GRAPH ENGINE (V3.0) - MULTI-X, MODERASI & MEDIASI TERMODERASI

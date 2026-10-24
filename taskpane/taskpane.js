@@ -2333,7 +2333,13 @@ function initMasterS3() {
     }
   });
 
-  // 6. Tulis Sub-Bab & Unduh .docx Doktoral (Panel 2)
+  // 6. Riset Dimensi & Indikator S3 (Live Academic Dimension Researcher)
+  const btnResearchOntology = document.getElementById("btn-s3-research-ontology");
+  if (btnResearchOntology) {
+    btnResearchOntology.addEventListener("click", () => handleS3ResearchOntology(true));
+  }
+
+  // 7. Tulis Sub-Bab & Unduh .docx Doktoral (Panel 2)
   document.querySelectorAll(".btn-s3-write").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const subId = btn.dataset.sub;
@@ -2348,12 +2354,12 @@ function initMasterS3() {
     });
   });
 
-  // 7. Olah Data PLS-SEM Doktoral (Panel 3)
+  // 8. Olah Data PLS-SEM Doktoral (Panel 3)
   if (btnRunPls) {
     btnRunPls.addEventListener("click", handleS3RunPls);
   }
 
-  // 8. 1 Unduh Lengkap Disertasi (Panel 4)
+  // 9. 1 Unduh Lengkap Disertasi (Panel 4)
   if (btnWriteFullWord) {
     btnWriteFullWord.addEventListener("click", handleS3WriteFullWord);
   }
@@ -2487,6 +2493,9 @@ async function autoDetectS3Title(notifyUser = true) {
     // 5. Tampilkan rumus matematis & daftar hipotesis
     renderS3GraphPreview(graph);
 
+    // 6. Otomatis telusuri Blueprint Ontologi Doktoral (Dimensi & Indikator Baku)
+    handleS3ResearchOntology(false);
+
     if (statEl) {
       statEl.style.color = "#059669";
       statEl.textContent = `⚡ Berhasil dideteksi via ${data.engine}: Model ${data.model_type} (${data.x_vars.length}X, ${data.m_vars.length}M, ${data.z_vars.length}Z) — ${graph.total_hypotheses} Hipotesis.`;
@@ -2550,6 +2559,147 @@ function renderS3GraphPreview(graph) {
       </div>
     `).join("");
   }
+}
+
+// =========================================================================
+// S3 DOCTORAL DIMENSION RESEARCHER & BLUEPRINT ONTOLOGY PREVIEW
+// =========================================================================
+let currentS3Ontology = null;
+let _s3OntologyReqSeq = 0;
+
+async function handleS3ResearchOntology(showLoading = true) {
+  const btn = document.getElementById("btn-s3-research-ontology");
+  const badge = document.getElementById("badge-s3-ontology-status");
+  const box = document.getElementById("s3-ontology-preview-box");
+  if (!btn) return;
+
+  const rawTitle = (document.getElementById("input-s3-judul")?.value || "").trim();
+  const x_vars = Array.from(document.querySelectorAll(".input-s3-x")).map(i => i.value.trim()).filter(Boolean);
+  const m_vars = [document.getElementById("input-s3-m")?.value.trim()].filter(Boolean);
+  const z_vars = [document.getElementById("input-s3-z")?.value.trim()].filter(Boolean);
+  const y_var = document.getElementById("input-s3-y")?.value.trim() || "Kinerja Pegawai";
+  const instansi = document.getElementById("input-s3-instansi")?.value.trim() || "Instansi Terkait";
+
+  if (!rawTitle || x_vars.length === 0) {
+    return;
+  }
+
+  const seq = ++_s3OntologyReqSeq;
+  if (showLoading) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Meneliti Dimensi & Indikator Doktoral via Live Academic API...";
+    setStatus("working", "Menelusuri teori ahli, dimensi, & indikator operasional doktoral...");
+  }
+  if (badge) badge.textContent = "Sedang Meriset...";
+
+  try {
+    const res = await fetch(`${API_BASE}/s3/research-ontology`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: rawTitle,
+        x_vars,
+        m_vars,
+        z_vars,
+        y_var,
+        instansi,
+        force_refresh: showLoading
+      })
+    });
+    const json = await res.json();
+    if (seq !== _s3OntologyReqSeq) return;
+
+    if (!res.ok || json.status === "error") {
+      throw new Error(json.message || `HTTP ${res.status}`);
+    }
+
+    currentS3Ontology = json.ontology;
+    renderS3OntologyPreview(currentS3Ontology);
+
+    if (badge) {
+      badge.textContent = `${currentS3Ontology.metadata.total_indikator} Indikator Terkunci`;
+      badge.style.background = "#dcfce7";
+      badge.style.color = "#15803d";
+    }
+
+    if (showLoading) {
+      setStatus("ready", `Riset dimensi & indikator S3 selesai (${currentS3Ontology.metadata.total_indikator} indikator operasional siap).`);
+    }
+  } catch (err) {
+    console.error("handleS3ResearchOntology error:", err);
+    if (badge) {
+      badge.textContent = "Perlu Tinjauan";
+      badge.style.background = "#fee2e2";
+      badge.style.color = "#991b1b";
+    }
+    if (showLoading) {
+      setStatus("error", `Riset dimensi S3 gagal: ${err.message}`);
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "🔍 Telusuri Dimensi & Indikator S3 via Live Academic API";
+    }
+  }
+}
+
+function renderS3OntologyPreview(onto) {
+  const box = document.getElementById("s3-ontology-preview-box");
+  if (!box || !onto || !onto.variables) return;
+
+  const vars = onto.variables;
+  const meta = onto.metadata || {};
+  const anchors = onto.anchors || {};
+
+  let gridCards = "";
+  for (const [code, v] of Object.entries(vars)) {
+    const role = (v.role || code).toUpperCase();
+    const isY = role === "Y";
+    const isM = role.startsWith("M");
+    const isZ = role.startsWith("Z");
+    const color = isY ? "#16a34a" : (isM ? "#d97706" : (isZ ? "#7c3aed" : "#0284c7"));
+    const label = isY ? "Variabel Terikat" : (isM ? "Mediasi" : (isZ ? "Moderasi" : "Bebas"));
+
+    const dims = v.dimensi || [];
+    const dimNames = dims.map(d => d.nama || "Dimensi").join(", ");
+    let indCount = 0;
+    dims.forEach(d => { indCount += (d.indikator || []).length; });
+
+    gridCards += `
+      <div style="padding: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
+        <div style="font-weight: 700; color: ${color}; font-size: 11px;">${role}: ${v.nama_resmi || v.input_name} (${label})</div>
+        <div style="color: #64748b; font-size: 10px;">Ahli: ${v.tokoh_ahli || 'Pakar Terkemuka'}</div>
+        <div style="color: #334155; font-size: 10px; margin-top: 2px;"><strong>Dimensi:</strong> ${dimNames || 'Disesuaikan'}</div>
+        <div style="color: #0f766e; font-size: 9px; margin-top: 2px; font-weight: 600;">Operasional: ${indCount} butir Likert | Teori: ${v.grand_theory || 'Grand Theory'}</div>
+      </div>
+    `;
+  }
+
+  let html = `
+    <div style="font-weight: bold; color: #15803d; margin-bottom: 6px; font-size: 11px;">
+      📌 Blueprint Ontologi Siap Pakai (${meta.total_indikator || 0} Indikator Operasional):
+    </div>
+    <div style="font-size: 9px; color: #64748b; margin-bottom: 6px;">
+      Dimensi: sumber/teori terverifikasi. Indikator: dikembangkan dari dimensi dan konteks objek doktoral (2–4 butir per dimensi).
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+      ${gridCards}
+    </div>
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px; border-radius: 4px; font-size: 10px; line-height: 1.5; color: #334155; margin-bottom: 8px;">
+      <strong>🔎 Grand Theory & Seleksi Dimensi Doktoral:</strong><br>
+      • <strong>Teori Utama:</strong> ${(onto.grand_theories || []).join(', ') || 'Contingency Theory, Goal Setting, Transformational Leadership'}.<br>
+      • <strong>Standar Pengukuran:</strong> ${meta.skala || 'Skala Likert 1-5'}.
+    </div>
+    <div style="background: #f1f5f9; padding: 6px; border-radius: 4px; font-size: 10px; line-height: 1.5; color: #334155;">
+      <strong>🔗 Keterikatan Benang Merah Doktoral Bab I s/d Lampiran:</strong><br>
+      • <strong>Tabel 1.1 (Evaluasi Y):</strong> Parameter <em>${(anchors.tabel_1_1_params || []).join(' | ')}</em>.<br>
+      • <strong>Tabel 1.2 (Fenomena M & Z):</strong> Membedah <em>${(anchors.tabel_1_2_issues || []).concat(anchors.moderation_issues || []).join(', ')}</em>.<br>
+      • <strong>Bab III & Kuesioner:</strong> Disusun ke dalam Kisi-Kisi Instrumen Disertasi Doktoral & ${meta.total_indikator || 0} butir angket skala Likert (1-5).
+    </div>
+  `;
+
+  box.innerHTML = html;
+  box.style.display = "block";
 }
 
 async function runS3PlsSimulation() {

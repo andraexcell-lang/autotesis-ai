@@ -71,35 +71,35 @@ S3_SUBCHAPTER_CATALOG = {
         "title": "Bagian Awal (Halaman Judul, Lembar Pengesahan Promotor, Abstrak Bilingual, Riwayat Hidup, Daftar Isi)",
         "desc": "Halaman administratif pra-naskah Disertasi Doktor: Halaman Sampul, Lembar Persetujuan Komisi Promotor & Pengesahan Komisi Penguji Disertasi, Kata Pengantar, Abstrak Bahasa Indonesia & Inggris, Riwayat Hidup, dan Daftar Isi/Tabel/Gambar."
     },
-    # Bab I: Pendahuluan
+    # Bab I: Pendahuluan (Format Disertasi Doktoral TAPD Pascasarjana: A, B, C, D, E, F)
     "sub_1_1": {
-        "chapter": 1, "code": "1.1",
-        "title": "1.1 Latar Belakang Masalah Disertasi",
+        "chapter": 1, "code": "A",
+        "title": "A. Latar Belakang",
         "desc": "Urgensi makro-nasional, telaah teoritis komprehensif variabel judul, profil dan fenomena empiris instansi, celah riset kontradiktif, novelty kebaruan doktoral, dan penetapan judul."
     },
     "sub_1_2": {
-        "chapter": 1, "code": "1.2",
-        "title": "1.2 Identifikasi dan Rumusan Masalah Doktoral",
+        "chapter": 1, "code": "B",
+        "title": "B. Rumusan Masalah",
         "desc": "Pertanyaan penelitian doktoral terstruktur (H1 s.d Hm) yang diturunkan dari model struktural judul mencakup pengaruh langsung, mediasi, moderasi, dan mediasi termoderasi."
     },
     "sub_1_3": {
-        "chapter": 1, "code": "1.3",
-        "title": "1.3 Pembatasan dan Tujuan Penelitian",
+        "chapter": 1, "code": "C",
+        "title": "C. Tujuan Penelitian",
         "desc": "Tujuan penelitian doktoral yang selaras 1-ke-1 dengan rumusan masalah dan hipotesis dari model judul."
     },
     "sub_1_4": {
-        "chapter": 1, "code": "1.4",
-        "title": "1.4 Manfaat Penelitian (Teoretis & Praktis Kebijakan)",
+        "chapter": 1, "code": "D",
+        "title": "D. Manfaat Penelitian",
         "desc": "Kontribusi teoretis pengembangan grand theory dan novelty keilmuan serta manfaat praktis rekomendasi strategis bagi instansi objek penelitian."
     },
     "sub_1_5": {
-        "chapter": 1, "code": "1.5",
-        "title": "1.5 Ruang Lingkup Penelitian Doktoral",
+        "chapter": 1, "code": "E",
+        "title": "E. Ruang Lingkup Penelitian",
         "desc": "Batasan substansi variabel judul, unit analisis instansi, metodologi kuantitatif PLS-SEM, dan batasan temporal penelitian."
     },
     "sub_1_6": {
-        "chapter": 1, "code": "1.6",
-        "title": "1.6 Sistematika Penulisan Disertasi",
+        "chapter": 1, "code": "F",
+        "title": "F. Sistematika Penulisan",
         "desc": "Sistematika naskah Disertasi 5 Bab sesuai buku pedoman resmi Program Doktor Ilmu Manajemen."
     },
 
@@ -430,7 +430,8 @@ def build_s3_prompt(sub_id: str, ctx: Dict[str, Any]) -> str:
     instruksi_khusus = ""
     if sub_id == "sub_1_1":
         instruksi_khusus = f"""
-=== PETUNJUK SPESIFIK WAJIB LATAR BELAKANG DISERTASI DOKTORAL (SUB-BAB 1.1) ===
+=== PETUNJUK SPESIFIK WAJIB LATAR BELAKANG DISERTASI DOKTORAL (SUB-BAB A. LATAR BELAKANG) ===
+Judul Sub-bab WAJIB ditulis persis: A. Latar Belakang
 Naskah Latar Belakang Masalah WAJIB disusun mengikuti Anatomi 7 Lapisan Deduktif Doktoral (The 7-Layer Doctoral Funnel) sebagai standar tertinggi Pascasarjana:
 
 1. LAPISAN 1: FENOMENA MAKRO NASIONAL & THEORETICAL HOOK
@@ -481,10 +482,6 @@ Naskah Latar Belakang Masalah WAJIB disusun mengikuti Anatomi 7 Lapisan Deduktif
 """
     elif sub_id == "sub_1_2":
         hypos = ctx["graph"]["hypotheses"]
-        direct_h = [h for h in hypos if h.get("type") in ("direct_to_mediator", "direct_to_dependent", "mediator_to_dependent", "moderator_main_effect", "direct")]
-        indirect_h = [h for h in hypos if h.get("type") in ("mediation_indirect", "indirect")]
-        moderation_h = [h for h in hypos if h.get("type") in ("moderation_interaction", "conditional_indirect", "moderated_mediation", "moderation")]
-
         blok_mediasi_p = (
             f"- Justifikasi Mediasi: Jelaskan bahwa pilar kapasitas organisasi ({x_vars_str}) adalah potensi pasif yang membutuhkan {m_vars_str} sebagai variabel mediasi untuk menjembatani kapasitas sistem ke dalam eksekusi perilaku unjuk kerja nyata (behavioral execution) di lapangan."
             if ctx["m_vars"] else
@@ -496,28 +493,17 @@ Naskah Latar Belakang Masalah WAJIB disusun mengikuti Anatomi 7 Lapisan Deduktif
             "- Model Tanpa Moderasi: Model mengasumsikan hubungan struktural bersifat invarian terhadap kondisi batas eksternal."
         )
 
-        daftar_pertanyaan_str = "A. Kelompok Pengaruh Langsung (Direct Effects):\n"
-        for i, h in enumerate(direct_h, 1):
+        daftar_pertanyaan_str = ""
+        for i, h in enumerate(hypos, 1):
             daftar_pertanyaan_str += f"   {i}. {h['question']}\n"
-        
-        cur_num = len(direct_h) + 1
-        if indirect_h:
-            daftar_pertanyaan_str += "\nB. Kelompok Pengaruh Tidak Langsung / Mediasi (Indirect / Mediating Effects):\n"
-            for h in indirect_h:
-                daftar_pertanyaan_str += f"   {cur_num}. {h['question']}\n"
-                cur_num += 1
-        
-        if moderation_h:
-            daftar_pertanyaan_str += "\nC. Kelompok Pengaruh Interaksi Moderasi (Moderating Effects):\n"
-            for h in moderation_h:
-                daftar_pertanyaan_str += f"   {cur_num}. {h['question']}\n"
-                cur_num += 1
 
         instruksi_khusus = f"""
-=== PETUNJUK SPESIFIK IDENTIFIKASI & RUMUSAN MASALAH DOKTORAL (SUB-BAB 1.2) ===
+=== PETUNJUK SPESIFIK RUMUSAN MASALAH DOKTORAL (SUB-BAB B. RUMUSAN MASALAH) ===
+Judul Sub-bab WAJIB ditulis persis: B. Rumusan Masalah
+
 Naskah WAJIB disusun dalam 2 Bagian Terpadu berstandar tertinggi Pascasarjana:
 
-BAGIAN 1: NARASI FONDASI MASALAH INDUK & SINTESIS MODEL DOKTORAL (MINIMAL 4 PARAGRAF):
+BAGIAN 1: NARASI FONDASI MASALAH INDUK & SINTESIS MODEL DOKTORAL (4 PARAGRAF):
 1. Paragraf 1 (Overarching Problem Statement & Theoretical Gap Anchor):
    - Wajib dibuka dengan rumusan masalah payung: "Rumusan masalah penelitian yang diajukan dalam Disertasi Doktor ini adalah: bagaimana membangun sebuah model konseptual dan model empirik untuk mengatasi kesenjangan penelitian (research gap) terkait peningkatan dan optimalisasi {y_var} pada {instansi}."
    - Paparkan kembali fakta inkonsistensi temuan antarpeneliti terdahulu (sitasi 2022-2026: Chen et al., 2023 vs Pratama & Suryani, 2022; Wang et al., 2022; Komalasari & Annisa, 2023; Adrian, 2024; Yulfani, 2025).
@@ -529,50 +515,42 @@ BAGIAN 1: NARASI FONDASI MASALAH INDUK & SINTESIS MODEL DOKTORAL (MINIMAL 4 PARA
    - Tegaskan kebaruan (novelty) pengujian model struktural {m_type}.
    - Deklarasikan secara resmi nama model konseptual doktoral orisinal: MODEL {model_acronym}. Jelaskan kepanjangan dan filosofi akronim tersebut.
 
-BAGIAN 2: DAFTAR PERTANYAAN PENELITIAN TERSTRUKTUR ({len(hypos)} PERTANYAAN FORMAL):
-Sajikan pengantar: "Berdasarkan perumusan masalah di atas, pertanyaan-pertanyaan penelitian dalam Disertasi Doktor ini dirumuskan secara terstruktur ke dalam kelompok-kelompok hubungan kausalitas berikut:"
+BAGIAN 2: DAFTAR PERTANYAAN PENELITIAN ({len(hypos)} PERTANYAAN FORMAL):
+Sajikan pengantar: "Berdasarkan perumusan masalah di atas, pertanyaan penelitian ini adalah:"
 {daftar_pertanyaan_str}
 
-ATURAN FORMULASI:
-- Bahasa Indonesia baku EYD V tingkat doktoral, lugas, presisi, dan konsisten dengan label variabel judul.
-- Jumlah pertanyaan wajib persis {len(hypos)} butir (sinkron 1-ke-1 dengan Hipotesis Formal H1 s.d H{total_h} dan Tujuan Penelitian).
+ATURAN STRUKTUR & LARANGAN FORMAT (SANGAT KETAT):
+- Judul Sub-bab WAJIB ditulis: B. Rumusan Masalah
+- DILARANG MENULISKAN SUB-JUDUL KELOMPOK seperti:
+  'A. Kelompok Pengaruh Langsung (Direct Effects):'
+  'B. Kelompok Pengaruh Tidak Langsung / Mediasi (Indirect / Mediating Effects):'
+  'C. Kelompok Pengaruh Interaksi Moderasi (Moderating Effects):'
+- Seluruh {len(hypos)} butir pertanyaan penelitian WAJIB ditulis langsung sebagai daftar penomoran sekuensial kontinu (1, 2, 3, ... s.d {len(hypos)}) tepat di bawah kalimat pengantar.
+- Jumlah butir pertanyaan WAJIB persis {len(hypos)} butir (sinkron 1-ke-1 dengan Hipotesis Formal H1 s.d H{total_h} dan Tujuan Penelitian).
 """
     elif sub_id == "sub_1_3":
         hypos = ctx["graph"]["hypotheses"]
-        direct_h = [h for h in hypos if h.get("type") in ("direct_to_mediator", "direct_to_dependent", "mediator_to_dependent", "moderator_main_effect", "direct")]
-        indirect_h = [h for h in hypos if h.get("type") in ("mediation_indirect", "indirect")]
-        moderation_h = [h for h in hypos if h.get("type") in ("moderation_interaction", "conditional_indirect", "moderated_mediation", "moderation")]
-
-        daftar_tujuan_str = "A. Kelompok Pengujian Pengaruh Langsung (Direct Effects):\n"
-        for i, h in enumerate(direct_h, 1):
+        daftar_tujuan_str = ""
+        for i, h in enumerate(hypos, 1):
             daftar_tujuan_str += f"   {i}. {h['objective']}\n"
-        
-        cur_num = len(direct_h) + 1
-        if indirect_h:
-            daftar_tujuan_str += "\nB. Kelompok Pengujian Efek Mediasi (Indirect / Mediating Effects):\n"
-            for h in indirect_h:
-                daftar_tujuan_str += f"   {cur_num}. {h['objective']}\n"
-                cur_num += 1
-        
-        if moderation_h:
-            daftar_tujuan_str += "\nC. Kelompok Pengujian Efek Moderasi (Moderating Effects):\n"
-            for h in moderation_h:
-                daftar_tujuan_str += f"   {cur_num}. {h['objective']}\n"
-                cur_num += 1
 
         instruksi_khusus = f"""
-=== PETUNJUK SPESIFIK PEMBATASAN & TUJUAN PENELITIAN DOKTORAL (SUB-BAB 1.3) ===
+=== PETUNJUK SPESIFIK TUJUAN PENELITIAN DOKTORAL (SUB-BAB C. TUJUAN PENELITIAN) ===
+Judul Sub-bab WAJIB ditulis persis: C. Tujuan Penelitian
+
 Naskah WAJIB disusun dalam 2 Bagian Terpadu:
 
 1. Pembatasan Masalah (Delimitasi Doktoral):
    - Jelaskan ruang lingkup konseptual dan batasan operasional penelitian agar kajian fokus pada pengujian model struktural {model_acronym} yang mengintegrasikan {y_var}, {m_vars_str}, {z_vars_str}, dan {x_vars_str} pada aparatur {instansi}.
 2. Tujuan Penelitian Terstruktur ({len(hypos)} Tujuan Formal):
-   - Sajikan pengantar: "Sejalan dengan perumusan masalah di atas, tujuan dari penelitian Disertasi Doktor ini pada {instansi} adalah untuk:"
+   - Sajikan pengantar: "Sejalan dengan pertanyaan penelitian di atas, tujuan dari penelitian ini adalah untuk:"
 {daftar_tujuan_str}
 
-ATURAN FORMULASI:
-- Setiap butir tujuan penelitian WAJIB selaras 1-ke-1 dengan Rumusan Masalah (1.2) dan Hipotesis Penelitian.
-- Gunakan formula baku: "Untuk menganalisis dan membuktikan pengaruh/peran..."
+ATURAN STRUKTUR & LARANGAN FORMAT:
+- Judul Sub-bab WAJIB ditulis: C. Tujuan Penelitian
+- DILARANG MENULISKAN SUB-JUDUL KELOMPOK seperti 'A. Kelompok Pengujian Pengaruh Langsung', 'B. Kelompok...', 'C. Kelompok...'.
+- Setiap butir tujuan penelitian WAJIB bernomor sekuensial kontinu (1 s.d {len(hypos)}) dan selaras 1-ke-1 dengan Rumusan Masalah serta Hipotesis Penelitian.
+- Gunakan formula baku doktoral: "Untuk menganalisis dan membuktikan pengaruh/peran..."
 """
     elif sub_id == "sub_2_1_1":
         instruksi_khusus = f"""
@@ -803,7 +781,7 @@ def _build_doc_sub_1_1(doc: Document, ctx: Dict[str, Any]):
     model_acronym = _generate_doctoral_model_acronym(ctx)
 
     h1(doc, "BAB I\nPENDAHULUAN")
-    h2(doc, "1.1 Latar Belakang Masalah")
+    h2(doc, "A. Latar Belakang")
 
     # --- LAPISAN 1: FENOMENA MAKRO NASIONAL & THEORETICAL HOOK ---
     p(doc, f"Tuntutan transformasi tata kelola organisasi modern di era disrupsi menempatkan keunggulan sumber daya manusia serta efektivitas kepemimpinan strategis sebagai pilar sentral pencapaian kinerja berkelanjutan (sustainable performance). Pada lanskap makro nasional, reformasi birokrasi dan peningkatan kualitas akuntabilitas kinerja di Indonesia meniscayakan pergeseran paradigma dari manajemen konvensional menuju tata kelola berbasis kinerja terukur dan pelayanan prima. Isu ini menjadi sangat krusial ketika dikaitkan dengan peran strategis institusi pengelola sektor publik seperti {instansi}, di mana unjuk kerja optimal dari seluruh aparatur merupakan prasyarat mutlak dalam pencapaian target penerimaan daerah, kepatuhan regulasi, dan pelayanan masyarakat secara berkelanjutan.", indent=0.5, space_after=6)
@@ -939,11 +917,11 @@ def _build_doc_sub_1_1(doc: Document, ctx: Dict[str, Any]):
 
 def _build_doc_sub_1_2(doc: Document, ctx: Dict[str, Any]):
     """
-    1.2 Identifikasi dan Rumusan Masalah Doktoral Berbasis Dynamic Graph Topology.
+    Sub-bab B. Rumusan Masalah Doktoral Berbasis Dynamic Graph Topology.
     Disusun dengan Arsitektur Masalah Induk, Justifikasi Mediasi/Moderasi, Novelty Model,
-    dan Daftar Pertanyaan Terstruktur 3 Tingkat (Direct, Mediating, Moderating).
+    dan Daftar Pertanyaan Sekuensial Kontinu (1 s.d Hn) tanpa sub-header kelompok.
     """
-    h2(doc, "1.2 Identifikasi dan Rumusan Masalah")
+    h2(doc, "B. Rumusan Masalah")
     judul = ctx["judul"]
     instansi = ctx["instansi"]
     x1, x2, x3 = ctx["x1"], ctx["x2"], ctx["x3"]
@@ -970,37 +948,19 @@ def _build_doc_sub_1_2(doc: Document, ctx: Dict[str, Any]):
 
     p(doc, f"Penelitian ini menawarkan kebaruan ilmiah (novelty) berupa pengujian empiris terhadap model struktural hibrida {m_type}. Model konseptual baru yang ditawarkan dalam Disertasi Doktor ini diberi nama: MODEL {model_acronym}. Model {model_acronym} merupakan sintesis terintegrasi dari elemen-elemen kebaruan yang mencerminkan pendekatan penelitian secara konseptual, kontekstual, dan metodologis dalam menjawab anomali kinerja birokrasi pada {instansi}.", indent=0.5, space_after=6)
 
-    p(doc, "Berdasarkan perumusan masalah di atas, pertanyaan-pertanyaan penelitian dalam Disertasi Doktor ini dirumuskan secara terstruktur ke dalam kelompok-kelompok hubungan kausalitas berikut:", indent=0.5, space_after=6)
+    p(doc, "Berdasarkan perumusan masalah di atas, pertanyaan penelitian ini adalah:", indent=0.5, space_after=6)
 
-    # Bagian 2: Daftar Pertanyaan Penelitian Terstruktur 3 Tingkat
-    direct_h = [h for h in hypos if h.get("type") in ("direct_to_mediator", "direct_to_dependent", "mediator_to_dependent", "moderator_main_effect", "direct")]
-    indirect_h = [h for h in hypos if h.get("type") in ("mediation_indirect", "indirect")]
-    moderation_h = [h for h in hypos if h.get("type") in ("moderation_interaction", "conditional_indirect", "moderated_mediation", "moderation")]
-
-    p(doc, "A. Kelompok Pengaruh Langsung (Direct Effects):", bold=True, indent=0.5, space_after=3)
-    for i, h in enumerate(direct_h, 1):
+    # Bagian 2: Daftar Pertanyaan Penelitian Sekuensial Kontinu (1 s.d n) Tanpa Sub-Header Kelompok
+    for i, h in enumerate(hypos, 1):
         p(doc, f"{i}. {h['question']}", indent=0.75, space_after=3)
-
-    cur_num = len(direct_h) + 1
-    if indirect_h:
-        p(doc, "B. Kelompok Pengaruh Tidak Langsung / Mediasi (Indirect / Mediating Effects):", bold=True, indent=0.5, space_after=3)
-        for h in indirect_h:
-            p(doc, f"{cur_num}. {h['question']}", indent=0.75, space_after=3)
-            cur_num += 1
-
-    if moderation_h:
-        p(doc, "C. Kelompok Pengaruh Interaksi Moderasi (Moderating Effects):", bold=True, indent=0.5, space_after=3)
-        for h in moderation_h:
-            p(doc, f"{cur_num}. {h['question']}", indent=0.75, space_after=3)
-            cur_num += 1
 
 
 def _build_doc_sub_1_3(doc: Document, ctx: Dict[str, Any]):
     """
-    1.3 Pembatasan dan Tujuan Penelitian Doktoral Berbasis Dynamic Graph Topology.
-    Disusun dengan Delimitasi Doktoral dan Tujuan Terstruktur 3 Tingkat yang Sinkron 1-ke-1.
+    Sub-bab C. Tujuan Penelitian Doktoral Berbasis Dynamic Graph Topology.
+    Disusun dengan Delimitasi Doktoral dan Tujuan Sekuensial Kontinu (1 s.d Hn).
     """
-    h2(doc, "1.3 Pembatasan dan Tujuan Penelitian")
+    h2(doc, "C. Tujuan Penelitian")
     instansi = ctx["instansi"]
     y_var = ctx["y_var"]
     x_vars_str = ", ".join(ctx["x_vars"])
@@ -1011,33 +971,16 @@ def _build_doc_sub_1_3(doc: Document, ctx: Dict[str, Any]):
 
     p(doc, f"Agar penelitian Disertasi Doktor ini memiliki batasan yang terukur, mendalam, dan memenuhi kaidah ketat riset ilmiah pascasarjana, maka penelitian dibatasi pada pengujian empiris Model {model_acronym} yang memetakan hubungan kausalitas struktural antara {y_var} sebagai variabel endogen utama, {m_vars_str} sebagai variabel mediasi, {z_vars_str} sebagai variabel moderasi, dan {x_vars_str} sebagai variabel eksogen pada aparatur di lingkungan {instansi}.", indent=0.5, space_after=6)
 
-    p(doc, f"Sejalan dengan perumusan masalah di atas, tujuan dari penelitian Disertasi Doktor ini pada {instansi} adalah untuk:", indent=0.5, space_after=6)
+    p(doc, "Sejalan dengan pertanyaan penelitian di atas, tujuan dari penelitian ini adalah untuk:", indent=0.5, space_after=6)
 
-    direct_h = [h for h in hypos if h.get("type") in ("direct_to_mediator", "direct_to_dependent", "mediator_to_dependent", "moderator_main_effect", "direct")]
-    indirect_h = [h for h in hypos if h.get("type") in ("mediation_indirect", "indirect")]
-    moderation_h = [h for h in hypos if h.get("type") in ("moderation_interaction", "conditional_indirect", "moderated_mediation", "moderation")]
-
-    p(doc, "A. Kelompok Pengujian Pengaruh Langsung (Direct Effects):", bold=True, indent=0.5, space_after=3)
-    for i, h in enumerate(direct_h, 1):
+    # Daftar Tujuan Penelitian Sekuensial Kontinu (1 s.d n)
+    for i, h in enumerate(hypos, 1):
         p(doc, f"{i}. {h['objective']}", indent=0.75, space_after=3)
-
-    cur_num = len(direct_h) + 1
-    if indirect_h:
-        p(doc, "B. Kelompok Pengujian Efek Mediasi (Indirect / Mediating Effects):", bold=True, indent=0.5, space_after=3)
-        for h in indirect_h:
-            p(doc, f"{cur_num}. {h['objective']}", indent=0.75, space_after=3)
-            cur_num += 1
-
-    if moderation_h:
-        p(doc, "C. Kelompok Pengujian Efek Moderasi (Moderating Effects):", bold=True, indent=0.5, space_after=3)
-        for h in moderation_h:
-            p(doc, f"{cur_num}. {h['objective']}", indent=0.75, space_after=3)
-            cur_num += 1
 
 
 def _build_doc_sub_1_4(doc: Document, ctx: Dict[str, Any]):
     """1.4 Manfaat Penelitian (Teoretis & Praktis)."""
-    h2(doc, "1.4 Manfaat Penelitian")
+    h2(doc, "D. Manfaat Penelitian")
     instansi = ctx["instansi"]
 
     p(doc, "Penelitian Disertasi Doktor ini diharapkan mampu memberikan kontribusi dan manfaat substantif, baik secara teoretis-akademis maupun secara praktis-kebijakan:", indent=0.5, space_after=6)
@@ -1055,7 +998,7 @@ def _build_doc_sub_1_4(doc: Document, ctx: Dict[str, Any]):
 
 def _build_doc_sub_1_5(doc: Document, ctx: Dict[str, Any]):
     """1.5 Ruang Lingkup Penelitian Doktoral."""
-    h2(doc, "1.5 Ruang Lingkup Penelitian")
+    h2(doc, "E. Ruang Lingkup Penelitian")
     instansi = ctx["instansi"]
 
     p(doc, f"Ruang lingkup dalam penelitian Disertasi Doktor ini ditetapkan secara terukur sebagai berikut:", indent=0.5, space_after=6)
@@ -1068,7 +1011,7 @@ def _build_doc_sub_1_5(doc: Document, ctx: Dict[str, Any]):
 
 def _build_doc_sub_1_6(doc: Document, ctx: Dict[str, Any]):
     """1.6 Sistematika Penulisan Disertasi."""
-    h2(doc, "1.6 Sistematika Penulisan")
+    h2(doc, "F. Sistematika Penulisan")
     p(doc, "Naskah Disertasi Doktor ini disusun ke dalam 5 (lima) bab yang saling terkait secara logis dan terstruktur sebagai berikut:", indent=0.5, space_after=6)
     p(doc, "BAB I PENDAHULUAN: Memuat latar belakang masalah, identifikasi dan rumusan masalah, pembatasan dan tujuan penelitian, manfaat penelitian, ruang lingkup penelitian, serta sistematika penulisan.", indent=0.5, space_after=3)
     p(doc, "BAB II KAJIAN PUSTAKA, KERANGKA KONSEPTUAL, DAN PENGEMBANGAN HIPOTESIS: Menguraikan telaah Grand Theory, Middle Theory, kajian teoritis mendalam per variabel, penelitian terdahulu (state of the art), kerangka konseptual model hibrida, dan formulasi hipotesis penelitian.", indent=0.5, space_after=3)

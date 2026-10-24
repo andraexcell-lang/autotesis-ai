@@ -3182,7 +3182,10 @@ function getS3Config() {
     degree: "Doktor",
     is_s3: true,
     program_studi: "Program Doktor Ilmu Manajemen",
-    custom_subchapters: getS3CustomSubchapters(1)
+    custom_subchapters: [
+      ...getS3CustomSubchapters(1),
+      ...getS3CustomSubchapters(2)
+    ]
   };
 }
 
@@ -3396,18 +3399,27 @@ function saveS3CustomSubchapters(chapterNum = 1, list) {
   } catch (e) {
     console.warn("Gagal menyimpan custom subchapters:", e);
   }
-  updateS3Chapter1Count(list);
+  updateS3ChapterCount(chapterNum, list);
 }
 
-function updateS3Chapter1Count(customList) {
-  const countEl = document.getElementById("count-s3-ch-1");
+function updateS3ChapterCount(chapterNum = 1, customList) {
+  const countEl = document.getElementById(`count-s3-ch-${chapterNum}`);
   if (!countEl) return;
-  const count = (customList || getS3CustomSubchapters(1)).length;
-  if (count === 0) {
-    countEl.textContent = "Sub-Bab A s/d D (Default) • Est. 12-15 Halaman";
-  } else {
-    const lastLetter = String.fromCharCode(68 + count); // 68 adalah 'D'
-    countEl.textContent = `Sub-Bab A s/d ${lastLetter} (+${count} Kustom) • Est. ${12 + count * 2}-${15 + count * 3} Halaman`;
+  const count = (customList || getS3CustomSubchapters(chapterNum)).length;
+  if (chapterNum === 1) {
+    if (count === 0) {
+      countEl.textContent = "Sub-Bab A s/d D (Default) • Est. 12-15 Halaman";
+    } else {
+      const lastLetter = String.fromCharCode(68 + count); // 68 = 'D'
+      countEl.textContent = `Sub-Bab A s/d ${lastLetter} (+${count} Kustom) • Est. ${12 + count * 2}-${15 + count * 3} Halaman`;
+    }
+  } else if (chapterNum === 2) {
+    if (count === 0) {
+      countEl.textContent = "Sub-Bab A s/d D (Granular Modular) • Est. 40-60 Halaman";
+    } else {
+      const lastLetter = String.fromCharCode(68 + count);
+      countEl.textContent = `Sub-Bab A s/d ${lastLetter} (+${count} Kustom) • Est. ${40 + count * 5}-${60 + count * 8} Halaman`;
+    }
   }
 }
 
@@ -3429,7 +3441,7 @@ function renderS3CustomSubchapters(chapterNum = 1) {
         <span class="sub-badge" style="background: #f3e8ff; color: #7e22ce;">${escapeHtmlS3(item.code)}</span>
         <div class="sub-text">
           <strong>${escapeHtmlS3(item.code)}. ${escapeHtmlS3(item.title)}</strong>
-          <span class="sub-meta" style="color: #9333ea;">✨ Sub-Bab Kustom • Adaptif Ontologi S3</span>
+          <span class="sub-meta" style="color: #9333ea;">✨ Sub-Bab Kustom Bab ${chapterNum} • Adaptif Ontologi S3</span>
         </div>
       </div>
       <div class="sub-actions">
@@ -3457,16 +3469,16 @@ function renderS3CustomSubchapters(chapterNum = 1) {
     container.appendChild(row);
   });
 
-  updateS3Chapter1Count(list);
+  updateS3ChapterCount(chapterNum, list);
 }
 
-function initS3CustomSubchaptersUI() {
-  const triggerBtn = document.getElementById("btn-add-sub-trigger-ch-1");
-  const formBox = document.getElementById("form-add-sub-ch-1");
-  const cancelBtn = document.getElementById("btn-cancel-custom-sub-1");
-  const saveBtn = document.getElementById("btn-save-custom-sub-1");
-  const inputCode = document.getElementById("input-custom-sub-code-1");
-  const inputTitle = document.getElementById("input-custom-sub-title-1");
+function initS3CustomSubchaptersForChapter(chapterNum = 1) {
+  const triggerBtn = document.getElementById(`btn-add-sub-trigger-ch-${chapterNum}`);
+  const formBox = document.getElementById(`form-add-sub-ch-${chapterNum}`);
+  const cancelBtn = document.getElementById(`btn-cancel-custom-sub-${chapterNum}`);
+  const saveBtn = document.getElementById(`btn-save-custom-sub-${chapterNum}`);
+  const inputCode = document.getElementById(`input-custom-sub-code-${chapterNum}`);
+  const inputTitle = document.getElementById(`input-custom-sub-title-${chapterNum}`);
 
   if (!triggerBtn || !formBox) return;
 
@@ -3475,7 +3487,7 @@ function initS3CustomSubchaptersUI() {
     const isHidden = formBox.style.display === "none" || !formBox.style.display;
     formBox.style.display = isHidden ? "block" : "none";
     if (isHidden) {
-      const list = getS3CustomSubchapters(1);
+      const list = getS3CustomSubchapters(chapterNum);
       const nextCharCode = 69 + list.length; // 69 = 'E'
       if (inputCode) inputCode.value = String.fromCharCode(nextCharCode);
       inputTitle?.focus();
@@ -3497,25 +3509,30 @@ function initS3CustomSubchaptersUI() {
       return;
     }
 
-    const currentList = getS3CustomSubchapters(1);
+    const currentList = getS3CustomSubchapters(chapterNum);
     const newItem = {
-      id: `custom_1_${code}_${Date.now()}`,
-      chapter: 1,
+      id: `custom_${chapterNum}_${code}_${Date.now()}`,
+      chapter: chapterNum,
       code: code,
       title: title,
       created_at: Date.now()
     };
 
     currentList.push(newItem);
-    saveS3CustomSubchapters(1, currentList);
-    renderS3CustomSubchapters(1);
+    saveS3CustomSubchapters(chapterNum, currentList);
+    renderS3CustomSubchapters(chapterNum);
 
     if (inputTitle) inputTitle.value = "";
     formBox.style.display = "none";
-    setStatus("ready", `Sub-bab kustom "${code}. ${title}" berhasil ditambahkan ke Bab I.`);
+    setStatus("ready", `Sub-bab kustom "${code}. ${title}" berhasil ditambahkan ke Bab ${chapterNum}.`);
   });
 
-  renderS3CustomSubchapters(1);
+  renderS3CustomSubchapters(chapterNum);
+}
+
+function initS3CustomSubchaptersUI() {
+  initS3CustomSubchaptersForChapter(1);
+  initS3CustomSubchaptersForChapter(2);
 }
 
 async function handleS3CustomSubChapterWrite(item, btn) {

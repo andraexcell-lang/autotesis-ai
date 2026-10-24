@@ -93,41 +93,46 @@ S3_SUBCHAPTER_CATALOG = {
         "desc": "Kontribusi teoretis pengembangan grand theory dan novelty keilmuan serta manfaat praktis rekomendasi strategis bagi instansi objek penelitian."
     },
 
-    # Bab II: Kajian Pustaka & Hipotesis
+    # Bab II: Tinjauan Pustaka & Hipotesis (Struktur Acuan TAPD 2026)
+    "sub_2_1_0": {
+        "chapter": 2, "code": "A.1",
+        "title": "A.1 1. Grand Teori (Deduktif 3 Tingkat & Novelty Model)",
+        "desc": "Hierarki teoretis deduktif doktoral: Grand Theory, Middle Range Theory, Applied Theory, konstruksi Novelty Model, dan justifikasi Relevansi dengan Penelitian."
+    },
     "sub_2_1_1": {
-        "chapter": 2, "code": "2.1.1",
-        "title": "2.1.1 Kajian Teoritis Variabel Terikat (Y)",
-        "desc": "Kajian mendalam hakikat variabel dependen dari judul, Grand Theory, Middle Range Theory, dimensi ontologis, indikator operasional, dan faktor determinan."
+        "chapter": 2, "code": "A.2",
+        "title": "A.2 2. Kajian Teoritis Variabel Terikat (Y)",
+        "desc": "Kajian mendalam hakikat variabel dependen, 10 definisi ahli terkini, Tabel Matriks Komparasi 10 Definisi, sintesis peneliti, serta Tabel Dimensi dan Indikator Operasional Baku."
     },
     "sub_2_1_2": {
-        "chapter": 2, "code": "2.1.2",
-        "title": "2.1.2 Kajian Teoritis Variabel Mediasi (M)",
-        "desc": "Kajian mendalam variabel intervening mediasi dari judul, teori transmisi psikologis, peran jembatan struktural, dimensi dan indikator."
-    },
-    "sub_2_1_3": {
-        "chapter": 2, "code": "2.1.3",
-        "title": "2.1.3 Kajian Teoritis Variabel Bebas Utama (X1)",
-        "desc": "Kajian mendalam variabel bebas utama dari judul, grand theory kepemimpinan/perilaku organisasi, dimensi, indikator, dan mekanisme pengaruhnya."
+        "chapter": 2, "code": "A.3",
+        "title": "A.3 3. Kajian Teoritis Variabel Mediasi (M)",
+        "desc": "Kajian mendalam variabel intervening mediasi, teori transmisi psikologis, 10 definisi ahli, Tabel Matriks Komparasi, sintesis peneliti, serta Tabel Dimensi dan Indikator Baku."
     },
     "sub_2_1_4": {
-        "chapter": 2, "code": "2.1.4",
-        "title": "2.1.4 Kajian Teoritis Variabel Moderasi (Z) & Bebas Lainnya",
-        "desc": "Kajian mendalam variabel kontingensi moderasi dari judul, Contingency Theory, kondisi batas, dimensi, indikator, dan interaksi struktural."
+        "chapter": 2, "code": "A.4",
+        "title": "A.4 4. Kajian Teoritis Variabel Moderasi (Z)",
+        "desc": "Kajian mendalam variabel kontingensi moderasi, Contingency Theory, kondisi batas (boundary conditions), 10 definisi ahli, Tabel Matriks Komparasi, sintesis peneliti, serta Tabel Dimensi Indikator Baku."
+    },
+    "sub_2_1_3": {
+        "chapter": 2, "code": "A.5",
+        "title": "A.5 5. Kajian Teoritis Variabel Bebas (X1, X2... Xn)",
+        "desc": "Kajian mendalam seluruh pilar variabel bebas eksogen, teori kapasitas organisasi, 10 definisi per variabel, Tabel Matriks Komparasi, serta Tabel Dimensi dan Indikator Baku."
     },
     "sub_2_2": {
-        "chapter": 2, "code": "2.2",
-        "title": "2.2 Penelitian Terdahulu (State of the Art & Research Gap)",
-        "desc": "Sintesis matriks komparasi 10-12 jurnal internasional bereputasi (2022-2026) mengenai variabel-variabel dalam judul, telaah persamaan, perbedaan, dan celah riset."
+        "chapter": 2, "code": "B",
+        "title": "B. Hasil Penelitian Yang Relevan",
+        "desc": "Sintesis matriks komparasi 10-15 jurnal internasional bereputasi (2022-2026), telaah persamaan, perbedaan, state of the art, dan celah penelitian (research gap)."
     },
     "sub_2_3": {
-        "chapter": 2, "code": "2.3",
-        "title": "2.3 Kerangka Konseptual & Model Struktural Disertasi",
-        "desc": "Arsitektur pemikiran teoretis terpadu yang memetakan keterkaitan logis seluruh variabel judul ke dalam skema model struktural doktoral."
+        "chapter": 2, "code": "C",
+        "title": "C. Kerangka Berfikir",
+        "desc": "Arsitektur pemikiran teoretis terpadu kausalitas struktural moderated-mediation, argumentasi fenomena kelembagaan, dan Gambar 2.1 Bagan Kerangka Konseptual."
     },
     "sub_2_4": {
-        "chapter": 2, "code": "2.4",
-        "title": "2.4 Pengembangan Hipotesis Penelitian Doktoral",
-        "desc": "Formulasi deduktif seluruh hipotesis formal doktoral (H1 s.d Hm) dengan dukungan logika teoretis dan komparasi temuan empiris."
+        "chapter": 2, "code": "D",
+        "title": "D. Hipotesis Penelitian",
+        "desc": "Formulasi deduktif seluruh hipotesis formal doktoral berarah (H1 s.d Hn) yang selaras 1-ke-1 dengan Rumusan Masalah dan Tujuan Penelitian."
     },
 
     # Bab III: Metode Penelitian
@@ -541,6 +546,31 @@ ATURAN STRUKTUR & LARANGAN FORMAT:
 - DILARANG MENULISKAN SUB-JUDUL KELOMPOK seperti 'A. Kelompok Pengujian Pengaruh Langsung', 'B. Kelompok...', 'C. Kelompok...'.
 - Setiap butir tujuan penelitian WAJIB bernomor sekuensial kontinu (1 s.d {len(hypos)}) dan selaras 1-ke-1 dengan Rumusan Masalah serta Hipotesis Penelitian.
 - Gunakan formula baku doktoral: "Untuk menganalisis dan membuktikan pengaruh/peran..."
+"""
+    elif sub_id == "sub_2_1_0":
+        model_acronym = _generate_doctoral_model_acronym(ctx)
+        instruksi_khusus = f"""
+=== PETUNJUK SPESIFIK WAJIB 1. GRAND TEORI (SUB-BAB A.1) ===
+Judul Sub-bab WAJIB ditulis persis: A.1 1. Grand Teori
+SUB-BAB INDUK: A. KAJIAN PUSTAKA
+
+Naskah WAJIB disusun dalam 4 Bagian Terpadu berstandar tertinggi Pascasarjana Doktoral (S3):
+
+1. Paragraf Pembuka Hierarki Teoretis Deduktif:
+   - Jelaskan bahwa Disertasi ini dibangun di atas hierarki teoretis yang terstruktur secara deduktif, dimulai dari teori utama (Grand Theory), teori penghubung keperilakuan dan organisasi (Middle Range Theory), hingga teori praktis pengukuran lapangan (Applied Theory).
+
+2. Grand Theory (Teori Utama / Payung Filosofis):
+   - Uraikan secara mendalam Agency Theory (Jensen & Meckling, 1976), Human Capital Theory (Becker, 1964), serta Resource-Based View (Barney, 1991, dalam Hitt et al., 2023).
+   - Deklarasikan Novelty Model Disertasi: Model {model_acronym} (sebuah model struktural moderated-mediation yang menghubungkan pilar eksogen {x_vars_str}, mediasi jembatan transmisi {m_vars_str}, pengawal kontingensi {z_vars_str}, dan muara endogen {y_var}).
+   - WAJIB sertakan sub-bagian eksplisit: "Relevansi dengan Penelitian" yang menjelaskan justifikasi logis pemilihan Grand Theory terhadap dinamika {instansi}.
+
+3. Middle Range Theory (Teori Penghubung / Perilaku / Manajemen):
+   - Uraikan Stewardship Theory (Donaldson & Davis, 1991), Transformational Leadership Theory (Bass, 1985; Yukl, 2022), serta Organizational Behavior & Motivation Theory (Robbins & Judge, 2022; Ryan & Deci, 2022).
+   - WAJIB sertakan sub-bagian eksplisit: "Relevansi dengan Penelitian" yang menjelaskan mengapa variabel mediasi {m_vars_str} dan variabel moderasi {z_vars_str} mutlak dihadirkan dalam model.
+
+4. Applied Theory (Teori Terapan / Operasional Lapangan):
+   - Uraikan Campbell's Theory of Job Performance (Campbell & Wiernik, 2022) serta AMO Framework (Appelbaum et al., dalam Boxall & Purcell, 2022).
+   - WAJIB sertakan sub-bagian eksplisit: "Relevansi dengan Penelitian" yang memetakan bagaimana teori ini menjadi matriks operasional untuk merumuskan indikator pengukuran operasional di lapangan.
 """
     elif sub_id == "sub_2_1_1":
         instruksi_khusus = f"""
@@ -1010,17 +1040,50 @@ def _build_doc_sub_1_6(doc: Document, ctx: Dict[str, Any]):
     p(doc, "BAB V KESIMPULAN, IMPLIKASI, DAN SARAN: Menyajikan kesimpulan menyeluruh, implikasi teoretis (novelty doktoral), implikasi manajerial praktis, keterbatasan penelitian, dan agenda riset lanjutan.", indent=0.5, space_after=6)
 
 
-def _build_doc_sub_2_1_1(doc: Document, ctx: Dict[str, Any]):
-    """2.1.1 Kajian Teoritis Variabel Terikat (Y) - 10 Definisi Ahli & Dimensi Indikator."""
+def _build_doc_sub_2_1_0(doc: Document, ctx: Dict[str, Any]):
+    """A.1 1. Grand Teori - Hierarki Deduktif 3 Tingkat & Novelty Model S3."""
     h1(doc, "BAB II\n"
             "KAJIAN PUSTAKA, KERANGKA KONSEPTUAL, DAN PENGEMBANGAN HIPOTESIS")
-    h2(doc, "2.1 Kajian Teoritis")
+    h2(doc, "A. KAJIAN PUSTAKA")
+    h3(doc, "1. Grand Teori")
 
+    y = ctx["y_var"]
+    instansi = ctx["instansi"]
+    x_vars_str = ", ".join(ctx["x_vars"])
+    m_vars_str = ", ".join(ctx["m_vars"]) if ctx["m_vars"] else "(Tanpa variabel mediasi)"
+    z_vars_str = ", ".join(ctx["z_vars"]) if ctx["z_vars"] else "(Tanpa variabel moderasi)"
+    model_acronym = _generate_doctoral_model_acronym(ctx)
+
+    # 1. Paragraf Pembuka Deduktif
+    p(doc, "Grand theory merupakan landasan fundamental dan filosofis yang memayungi seluruh kerangka pemikiran dalam penelitian Disertasi Doktor ini, guna menjelaskan akar penyebab fenomena yang diteliti serta memberikan dasar epistemologis yang kokoh bagi perumusan model konseptual.", indent=0.5, space_after=6)
+    p(doc, "Penelitian ini dibangun di atas hierarki teoretis yang terstruktur secara deduktif, dimulai dari teori utama (Grand Theory), teori penghubung (Middle Range Theory), hingga teori praktis operasional (Applied Theory) guna menjawab permasalahan kesenjangan penelitian secara komprehensif.", indent=0.5, space_after=6)
+
+    # 2. Grand Theory
+    p(doc, "Sebagai Grand Theory, penelitian ini berakar pada Teori Keagenan (Agency Theory) yang dipelopori oleh Jensen & Meckling (1976), dalam Putri & Rachman, (2024) serta Teori Modal Manusia (Human Capital Theory) Becker (1964) yang diperkuat oleh Resource-Based View (RBV) Barney (1991), dalam Hitt et al., (2023). Dalam perspektif Teori Keagenan, tata kelola pada sektor publik melibatkan hubungan kontraktual antara masyarakat atau pemerintah sebagai Prinsipal dengan aparatur birokrasi sebagai Agen. Tantangan utama dalam relasi ini adalah adanya asimetri informasi (information asymmetry) dan kecenderungan moral hazard yang menuntut adanya mekanisme pengawasan, penguatan sistem nilai budaya, dan integritas moral aparatur. Sementara itu, perspektif Resource-Based View dan Human Capital Theory memposisikan aparatur sebagai aset intelektual strategis yang memiliki kapasitas bernilai, langka, dan sulit ditiru (valuable, rare, inimitable, and non-substitutable / VRIN) yang menjadi pilar keunggulan kinerja institusional.", indent=0.5, space_after=6)
+
+    # Deklarasi Novelty Model
+    p(doc, f"Sebagai bentuk kebaruan ilmiah (doctoral novelty), penelitian ini mengonstruksi model integratif yang disebut sebagai MODEL {model_acronym}. Model ini merupakan sebuah model struktural kontingensi hibrida (moderated-mediation model) yang dirancang secara orisinal untuk memecahkan anomali pencapaian kinerja pada {instansi}.", indent=0.5, space_after=6)
+    p(doc, f"Struktur arsitektur Model {model_acronym} menghubungkan pilar-pilar kapasitas organisasi sebagai Variabel Eksogen ({x_vars_str}) yang ditransmisikan melalui peran jembatan eksekusi Variabel Mediasi ({m_vars_str}), dengan diproteksi dan diperkuat oleh Variabel Moderasi ({z_vars_str}) sebagai kondisi batas (boundary conditions), guna mewujudkan keunggulan Variabel Endogen Utama ({y}). Sinergi ketiga komponen ini (Eksogen -> Mediasi -> Moderasi -> Endogen) menjadi terobosan teoretis dalam mengatasi keterbatasan model linier sederhana pada penelitian terdahulu.", indent=0.5, space_after=6)
+
+    # Relevansi Grand Theory
+    p(doc, f"Relevansi dengan Penelitian: Grand Theory ini menjadi pijakan filosofis utama karena memberikan pemahaman mendasar bahwa optimalisasi {y} pada {instansi} tidak dapat dicapai semata-mata melalui instruksi administratif formal, melainkan menuntut mitigasi masalah keagenan melalui pemberdayaan modal manusia ({x_vars_str}) yang terarah. Kapasitas modal manusia ini memerlukan jembatan transmisi psikologis ({m_vars_str}) dalam pelaksanaan tugas sehari-hari, serta mutlak membutuhkan payung komitmen kepemimpinan ({z_vars_str}) sebagai pengawal integritas sistem guna memastikan seluruh energi organisasi terfokus pada pencapaian kinerja publik yang akuntabel.", indent=0.5, space_after=6)
+
+    # 3. Middle Range Theory
+    p(doc, "Pada tataran Middle Range Theory, penelitian ini dipandu oleh Teori Kepemimpinan Transformasional (Transformational Leadership Theory) Bass (1985), dalam Yukl, (2022), Teori Stewardship Donaldson & Davis (1991), serta Teori Perilaku Organisasi dan Teori Motivasi (Robbins & Judge, 2022; Ryan & Deci, 2022). Berbeda dengan asumsi oportunistik murni, Teori Stewardship mendalilkan bahwa pimpinan dan aparatur pada dasarnya memiliki dorongan intrinsik untuk bertindak sebagai pelayan publik yang berintegritas. Pendekatan ini bersinergi dengan Kepemimpinan Transformasional yang menempatkan keteladanan pimpinan (tone at the top) sebagai inspirator yang mentransformasikan nilai-nilai etis ke seluruh jajaran organisasi.", indent=0.5, space_after=6)
+    p(doc, f"Relevansi dengan Penelitian: Teori tingkat menengah ini secara logis mendasari posisi {z_vars_str} sebagai variabel moderasi dan {m_vars_str} sebagai variabel mediasi. Pimpinan bertindak sebagai steward yang memberikan keteladanan, motivasi menginspirasi, dan perlindungan kebijakan, sehingga memperkuat daya dorong pilar-pilar kapasitas organisasi ({x_vars_str}) dalam membangkitkan komitmen tugas ({m_vars_str}) aparatur pada {instansi}.", indent=0.5, space_after=6)
+
+    # 4. Applied Theory
+    p(doc, "Pada tataran Applied Theory, penelitian ini mengaplikasikan Campbell's Theory of Job Performance (Campbell & Wiernik, 2022) serta AMO Framework (Ability, Motivation, Opportunity) yang dirumuskan oleh Appelbaum et al. (2000), dalam Boxall & Purcell, (2022). Teori Campbell secara tegas mendalilkan bahwa unjuk kerja merupakan fungsi dari perilaku nyata yang berada di bawah kendali individu dan terarah pada sasaran institusi. Kerangka kerja AMO menegaskan bahwa kinerja aparatur yang unggul merupakan hasil perkalian interaktif antara kompetensi intelektual (Ability), dorongan motif kerja (Motivation), dan ruang iklim kerja yang mendukung (Opportunity to participate).", indent=0.5, space_after=6)
+    p(doc, f"Relevansi dengan Penelitian: Teori terapan ini diaplikasikan langsung sebagai matriks operasional untuk merumuskan indikator pengukuran empiris {y} serta variabel-variabel penjelasnya. Melalui AMO Framework, seluruh dimensi dan indikator dalam Model {model_acronym} diturunkan secara presisi untuk mengukur kapabilitas teknis, dorongan motivasional, dan kondisi lingkungan kerja aparatur pada {instansi}.", indent=0.5, space_after=6)
+
+
+def _build_doc_sub_2_1_1(doc: Document, ctx: Dict[str, Any]):
+    """A.2 2. Kajian Teoritis Variabel Terikat (Y) - 10 Definisi Ahli & Dimensi Indikator."""
     y = ctx["y_var"]
     onto_vars = ctx.get("ontology", {}).get("variables", {})
     onto_y = onto_vars.get("y") or onto_vars.get("Y", {})
 
-    h3(doc, f"2.1.1 Kajian Teoritis {y}")
+    h2(doc, f"2. Kajian Teoritis {y}")
 
     # 1. Grand Theory & Middle-Range Theory
     p(doc, f"Kajian teoritis mengenai {y} berakar pada dua pilar Grand Theory utama dalam ranah manajemen dan psikologi organisasi, yaitu Goal-Setting Theory yang dirumuskan oleh Locke & Latham (1990), dalam Schunk, (2022) serta Resource-Based View (RBV) yang dipelopori oleh Barney (1991), dalam Hitt et al., (2023). Dalam perspektif Goal-Setting Theory, unjuk kerja individu dan kolektif di dalam organisasi digerakkan oleh keberadaan sasaran kerja yang spesifik, menantang (challenging), terukur, serta disertai mekanisme umpan balik berkala (feedback). Sasaran yang menantang secara kognitif memfokuskan perhatian, mengarahkan alokasi daya upaya, dan memelihara persistensi pegawai dalam menuntaskan tugas kedinasan. Sementara itu, kerangka Resource-Based View Barney (1991), dalam Hitt et al., (2023) memposisikan sumber daya manusia sebagai aset internal strategis yang memiliki karakteristik valuable, rare, in-imitable, dan non-substitutable (VRIN). Dalam paradigma RBV, {y} bukan sekadar luaran administratif mekanistis, melainkan manifestasi kapabilitas dinamis institusional yang menentukan keunggulan bersaing dan efektivitas organisasi secara berkelanjutan.", indent=0.5, space_after=6)
@@ -1085,7 +1148,7 @@ def _build_doc_sub_2_1_2(doc: Document, ctx: Dict[str, Any]):
         p(doc, "Model penelitian tidak menggunakan variabel intervening mediasi.", indent=0.5)
         return
 
-    h3(doc, f"2.1.2 Kajian Teoritis Variabel Mediasi ({m})")
+    h2(doc, f"3. Kajian Teoritis Variabel Mediasi ({m})")
 
     # 1. Grand Theory & Middle-Range Theory
     p(doc, f"Kajian teoritis mengenai {m} dilandaskan pada dua Grand Theory psikologi perilaku terkemuka, yaitu Social Cognitive Theory yang dipelopori oleh Bandura (1986), dalam Ryan & Deci, (2022) dan Self-Determination Theory (Ryan & Deci, 2022). Teori kognitif sosial Bandura menegaskan bahwa perilaku manusia digerakkan oleh interaksi timbal balik antara faktor personal-kognitif (termasuk efikasi diri), perilaku, dan stimulus lingkungan. Motivasi berfungsi sebagai daya dorong internal yang mengarahkan atensi dan energi individu. Sementara itu, Self-Determination Theory (Ryan & Deci, 2022) mengklasifikasikan motivasi ke dalam motivasi intrinsik (dorongan pemenuhan kepuasan batiniah atas tugas) dan motivasi ekstrinsik (dorongan instrumental yang dikondisikan oleh pengakuan, penghargaan, dan regulasi eksternal).", indent=0.5, space_after=6)
@@ -1143,7 +1206,7 @@ def _build_doc_sub_2_1_2(doc: Document, ctx: Dict[str, Any]):
 def _build_doc_sub_2_1_3(doc: Document, ctx: Dict[str, Any]):
     """2.1.3 Kajian Teoritis Variabel Bebas Utama (X1) - 10 Definisi Ahli & Dimensi Indikator."""
     x1 = ctx["x1"]
-    h3(doc, f"2.1.3 Kajian Teoritis Variabel Bebas ({x1})")
+    h2(doc, f"5. Kajian Teoritis Variabel-Variabel Bebas ({x1})")
 
     # 1. Grand Theory & Middle-Range Theory
     p(doc, f"Landasan konseptual mengenai {x1} berakar kuat pada Transformational Leadership Theory yang dipelopori oleh Bass (1985), dalam Yukl, (2022) dan Burns (1978), dalam Antonakis & Day, (2022), serta dielaborasi secara komprehensif oleh Yukl, (2022). Paradigma transformasional memandang kepemimpinan bukan sekadar pertukaran kontraktual jangka pendek (transactional), melainkan proses peningkatan kesadaran moral, pembaharuan nilai-nilai fundamental, penanaman visi bersama, dan pengorbanan kepentingan personal demi pencapaian misi organisasi yang lebih luhur.", indent=0.5, space_after=6)
@@ -1199,19 +1262,14 @@ def _build_doc_sub_2_1_3(doc: Document, ctx: Dict[str, Any]):
 
 
 def _build_doc_sub_2_1_4(doc: Document, ctx: Dict[str, Any]):
-    """2.1.4 Kajian Teoritis Variabel Moderasi (Z) & Bebas Lainnya - 10 Definisi Tiap Variabel."""
-    x1 = ctx["x1"]
-    m = ctx["m"]
+    """A.4 4. Kajian Teoritis Variabel Moderasi (Z) - 10 Definisi Ahli & Dimensi Indikator."""
     z = ctx["z"]
-    x2 = ctx["x2"]
-    x3 = ctx["x3"]
+    if not z:
+        h2(doc, "4. Kajian Teoritis Variabel Moderasi")
+        p(doc, "Model penelitian tidak menggunakan variabel moderasi.", indent=0.5)
+        return
 
-    h3(doc, f"2.1.4 Kajian Teoritis Variabel Moderasi ({z if z else 'Kontingensi'}) dan Variabel Bebas Lainnya")
-
-    # =========================================================================
-    # BAGIAN A: KAJIAN TEORITIS VARIABEL MODERASI (ETOS KERJA)
-    # =========================================================================
-    h3(doc, f"2.1.4.1 Kajian Teoritis Variabel Moderasi ({z})")
+    h2(doc, f"4. Kajian Teoritis Variabel Moderasi ({z})")
 
     p(doc, f"Kajian mengenai {z} sebagai variabel kontingensi berakar pada Contingency Theory of Organizations yang dipelopori oleh Donaldson (2001), dalam Donaldson, (2023) dan Teori Etos Kerja Multidimensional yang berakar pada pemikiran Weber (1905), dalam Donaldson, (2023) serta Miller et al. (2002), dalam Meriac et al., (2023). Contingency Theory mendalilkan bahwa efektivitas keterkaitan antar variabel dalam organisasi tidak bersifat absolut universal, melainkan dikondisikan oleh faktor-faktor situasional dan batas internal (boundary conditions). Dalam konteks ini, {z} diposisikan sebagai variabel moderasi yang memperkuat efektivitas transmisi pengaruh kepemimpinan dan motivasi terhadap pencapaian kinerja aparatur.", indent=0.5, space_after=6)
 
@@ -1357,7 +1415,7 @@ def _build_doc_sub_2_1_4(doc: Document, ctx: Dict[str, Any]):
 
 def _build_doc_sub_2_2(doc: Document, ctx: Dict[str, Any]):
     """2.2 Penelitian Terdahulu (State of the Art & Research Gap)."""
-    h2(doc, "2.2 Penelitian Terdahulu (State of the Art)")
+    h2(doc, "B. Hasil Penelitian Yang Relevan")
 
     p(doc, f"Telaah penelitian terdahulu (state of the art) dilakukan untuk memetakan posisi akademik disertasi ini dalam peta keilmuan internasional kontemporer. Sebanyak 10-12 artikel jurnal bereputasi Scopus dan Sinta (2022-2026) dianalisis untuk mengidentifikasi konsistensi temuan, metode, dan celah penelitian yang ada.", indent=0.5, space_after=6)
 
@@ -1379,7 +1437,7 @@ def _build_doc_sub_2_2(doc: Document, ctx: Dict[str, Any]):
 
 def _build_doc_sub_2_3(doc: Document, ctx: Dict[str, Any]):
     """2.3 Kerangka Konseptual & Model Struktural Disertasi."""
-    h2(doc, "2.3 Kerangka Konseptual dan Model Penelitian")
+    h2(doc, "C. Kerangka Berfikir")
     instansi = ctx["instansi"]
     m_type = ctx["model_type"].replace("_", " ").title()
 
@@ -1393,7 +1451,7 @@ def _build_doc_sub_2_3(doc: Document, ctx: Dict[str, Any]):
 
 def _build_doc_sub_2_4(doc: Document, ctx: Dict[str, Any]):
     """2.4 Pengembangan Hipotesis Penelitian Doktoral."""
-    h2(doc, "2.4 Pengembangan Hipotesis Penelitian")
+    h2(doc, "D. Hipotesis Penelitian")
     hypos = ctx["graph"]["hypotheses"]
 
     p(doc, "Berdasarkan telaah teori substantif, integrasi kerangka konseptual, serta dukungan temuan empiris terdahulu, maka hipotesis dalam Disertasi Doktor ini dirumuskan secara formal sebagai berikut:", indent=0.5, space_after=6)
@@ -1931,10 +1989,11 @@ S3_BUILDER_MAP = {
     "sub_1_5": _build_doc_sub_1_5,
     "sub_1_6": _build_doc_sub_1_6,
 
+    "sub_2_1_0": _build_doc_sub_2_1_0,
     "sub_2_1_1": _build_doc_sub_2_1_1,
     "sub_2_1_2": _build_doc_sub_2_1_2,
-    "sub_2_1_3": _build_doc_sub_2_1_3,
     "sub_2_1_4": _build_doc_sub_2_1_4,
+    "sub_2_1_3": _build_doc_sub_2_1_3,
     "sub_2_2": _build_doc_sub_2_2,
     "sub_2_3": _build_doc_sub_2_3,
     "sub_2_4": _build_doc_sub_2_4,
@@ -2226,7 +2285,7 @@ def build_s3_full_dissertation_doc(config: Optional[Dict[str, Any]] = None) -> T
     all_keys = [
         "sub_bagian_awal",
         "sub_1_1", "sub_1_2", "sub_1_3", "sub_1_4",
-        "sub_2_1_1", "sub_2_1_2", "sub_2_1_3", "sub_2_1_4", "sub_2_2", "sub_2_3", "sub_2_4",
+        "sub_2_1_0", "sub_2_1_1", "sub_2_1_2", "sub_2_1_4", "sub_2_1_3", "sub_2_2", "sub_2_3", "sub_2_4",
         "sub_3_1", "sub_3_2", "sub_3_3", "sub_3_4", "sub_3_5", "sub_3_6",
         "sub_4_1_1", "sub_4_1_2", "sub_4_1_3", "sub_4_1_4", "sub_4_1_5",
         "sub_4_2_poin_1", "sub_4_2_poin_2", "sub_4_2_poin_3", "sub_4_2_poin_4", "sub_4_2_poin_5", "sub_4_2_poin_6", "sub_4_2_poin_7",

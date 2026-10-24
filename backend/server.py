@@ -47,6 +47,7 @@ import academic_dimension_researcher
 import structural_graph_compiler
 import dynamic_pls_engine
 import engine_graph_dynamic
+import s3_title_parser
 from provenance import (
     label_data_source,
     label_origin,
@@ -1104,6 +1105,33 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 }
 
             # =========================================================================
+            # S3 DOCTORAL DISSERTATION ENGINE (V3.0) - PARSER & AUTO-DETECT JUDUL S3
+            # =========================================================================
+            elif path == "/api/s3/parse-title":
+                try:
+                    raw_title = body.get("title", "") or body.get("judul", "")
+                    parsed_s3 = s3_title_parser.parse_title_doctoral(raw_title)
+                    
+                    # Otomatis kompilasi graph model berdasarkan hasil deteksi judul
+                    compiled = structural_graph_compiler.compile_research_graph(
+                        model_type=parsed_s3.get("model_type", "moderated_mediation"),
+                        x_vars=parsed_s3.get("x_vars", []),
+                        m_vars=parsed_s3.get("m_vars", []),
+                        z_vars=parsed_s3.get("z_vars", []),
+                        y_var=parsed_s3.get("y_var", "Kinerja Pegawai"),
+                        instansi=parsed_s3.get("instansi", "Instansi Terkait")
+                    )
+                    response_data = {
+                        "status": "success",
+                        "title": raw_title,
+                        "data": parsed_s3,
+                        "graph": compiled
+                    }
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": f"Deteksi judul S3 gagal: {ex}"}
+
+            # =========================================================================
             # DYNAMIC RESEARCH GRAPH ENGINE (V3.0) - MULTI-X, MODERASI & MEDIASI TERMODERASI
             # (Modul Terpisah - 100% Tidak Mengganggu Mesin Master)
             # =========================================================================
@@ -1149,7 +1177,8 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                     if not out_name.endswith(".docx"):
                         out_name += ".docx"
                     out_path = os.path.join(OUTPUT_DIR, out_name)
-                    saved = engine_graph_dynamic.build_graph_model_docx(graph_spec, pls_res, out_path)
+                    sub_id = body.get("sub_id", "all")
+                    saved = engine_graph_dynamic.build_graph_model_docx(graph_spec, pls_res, out_path, sub_id=sub_id)
                     response_data = {
                         "status": "success",
                         "filename": out_name,

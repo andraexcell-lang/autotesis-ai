@@ -33,11 +33,19 @@ if (window.Office && Office.onReady) {
 }
 
 function initUI() {
-  // Tab Switching
+  // Dual-Master Switcher (S2 Tesis Magister vs S3 Disertasi Doktor)
+  initMasterSwitcher();
+
+  // Tab Switching (Scoped per active master nav-tabs)
   const tabs = document.querySelectorAll(".tab-btn");
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
-      tabs.forEach((t) => t.classList.remove("active"));
+      const parentNav = tab.closest(".nav-tabs");
+      if (parentNav) {
+        parentNav.querySelectorAll(".tab-btn").forEach((t) => t.classList.remove("active"));
+      } else {
+        tabs.forEach((t) => t.classList.remove("active"));
+      }
       document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
       tab.classList.add("active");
       const targetId = `panel-${tab.dataset.tab}`;
@@ -136,7 +144,7 @@ function initUI() {
     setStatus("ready", "Skrip diunduh sebagai KUESIONER_GOOGLE_FORM.gs — tempel isinya di script.google.com.");
   });
   document.getElementById("btn-generate-full")?.addEventListener("click", handleFullDocumentGeneration);
-  initGraphUI();
+  initMasterS3();
   
   // Dedicated Front Matter Export
   document.getElementById("btn-export-front-matter")?.addEventListener("click", async () => {
@@ -2164,214 +2172,487 @@ async function handleFullDocumentGeneration() {
 }
 
 // =========================================================================
-// GRAPH ENGINE (V3.0) - MULTI-X, MODERASI & MEDIASI TERMODERASI
+// DUAL-MASTER SWITCHER: MASTER S2 (TESIS) vs MASTER S3 (DISERTASI DOKTOR)
 // =========================================================================
-let currentGraphModel = null;
-let currentPlsResults = null;
+function initMasterSwitcher() {
+  const btnS2 = document.getElementById("btn-master-s2");
+  const btnS3 = document.getElementById("btn-master-s3");
+  const navS2 = document.getElementById("nav-tabs-s2");
+  const navS3 = document.getElementById("nav-tabs-s3");
+  const titleEl = document.getElementById("app-header-title");
+  const descEl = document.getElementById("app-header-desc");
 
-function initGraphUI() {
-  const modelTypeSel = document.getElementById("graph-model-type");
-  const groupM = document.getElementById("group-var-m");
-  const groupZ = document.getElementById("group-var-z");
-  const btnAddX = document.getElementById("btn-add-x-var");
-  const xContainer = document.getElementById("x-vars-container");
-  const btnCompile = document.getElementById("btn-compile-graph");
-  const btnSimulatePls = document.getElementById("btn-simulate-graph-pls");
-  const btnWriteWord = document.getElementById("btn-graph-write-native");
-  const btnDownloadDocx = document.getElementById("btn-graph-download-docx");
+  function switchToS2() {
+    if (btnS2) btnS2.classList.add("active");
+    if (btnS3) btnS3.classList.remove("active");
+    if (navS2) navS2.classList.remove("hidden");
+    if (navS3) navS3.classList.add("hidden");
+    if (titleEl) titleEl.textContent = "Asisten Tesis Magister";
+    if (descEl) descEl.textContent = "Penulisan otomatis 5 Bab & Olah Data PLS-SEM langsung ke dokumen Microsoft Word.";
 
+    // Hide all panels, activate active S2 tab
+    document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+    const activeTab = navS2?.querySelector(".tab-btn.active") || navS2?.querySelector(".tab-btn");
+    if (activeTab) {
+      activeTab.classList.add("active");
+      const panel = document.getElementById(`panel-${activeTab.dataset.tab}`);
+      if (panel) panel.classList.add("active");
+    }
+  }
+
+  function switchToS3() {
+    if (btnS3) btnS3.classList.add("active");
+    if (btnS2) btnS2.classList.remove("active");
+    if (navS3) navS3.classList.remove("hidden");
+    if (navS2) navS2.classList.add("hidden");
+    if (titleEl) titleEl.textContent = "👑 Asisten Disertasi Doktor (S3)";
+    if (descEl) descEl.textContent = "Model Hibrida Dinamis (Multi-Variabel Bebas, Mediasi & Moderasi) — Berstandar Pascasarjana.";
+
+    // Hide all panels, activate active S3 tab
+    document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+    const activeTab = navS3?.querySelector(".tab-btn.active") || navS3?.querySelector(".tab-btn");
+    if (activeTab) {
+      activeTab.classList.add("active");
+      const panel = document.getElementById(`panel-${activeTab.dataset.tab}`);
+      if (panel) panel.classList.add("active");
+    }
+
+    // Auto-detect S3 jika belum terkompilasi
+    if (!currentS3Graph) {
+      autoDetectS3Title(false);
+    }
+  }
+
+  btnS2?.addEventListener("click", switchToS2);
+  btnS3?.addEventListener("click", switchToS3);
+}
+
+// =========================================================================
+// MASTER S3: DISERTASI DOKTOR CONTROLLER & DYNAMIC PARSER
+// =========================================================================
+let currentS3Graph = null;
+let currentS3Pls = null;
+
+function initMasterS3() {
+  const inputJudul = document.getElementById("input-s3-judul");
+  const btnAutoDetect = document.getElementById("btn-s3-auto-detect");
+  const modelTypeSel = document.getElementById("input-s3-model-type");
+  const btnAddX = document.getElementById("btn-s3-add-x");
+  const xContainer = document.getElementById("s3-x-vars-container");
+  const inputPopulasi = document.getElementById("input-s3-populasi");
+  const inputSampel = document.getElementById("input-s3-sampel");
+  const inputSampleSize = document.getElementById("input-s3-sample-size");
+  const btnRunPls = document.getElementById("btn-s3-run-pls");
+  const btnWriteFullWord = document.getElementById("btn-s3-write-full-word");
+  const btnDownloadFull = document.getElementById("btn-s3-download-full");
+
+  // 1. Perhitungan Sampel Otomatis (Slovin e=5% / Sensus)
+  if (inputPopulasi) {
+    inputPopulasi.addEventListener("input", () => {
+      const N = parseInt(inputPopulasi.value, 10) || 0;
+      if (N <= 0) return;
+      let n;
+      if (N <= 100) {
+        n = N; // Sensus populasi kecil
+      } else {
+        n = Math.round(N / (1 + N * 0.0025));
+        if (n > N) n = N;
+      }
+      if (inputSampel) inputSampel.value = n;
+      if (inputSampleSize) inputSampleSize.value = n;
+    });
+  }
+
+  // 2. Pemilihan Jenis Arsitektur Model
   if (modelTypeSel) {
     modelTypeSel.addEventListener("change", () => {
       const val = modelTypeSel.value;
-      if (val === "moderation") {
-        if (groupM) groupM.style.display = "none";
-        if (groupZ) groupZ.style.display = "block";
-      } else if (val === "mediation") {
-        if (groupM) groupM.style.display = "block";
-        if (groupZ) groupZ.style.display = "none";
-      } else {
-        if (groupM) groupM.style.display = "block";
-        if (groupZ) groupZ.style.display = "block";
-      }
+      updateS3ModelVisibility(val);
+      compileS3Graph();
     });
   }
 
+  // 3. Tambah Variabel Bebas (X) Baru
   if (btnAddX && xContainer) {
     btnAddX.addEventListener("click", () => {
-      const rows = xContainer.querySelectorAll(".x-var-row");
-      const nextIdx = rows.length + 1;
+      const count = xContainer.querySelectorAll(".s3-x-row").length + 1;
       const row = document.createElement("div");
-      row.className = "x-var-row";
+      row.className = "s3-x-row";
       row.style.cssText = "display: flex; gap: 6px; align-items: center;";
       row.innerHTML = `
-        <span style="font-size: 11px; font-weight: 700; width: 28px; color: #475569;">X${nextIdx}:</span>
-        <input type="text" class="input-graph-x" value="Variabel X${nextIdx}" style="flex: 1; padding: 6px 10px; font-size: 11px;">
-        <button type="button" class="btn btn-outline btn-xs btn-remove-x" style="color: #ef4444; border-color: #fca5a5;">✕</button>
+        <span style="font-size: 11px; font-weight: 700; width: 28px; color: #475569;">X${count}:</span>
+        <input type="text" class="input-s3-x" value="Variabel X${count}" style="flex: 1; padding: 5px 8px; font-size: 11px;">
+        <button type="button" class="btn btn-outline btn-xs btn-s3-remove-x" style="color: #ef4444; border-color: #fca5a5;">✕</button>
       `;
       xContainer.appendChild(row);
-      attachRemoveXListeners();
+      attachS3RemoveXListeners();
+      compileS3Graph();
     });
-    attachRemoveXListeners();
   }
 
-  function attachRemoveXListeners() {
+  function attachS3RemoveXListeners() {
     if (!xContainer) return;
-    xContainer.querySelectorAll(".btn-remove-x").forEach(btn => {
-      btn.onclick = function() {
-        const row = this.closest(".x-var-row");
+    xContainer.querySelectorAll(".btn-s3-remove-x").forEach((btn) => {
+      btn.onclick = function () {
+        const row = this.closest(".s3-x-row");
         if (row) row.remove();
-        xContainer.querySelectorAll(".x-var-row").forEach((r, idx) => {
+        xContainer.querySelectorAll(".s3-x-row").forEach((r, idx) => {
           const sp = r.querySelector("span");
           if (sp) sp.textContent = `X${idx + 1}:`;
         });
+        compileS3Graph();
       };
     });
   }
+  attachS3RemoveXListeners();
 
-  if (btnCompile) btnCompile.addEventListener("click", handleCompileGraph);
-  if (btnSimulatePls) btnSimulatePls.addEventListener("click", handleSimulateGraphPls);
-  if (btnWriteWord) btnWriteWord.addEventListener("click", handleGraphWriteWord);
-  if (btnDownloadDocx) btnDownloadDocx.addEventListener("click", handleGraphDownloadDocx);
+  // 4. Deteksi Judul Otomatis & Live Debounce
+  if (btnAutoDetect) {
+    btnAutoDetect.addEventListener("click", () => autoDetectS3Title(true));
+  }
+
+  if (inputJudul) {
+    let s3Timer = null;
+    inputJudul.addEventListener("input", () => {
+      clearTimeout(s3Timer);
+      s3Timer = setTimeout(() => {
+        autoDetectS3Title(false);
+      }, 750);
+    });
+  }
+
+  // 5. Perubahan Input Variabel Manual
+  [
+    document.getElementById("input-s3-m"),
+    document.getElementById("input-s3-z"),
+    document.getElementById("input-s3-y"),
+    document.getElementById("input-s3-instansi")
+  ].forEach(el => {
+    if (el) {
+      el.addEventListener("change", () => compileS3Graph());
+    }
+  });
+
+  // 6. Tulis Sub-Bab & Unduh .docx Doktoral (Panel 2)
+  document.querySelectorAll(".btn-s3-write").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const subId = btn.dataset.sub;
+      await handleS3WriteChapter(subId, btn);
+    });
+  });
+
+  document.querySelectorAll(".btn-s3-docx").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const subId = btn.dataset.sub;
+      await handleS3DownloadSubchapterDocx(subId, btn);
+    });
+  });
+
+  // 7. Olah Data PLS-SEM Doktoral (Panel 3)
+  if (btnRunPls) {
+    btnRunPls.addEventListener("click", handleS3RunPls);
+  }
+
+  // 8. 1 Unduh Lengkap Disertasi (Panel 4)
+  if (btnWriteFullWord) {
+    btnWriteFullWord.addEventListener("click", handleS3WriteFullWord);
+  }
+  if (btnDownloadFull) {
+    btnDownloadFull.addEventListener("click", handleS3DownloadFull);
+  }
+
+  // Jalankan inisialisasi awal kompilasi S3 setelah render
+  setTimeout(() => {
+    if (!currentS3Graph) {
+      autoDetectS3Title(false);
+    }
+  }, 150);
 }
 
-async function handleCompileGraph() {
-  const btn = document.getElementById("btn-compile-graph");
-  if (btn) btn.disabled = true;
-  setStatus("working", "Mengompilasi Structural Graph & Hipotesis Formal...");
+function updateS3ModelVisibility(val) {
+  const groupM = document.getElementById("group-s3-m");
+  const groupZ = document.getElementById("group-s3-z");
+  const badge = document.getElementById("s3-model-badge");
+  if (val === "moderation") {
+    if (groupM) groupM.style.display = "none";
+    if (groupZ) groupZ.style.display = "block";
+    if (badge) {
+      badge.textContent = "Moderasi Murni";
+      badge.style.background = "#dbeafe";
+      badge.style.color = "#1e40af";
+    }
+  } else if (val === "mediation") {
+    if (groupM) groupM.style.display = "block";
+    if (groupZ) groupZ.style.display = "none";
+    if (badge) {
+      badge.textContent = "Mediasi Multi-X";
+      badge.style.background = "#e0e7ff";
+      badge.style.color = "#4338ca";
+    }
+  } else {
+    if (groupM) groupM.style.display = "block";
+    if (groupZ) groupZ.style.display = "block";
+    if (badge) {
+      badge.textContent = "Mediasi Termoderasi";
+      badge.style.background = "#fef3c7";
+      badge.style.color = "#b45309";
+    }
+  }
+}
+
+async function autoDetectS3Title(notifyUser = true) {
+  const inputJudul = document.getElementById("input-s3-judul");
+  const rawTitle = (inputJudul?.value || "").trim();
+  if (!rawTitle) return;
+
+  const statEl = document.getElementById("s3-detect-status");
+  if (statEl) {
+    statEl.style.display = "block";
+    statEl.style.color = "#4338ca";
+    statEl.textContent = "⚡ Menganalisis judul & menyusun model Disertasi S3...";
+  }
 
   try {
-    const model_type = document.getElementById("graph-model-type")?.value || "moderated_mediation";
-    const instansi = document.getElementById("graph-instansi")?.value || "";
-    const x_vars = Array.from(document.querySelectorAll(".input-graph-x")).map(i => i.value.trim()).filter(Boolean);
-    const m_vars = model_type !== "moderation" ? [document.getElementById("graph-var-m")?.value.trim()].filter(Boolean) : [];
-    const z_vars = model_type !== "mediation" ? [document.getElementById("graph-var-z")?.value.trim()].filter(Boolean) : [];
-    const y_var = document.getElementById("graph-var-y")?.value.trim() || "Kinerja Pegawai";
+    const res = await fetch(`${API_BASE}/s3/parse-title`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: rawTitle })
+    });
+    const json = await res.json();
+    if (!res.ok || json.status === "error") {
+      throw new Error(json.message || `HTTP ${res.status}`);
+    }
 
-    const payload = {
-      model_type,
-      x_vars,
-      m_vars,
-      z_vars,
-      y_var,
-      instansi
-    };
+    const data = json.data;
+    const graph = json.graph;
+    currentS3Graph = graph;
 
+    // 1. Update jenis model
+    const modelTypeSel = document.getElementById("input-s3-model-type");
+    if (modelTypeSel && data.model_type) {
+      modelTypeSel.value = data.model_type;
+      updateS3ModelVisibility(data.model_type);
+    }
+
+    // 2. Update instansi
+    const instansiInput = document.getElementById("input-s3-instansi");
+    if (instansiInput && data.instansi) {
+      instansiInput.value = data.instansi;
+    }
+
+    // 3. Update daftar variabel X
+    const xContainer = document.getElementById("s3-x-vars-container");
+    if (xContainer && data.x_vars && data.x_vars.length > 0) {
+      xContainer.innerHTML = "";
+      data.x_vars.forEach((xName, idx) => {
+        const row = document.createElement("div");
+        row.className = "s3-x-row";
+        row.style.cssText = "display: flex; gap: 6px; align-items: center;";
+        row.innerHTML = `
+          <span style="font-size: 11px; font-weight: 700; width: 28px; color: #475569;">X${idx + 1}:</span>
+          <input type="text" class="input-s3-x" value="${xName}" style="flex: 1; padding: 5px 8px; font-size: 11px;">
+          ${idx > 0 ? '<button type="button" class="btn btn-outline btn-xs btn-s3-remove-x" style="color: #ef4444; border-color: #fca5a5;">✕</button>' : ''}
+        `;
+        xContainer.appendChild(row);
+      });
+
+      // Attach remove handlers
+      xContainer.querySelectorAll(".btn-s3-remove-x").forEach((btn) => {
+        btn.onclick = function () {
+          const row = this.closest(".s3-x-row");
+          if (row) row.remove();
+          xContainer.querySelectorAll(".s3-x-row").forEach((r, i) => {
+            const sp = r.querySelector("span");
+            if (sp) sp.textContent = `X${i + 1}:`;
+          });
+          compileS3Graph();
+        };
+      });
+    }
+
+    // 4. Update M, Z, Y
+    const inputM = document.getElementById("input-s3-m");
+    if (inputM && data.m_vars && data.m_vars.length > 0) {
+      inputM.value = data.m_vars[0];
+    }
+    const inputZ = document.getElementById("input-s3-z");
+    if (inputZ && data.z_vars && data.z_vars.length > 0) {
+      inputZ.value = data.z_vars[0];
+    }
+    const inputY = document.getElementById("input-s3-y");
+    if (inputY && data.y_var) {
+      inputY.value = data.y_var;
+    }
+
+    // 5. Tampilkan rumus matematis & daftar hipotesis
+    renderS3GraphPreview(graph);
+
+    if (statEl) {
+      statEl.style.color = "#059669";
+      statEl.textContent = `⚡ Berhasil dideteksi via ${data.engine}: Model ${data.model_type} (${data.x_vars.length}X, ${data.m_vars.length}M, ${data.z_vars.length}Z) — ${graph.total_hypotheses} Hipotesis.`;
+    }
+
+    if (notifyUser) {
+      setStatus("ready", `Deteksi S3 berhasil: Model ${data.model_type} (${graph.total_hypotheses} hipotesis terkompilasi).`);
+    }
+  } catch (err) {
+    console.error("autoDetectS3Title error:", err);
+    if (statEl) {
+      statEl.style.color = "#b91c1c";
+      statEl.textContent = `❌ Deteksi judul S3 gagal: ${err.message}`;
+    }
+    if (notifyUser) {
+      setStatus("error", `Gagal deteksi judul S3: ${err.message}`);
+    }
+  }
+}
+
+async function compileS3Graph() {
+  const model_type = document.getElementById("input-s3-model-type")?.value || "moderated_mediation";
+  const instansi = document.getElementById("input-s3-instansi")?.value || "Instansi Terkait";
+  const x_vars = Array.from(document.querySelectorAll(".input-s3-x")).map(i => i.value.trim()).filter(Boolean);
+  const m_vars = model_type !== "moderation" ? [document.getElementById("input-s3-m")?.value.trim()].filter(Boolean) : [];
+  const z_vars = model_type !== "mediation" ? [document.getElementById("input-s3-z")?.value.trim()].filter(Boolean) : [];
+  const y_var = document.getElementById("input-s3-y")?.value.trim() || "Kinerja Pegawai";
+
+  try {
     const res = await fetch(`${API_BASE}/graph/compile`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ model_type, x_vars, m_vars, z_vars, y_var, instansi })
     });
-
-    const data = await res.json();
-    if (!res.ok || data.status === "error") {
-      throw new Error(data.message || `HTTP ${res.status}`);
+    const json = await res.json();
+    if (res.ok && json.status === "success") {
+      currentS3Graph = json.graph;
+      renderS3GraphPreview(currentS3Graph);
     }
-
-    currentGraphModel = data.graph;
-
-    // Render Preview
-    const badgeHipo = document.getElementById("badge-total-hipo");
-    if (badgeHipo) badgeHipo.textContent = `${currentGraphModel.total_hypotheses} Hipotesis`;
-
-    const eqList = document.getElementById("graph-equations-list");
-    if (eqList) {
-      eqList.innerHTML = currentGraphModel.equations.map(e => `<div>• <strong>${e.name}</strong>: ${e.formula}</div>`).join("");
-    }
-
-    const hipoList = document.getElementById("graph-hypotheses-list");
-    if (hipoList) {
-      hipoList.innerHTML = currentGraphModel.hypotheses.map(h => `
-        <div style="margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dashed #e2e8f0;">
-          <span style="display: inline-block; background: #e0e7ff; color: #3730a3; font-weight: 700; padding: 1px 6px; border-radius: 4px; font-size: 10px; margin-right: 4px;">${h.code}</span>
-          <span style="font-weight: 600; color: #1e293b;">[${h.relation}]</span>: ${h.statement}
-        </div>
-      `).join("");
-    }
-
-    document.getElementById("card-graph-result")?.classList.remove("hidden");
-    setStatus("ready", `Graph berhasil dikompilasi! Terbentuk ${currentGraphModel.total_hypotheses} hipotesis terstruktur.`);
-  } catch (err) {
-    console.error(err);
-    setStatus("error", `Gagal kompilasi graph: ${err.message}`);
-  } finally {
-    if (btn) btn.disabled = false;
+  } catch (e) {
+    console.warn("compileS3Graph error:", e);
   }
 }
 
-async function handleSimulateGraphPls() {
-  if (!currentGraphModel) {
-    await handleCompileGraph();
-    if (!currentGraphModel) return;
+function renderS3GraphPreview(graph) {
+  if (!graph) return;
+  const badgeHipo = document.getElementById("badge-s3-total-hipo");
+  if (badgeHipo) badgeHipo.textContent = `${graph.total_hypotheses} Hipotesis`;
+
+  const eqList = document.getElementById("s3-equations-list");
+  if (eqList && graph.equations) {
+    eqList.innerHTML = graph.equations.map(e => `<div>• <strong>${e.name}</strong>: ${e.formula}</div>`).join("");
   }
 
-  const btn = document.getElementById("btn-simulate-graph-pls");
+  const hipoList = document.getElementById("s3-hypotheses-list");
+  if (hipoList && graph.hypotheses) {
+    hipoList.innerHTML = graph.hypotheses.map(h => `
+      <div style="margin-bottom: 6px; padding-bottom: 5px; border-bottom: 1px dashed #e2e8f0;">
+        <span style="display: inline-block; background: #e0e7ff; color: #3730a3; font-weight: 700; padding: 1px 5px; border-radius: 4px; font-size: 10px; margin-right: 4px;">${h.code}</span>
+        <span style="font-weight: 600; color: #1e293b;">[${h.relation}]</span>: ${h.statement}
+      </div>
+    `).join("");
+  }
+}
+
+async function runS3PlsSimulation() {
+  if (!currentS3Graph) {
+    await compileS3Graph();
+  }
+  const sample_size = parseInt(document.getElementById("input-s3-sample-size")?.value || "110", 10);
+  const payload = {
+    graph: currentS3Graph,
+    sample_size
+  };
+
+  const res = await fetch(`${API_BASE}/graph/simulate-pls`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  if (!res.ok || data.status === "error") {
+    throw new Error(data.message || `HTTP ${res.status}`);
+  }
+  currentS3Pls = data.pls_results;
+  return currentS3Pls;
+}
+
+async function handleS3RunPls() {
+  const btn = document.getElementById("btn-s3-run-pls");
   if (btn) btn.disabled = true;
-  setStatus("working", "Menjalankan Simulasi SmartPLS 4 (Bootstrapping 5.000 & Evaluasi Hibrida)...");
+  setStatus("working", "Menjalankan Olah Data PLS-SEM Doktoral (Bootstrapping 5.000)...");
 
   try {
-    const sample_size = parseInt(document.getElementById("graph-sample-size")?.value || "92", 10);
-    const payload = {
-      graph: currentGraphModel,
-      sample_size
-    };
+    const pls = await runS3PlsSimulation();
 
-    const res = await fetch(`${API_BASE}/graph/simulate-pls`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    // Render results in #s3-pls-summary-tables
+    const container = document.getElementById("s3-pls-summary-tables");
+    if (container) {
+      let html = "";
 
-    const data = await res.json();
-    if (!res.ok || data.status === "error") {
-      throw new Error(data.message || `HTTP ${res.status}`);
-    }
+      // 1. Outer Model Table
+      html += `<div style="margin-bottom: 6px;"><strong style="color: #166534; font-size: 11px;">1. Evaluasi Model Pengukuran (Outer Model):</strong></div>`;
+      html += `<table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 12px;">
+        <thead>
+          <tr style="background: #e2e8f0; color: #1e293b; text-align: left;">
+            <th style="padding: 4px; border: 1px solid #cbd5e1;">Variabel</th>
+            <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">Cronbach's α</th>
+            <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">Composite Rel</th>
+            <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">AVE (>0.50)</th>
+            <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">Status</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      pls.construct_validity.forEach(c => {
+        html += `<tr>
+          <td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 600;">${c.variable}</td>
+          <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">${c.cronbach_alpha.toFixed(3)}</td>
+          <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">${c.composite_reliability.toFixed(3)}</td>
+          <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: right; font-weight: 600; color: #15803d;">${c.ave.toFixed(3)}</td>
+          <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center; color: #15803d; font-weight: 700;">Valid & Reliabel</td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
 
-    currentPlsResults = data.pls_results;
-
-    // Render Table Summary
-    const tableDiv = document.getElementById("graph-pls-summary-table");
-    if (tableDiv) {
-      let html = `<div style="margin-bottom: 8px;"><strong style="color: #166534;">Ringkasan Uji Hipotesis Struktural:</strong></div>`;
-      html += `<table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 10px;">
+      // 2. Hypotheses Testing Table
+      html += `<div style="margin-bottom: 6px;"><strong style="color: #166534; font-size: 11px;">2. Pengujian Hipotesis Struktural (Inner Model):</strong></div>`;
+      html += `<table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 12px;">
         <thead>
           <tr style="background: #e2e8f0; color: #1e293b; text-align: left;">
             <th style="padding: 4px; border: 1px solid #cbd5e1;">Hipo</th>
             <th style="padding: 4px; border: 1px solid #cbd5e1;">Jalur Hubungan</th>
-            <th style="padding: 4px; border: 1px solid #cbd5e1;">Path (β)</th>
-            <th style="padding: 4px; border: 1px solid #cbd5e1;">T-Stat</th>
-            <th style="padding: 4px; border: 1px solid #cbd5e1;">P-Val</th>
-            <th style="padding: 4px; border: 1px solid #cbd5e1;">Keputusan</th>
+            <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">β</th>
+            <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">T-Stat</th>
+            <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">P-Val</th>
+            <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">Keputusan</th>
           </tr>
         </thead>
         <tbody>`;
-
-      currentPlsResults.hypotheses_testing.forEach(h => {
+      pls.hypotheses_testing.forEach(h => {
         html += `<tr>
           <td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 700;">${h.code}</td>
           <td style="padding: 4px; border: 1px solid #cbd5e1;">${h.relation}</td>
           <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">${h.original_sample.toFixed(3)}</td>
           <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">${h.t_statistics.toFixed(3)}</td>
           <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">${h.p_value.toFixed(3)}</td>
-          <td style="padding: 4px; border: 1px solid #cbd5e1; color: #15803d; font-weight: 600;">${h.decision}</td>
+          <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center; color: #15803d; font-weight: 700;">${h.decision}</td>
         </tr>`;
       });
       html += `</tbody></table>`;
 
-      // Moderation section
-      if (currentPlsResults.moderation_details && currentPlsResults.moderation_details.length > 0) {
-        html += `<div style="margin: 8px 0 4px 0;"><strong style="color: #166534;">Evaluasi Moderasi (Simple Slope):</strong></div>`;
-        html += `<table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 10px;">
+      // 3. Moderation details if present
+      if (pls.moderation_details && pls.moderation_details.length > 0) {
+        html += `<div style="margin-bottom: 6px;"><strong style="color: #166534; font-size: 11px;">3. Evaluasi Moderasi (Simple Slope Analysis):</strong></div>`;
+        html += `<table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 12px;">
           <thead>
             <tr style="background: #e2e8f0; color: #1e293b;">
               <th style="padding: 4px; border: 1px solid #cbd5e1;">Pasangan Interaksi</th>
-              <th style="padding: 4px; border: 1px solid #cbd5e1;">-1SD (Rendah)</th>
-              <th style="padding: 4px; border: 1px solid #cbd5e1;">Mean</th>
-              <th style="padding: 4px; border: 1px solid #cbd5e1;">+1SD (Tinggi)</th>
-              <th style="padding: 4px; border: 1px solid #cbd5e1;">f²</th>
+              <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">-1 SD (Rendah)</th>
+              <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">Mean</th>
+              <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">+1 SD (Tinggi)</th>
+              <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">f²</th>
             </tr>
           </thead>
           <tbody>`;
-        currentPlsResults.moderation_details.forEach(m => {
+        pls.moderation_details.forEach(m => {
           html += `<tr>
             <td style="padding: 4px; border: 1px solid #cbd5e1;">${m.interaction_pair}</td>
             <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">${m.slope_low_z.toFixed(3)}</td>
@@ -2383,83 +2664,82 @@ async function handleSimulateGraphPls() {
         html += `</tbody></table>`;
       }
 
-      // Conditional Indirect section
-      if (currentPlsResults.conditional_indirect_details && currentPlsResults.conditional_indirect_details.length > 0) {
-        html += `<div style="margin: 8px 0 4px 0;"><strong style="color: #166534;">Mediasi Termoderasi (Conditional Indirect Effects):</strong></div>`;
+      // 4. Conditional Indirect Effects if present
+      if (pls.conditional_indirect_details && pls.conditional_indirect_details.length > 0) {
+        html += `<div style="margin-bottom: 6px;"><strong style="color: #166534; font-size: 11px;">4. Mediasi Termoderasi (Conditional Indirect Effects - Hayes PROCESS):</strong></div>`;
         html += `<table style="width: 100%; border-collapse: collapse; font-size: 10px;">
           <thead>
             <tr style="background: #e2e8f0; color: #1e293b;">
               <th style="padding: 4px; border: 1px solid #cbd5e1;">Jalur Mediasi Bersyarat</th>
-              <th style="padding: 4px; border: 1px solid #cbd5e1;">Index ModMed</th>
-              <th style="padding: 4px; border: 1px solid #cbd5e1;">P-Value</th>
-              <th style="padding: 4px; border: 1px solid #cbd5e1;">Kesimpulan</th>
+              <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">Index ModMed</th>
+              <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">P-Value</th>
+              <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">Kesimpulan</th>
             </tr>
           </thead>
           <tbody>`;
-        currentPlsResults.conditional_indirect_details.forEach(c => {
+        pls.conditional_indirect_details.forEach(c => {
           html += `<tr>
             <td style="padding: 4px; border: 1px solid #cbd5e1;">${c.path}</td>
             <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: right; font-weight: 700;">${c.index_of_mod_med.toFixed(3)}</td>
             <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: right;">${c.mod_med_p_value.toFixed(3)}</td>
-            <td style="padding: 4px; border: 1px solid #cbd5e1; color: #15803d;">Didukung Empiris (Signifikan)</td>
+            <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center; color: #15803d; font-weight: 600;">Signifikan (Didukung Empiris)</td>
           </tr>`;
         });
         html += `</tbody></table>`;
       }
 
-      tableDiv.innerHTML = html;
+      container.innerHTML = html;
     }
 
-    document.getElementById("card-graph-pls-results")?.classList.remove("hidden");
-    setStatus("ready", `Analisis PLS-SEM selesai! Seluruh ${currentPlsResults.total_hypotheses} hipotesis signifikan dan valid.`);
+    document.getElementById("s3-pls-result-box")?.classList.remove("hidden");
+    const badge = document.getElementById("badge-s3-pls-status");
+    if (badge) badge.textContent = `✅ ${pls.total_hypotheses} Hipotesis Teruji Signifikan`;
+    setStatus("ready", `Olah data PLS-SEM Doktoral selesai! Seluruh ${pls.total_hypotheses} hipotesis signifikan dan valid.`);
   } catch (err) {
     console.error(err);
-    setStatus("error", `Gagal analisis PLS: ${err.message}`);
+    setStatus("error", `Gagal analisis PLS-SEM: ${err.message}`);
   } finally {
     if (btn) btn.disabled = false;
   }
 }
 
-async function handleGraphWriteWord() {
-  if (!currentGraphModel || !currentPlsResults) {
-    setStatus("error", "Harap jalankan Kompilasi Graph dan Analisis PLS-SEM terlebih dahulu.");
-    return;
-  }
+async function handleS3WriteChapter(subId, btn) {
+  if (!currentS3Graph) await compileS3Graph();
+  if (!currentS3Pls) await runS3PlsSimulation();
 
-  const sub_id = document.getElementById("graph-select-subchapter")?.value || "all";
-  const btn = document.getElementById("btn-graph-write-native");
-  const statEl = document.getElementById("graph-action-status");
-  if (btn) btn.disabled = true;
-  setStatus("working", "Menulis naskah model hibrida langsung ke Microsoft Word...");
-  if (statEl) statEl.textContent = "Sedang mengetik ke dokumen Word...";
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "⏳ Menulis...";
+  setStatus("working", `Menulis sub-bab ${subId} Disertasi Doktor langsung ke Microsoft Word...`);
 
   try {
-    // 1. Coba via Office.js dengan docx base64
+    // 1. Docx base64 via Office.js
     const docRes = await fetch(`${API_BASE}/graph/generate-docx`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        graph: currentGraphModel,
-        pls_results: currentPlsResults,
-        filename: `NASKAH_MODEL_${currentGraphModel.model_type.toUpperCase()}.docx`
+        sub_id: subId,
+        graph: currentS3Graph,
+        pls_results: currentS3Pls,
+        filename: `S3_${subId.toUpperCase()}.docx`
       })
     });
     const docData = await docRes.json();
-    let officeJsInserted = false;
+    let inserted = false;
     if (docData && docData.docx_base64) {
-      officeJsInserted = await insertDocxBase64ToActiveWord(docData.docx_base64);
+      inserted = await insertDocxBase64ToActiveWord(docData.docx_base64);
     }
 
-    // 2. Jalur Native Word COM bila di desktop
+    // 2. Fallback Native COM
     let nativeSuccess = false;
     try {
       const nativeRes = await fetch(`${API_BASE}/graph/write-word`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sub_id,
-          graph: currentGraphModel,
-          pls_results: currentPlsResults
+          sub_id: subId,
+          graph: currentS3Graph,
+          pls_results: currentS3Pls
         })
       });
       const nativeData = await nativeRes.json();
@@ -2468,22 +2748,131 @@ async function handleGraphWriteWord() {
       console.warn("Native write call:", e);
     }
 
-    if (officeJsInserted || nativeSuccess) {
-      setStatus("ready", "Naskah model hibrida berhasil diketik langsung ke dokumen Word aktif!");
+    if (inserted || nativeSuccess) {
+      btn.textContent = "✅ Selesai!";
+      setStatus("ready", `Sub-bab ${subId} Disertasi berhasil ditulis langsung ke dokumen Word!`);
+    } else {
+      btn.textContent = "ℹ️ Tersimpan";
+      setStatus("ready", `Sub-bab ${subId} siap. Gunakan tombol .docx bila Word tidak terhubung.`);
+    }
+  } catch (err) {
+    console.error(err);
+    btn.textContent = "❌ Gagal";
+    setStatus("error", `Gagal menulis sub-bab ${subId}: ${err.message}`);
+  } finally {
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }, 2500);
+  }
+}
+
+async function handleS3DownloadSubchapterDocx(subId, btn) {
+  if (!currentS3Graph) await compileS3Graph();
+  if (!currentS3Pls) await runS3PlsSimulation();
+
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "⏳...";
+  setStatus("working", `Menyiapkan berkas .docx untuk sub-bab ${subId}...`);
+
+  try {
+    const filename = `DISERTASI_S3_${subId.toUpperCase()}_${new Date().toISOString().slice(0, 10)}.docx`;
+    const res = await fetch(`${API_BASE}/graph/generate-docx`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sub_id: subId,
+        graph: currentS3Graph,
+        pls_results: currentS3Pls,
+        filename
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || data.status === "error") {
+      throw new Error(data.message || `HTTP ${res.status}`);
+    }
+
+    const a = document.createElement("a");
+    a.href = `${API_BASE}/download/${data.filename}`;
+    a.download = data.filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setStatus("ready", `Dokumen ${data.filename} berhasil diunduh!`);
+  } catch (err) {
+    console.error(err);
+    setStatus("error", `Gagal mengunduh .docx: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+async function handleS3WriteFullWord() {
+  if (!currentS3Graph) await compileS3Graph();
+  if (!currentS3Pls) await runS3PlsSimulation();
+
+  const btn = document.getElementById("btn-s3-write-full-word");
+  const statEl = document.getElementById("s3-full-status");
+  if (btn) btn.disabled = true;
+  if (statEl) {
+    statEl.style.color = "#4338ca";
+    statEl.textContent = "⏳ Sedang merangkai seluruh naskah Disertasi Doktor ke Word...";
+  }
+  setStatus("working", "Merangkai seluruh naskah Disertasi Doktor ke Word aktif...");
+
+  try {
+    const docRes = await fetch(`${API_BASE}/graph/generate-docx`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sub_id: "all",
+        graph: currentS3Graph,
+        pls_results: currentS3Pls,
+        filename: `DISERTASI_DOKTOR_LENGKAP.docx`
+      })
+    });
+    const docData = await docRes.json();
+    let inserted = false;
+    if (docData && docData.docx_base64) {
+      inserted = await insertDocxBase64ToActiveWord(docData.docx_base64);
+    }
+
+    let nativeSuccess = false;
+    try {
+      const nativeRes = await fetch(`${API_BASE}/graph/write-word`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sub_id: "all",
+          graph: currentS3Graph,
+          pls_results: currentS3Pls
+        })
+      });
+      const nativeData = await nativeRes.json();
+      if (nativeData.status === "success") nativeSuccess = true;
+    } catch (e) {
+      console.warn("Native write call:", e);
+    }
+
+    if (inserted || nativeSuccess) {
+      setStatus("ready", "Naskah Disertasi Doktor utuh berhasil diketik ke dokumen Word aktif!");
       if (statEl) {
         statEl.style.color = "#15803d";
         statEl.textContent = "✅ Berhasil disisipkan ke dokumen Word aktif!";
       }
     } else {
-      setStatus("ready", "Naskah dokumen Word telah disiapkan.");
+      setStatus("ready", "Dokumen utuh telah selesai dibangkitkan.");
       if (statEl) {
         statEl.style.color = "#0369a1";
-        statEl.textContent = `ℹ️ File dokumen siap. Gunakan tombol 'Unduh .docx Standar' bila Word tidak terbuka.`;
+        statEl.textContent = "ℹ️ Berkas siap. Klik 'Unduh File Dokumen Utuh (.docx)' untuk menyimpan.";
       }
     }
   } catch (err) {
     console.error(err);
-    setStatus("error", `Gagal menulis ke Word: ${err.message}`);
+    setStatus("error", `Gagal menulis naskah penuh: ${err.message}`);
     if (statEl) {
       statEl.style.color = "#b91c1c";
       statEl.textContent = `❌ ${err.message}`;
@@ -2493,51 +2882,51 @@ async function handleGraphWriteWord() {
   }
 }
 
-async function handleGraphDownloadDocx() {
-  if (!currentGraphModel || !currentPlsResults) {
-    setStatus("error", "Harap jalankan Kompilasi Graph dan Analisis PLS-SEM terlebih dahulu.");
-    return;
-  }
+async function handleS3DownloadFull() {
+  if (!currentS3Graph) await compileS3Graph();
+  if (!currentS3Pls) await runS3PlsSimulation();
 
-  const btn = document.getElementById("btn-graph-download-docx");
-  const statEl = document.getElementById("graph-action-status");
+  const btn = document.getElementById("btn-s3-download-full");
+  const statEl = document.getElementById("s3-full-status");
   if (btn) btn.disabled = true;
-  setStatus("working", "Membuat dokumen Word (.docx) standar By SkripsiPlg...");
+  if (statEl) {
+    statEl.style.color = "#4338ca";
+    statEl.textContent = "⏳ Mempersiapkan berkas .docx Disertasi Doktor utuh...";
+  }
+  setStatus("working", "Membuat berkas Disertasi Doktor lengkap .docx...");
 
   try {
-    const filename = `TESIS_MODEL_${currentGraphModel.model_type.toUpperCase()}_${new Date().toISOString().slice(0, 10)}.docx`;
+    const filename = `DISERTASI_DOKTOR_S3_${new Date().toISOString().slice(0, 10)}.docx`;
     const res = await fetch(`${API_BASE}/graph/generate-docx`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        graph: currentGraphModel,
-        pls_results: currentPlsResults,
+        sub_id: "all",
+        graph: currentS3Graph,
+        pls_results: currentS3Pls,
         filename
       })
     });
-
     const data = await res.json();
     if (!res.ok || data.status === "error") {
       throw new Error(data.message || `HTTP ${res.status}`);
     }
 
-    // Trigger download
-    const dlUrl = `${API_BASE}/download/${data.filename}`;
     const a = document.createElement("a");
-    a.href = dlUrl;
+    a.href = `${API_BASE}/download/${data.filename}`;
     a.download = data.filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
 
-    setStatus("ready", `Dokumen ${data.filename} berhasil diunduh!`);
+    setStatus("ready", `Disertasi Doktor ${data.filename} berhasil diunduh!`);
     if (statEl) {
       statEl.style.color = "#15803d";
       statEl.textContent = `✅ Unduhan dimulai: ${data.filename}`;
     }
   } catch (err) {
     console.error(err);
-    setStatus("error", `Gagal membuat .docx: ${err.message}`);
+    setStatus("error", `Gagal mengunduh disertasi: ${err.message}`);
     if (statEl) {
       statEl.style.color = "#b91c1c";
       statEl.textContent = `❌ ${err.message}`;

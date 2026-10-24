@@ -350,64 +350,72 @@ def generate_sub_5_1(compiled_graph: Dict[str, Any], pls_res: Dict[str, Any]) ->
     return [{"type": "body", "text": text.strip()}]
 
 
-def build_graph_model_docx(compiled_graph: Dict[str, Any], pls_res: Dict[str, Any], output_path: str) -> str:
+def build_graph_model_docx(compiled_graph: Dict[str, Any], pls_res: Dict[str, Any], output_path: str, sub_id: str = "all") -> str:
     """
-    Menghasilkan berkas Word .docx lengkap untuk naskah riset model dinamis / hibrida.
+    Menghasilkan berkas Word .docx untuk naskah riset model dinamis / hibrida.
+    Mendukung pembuatan sub-bab spesifik atau seluruh naskah lengkap.
     """
     doc = Document()
     setup_page(doc)
     
     # Judul Header Dokumen
     h1(doc, "MODEL PENELITIAN KUANTITATIF TINGKAT LANJUT")
-    h2(doc, f"Analisis Empiris Model: {compiled_graph['model_type'].replace('_', ' ').title()}")
-    p(doc, f"Instansi Penelitian: {compiled_graph['instansi']}", italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
-    p(doc, f"Total Variabel: {compiled_graph['total_nodes']} | Total Hipotesis: {compiled_graph['total_hypotheses']}", italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
+    h2(doc, f"Analisis Empiris Model: {compiled_graph.get('model_type', '').replace('_', ' ').title()}")
+    p(doc, f"Instansi Penelitian: {compiled_graph.get('instansi', '')}", italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
+    p(doc, f"Total Variabel: {compiled_graph.get('total_nodes', 0)} | Total Hipotesis: {compiled_graph.get('total_hypotheses', 0)}", italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
     p(doc, "", space_after=12)
 
     # 1. Rumusan Masalah
-    h2(doc, "1.2 Rumusan Masalah")
-    for item in generate_sub_1_2(compiled_graph):
-        p(doc, item["text"], space_after=12)
+    if sub_id in ("all", "sub_1_2"):
+        h2(doc, "1.2 Rumusan Masalah")
+        for item in generate_sub_1_2(compiled_graph):
+            p(doc, item["text"], space_after=12)
 
     # 2. Tujuan Penelitian
-    h2(doc, "1.3 Tujuan Penelitian")
-    for item in generate_sub_1_3(compiled_graph):
-        p(doc, item["text"], space_after=12)
+    if sub_id in ("all", "sub_1_3"):
+        h2(doc, "1.3 Tujuan Penelitian")
+        for item in generate_sub_1_3(compiled_graph):
+            p(doc, item["text"], space_after=12)
 
     # 3. Kerangka Konseptual & Hipotesis
-    h2(doc, "2.3 Kerangka Konseptual & Model Hipotesis")
-    for item in generate_sub_2_3(compiled_graph):
-        p(doc, item["text"], space_after=12)
+    if sub_id in ("all", "sub_2_3"):
+        h2(doc, "2.3 Kerangka Konseptual & Model Hipotesis")
+        for item in generate_sub_2_3(compiled_graph):
+            p(doc, item["text"], space_after=12)
 
     # 4. Teknik Analisis Data & Model Struktural
-    h2(doc, "3.5 Rancangan Analisis PLS-SEM & Model Persamaan")
-    for item in generate_sub_3_5(compiled_graph):
-        p(doc, item["text"], space_after=12)
+    if sub_id in ("all", "sub_3_5"):
+        h2(doc, "3.5 Rancangan Analisis PLS-SEM & Model Persamaan")
+        for item in generate_sub_3_5(compiled_graph):
+            p(doc, item["text"], space_after=12)
 
     # 5. Hasil Analisis PLS-SEM
-    h2(doc, "4.2 Hasil Evaluasi Model Pengukuran dan Struktural")
-    for item in generate_sub_4_2_results(compiled_graph, pls_res):
-        if item["type"] == "body":
-            p(doc, item["text"], space_after=12)
-        elif item["type"] == "table":
-            add_table_data(
-                doc,
-                title=item["title"],
-                headers=item["headers"],
-                data=item["rows"],
-                source=item.get("source", "")
-            )
-            p(doc, "", space_after=8)
+    if sub_id in ("all", "sub_4_2"):
+        h2(doc, "4.2 Hasil Evaluasi Model Pengukuran dan Struktural")
+        for item in generate_sub_4_2_results(compiled_graph, pls_res):
+            if item["type"] == "body":
+                p(doc, item["text"], space_after=12)
+            elif item["type"] == "table":
+                add_table_data(
+                    doc,
+                    title=item["title"],
+                    headers=item["headers"],
+                    data=item["rows"],
+                    source=item.get("source", "")
+                )
+                p(doc, "", space_after=8)
 
     # 6. Pembahasan Komprehensif
-    h2(doc, "4.4 Pembahasan Hasil Penelitian")
-    for item in generate_sub_4_4_discussion(compiled_graph, pls_res):
-        p(doc, item["text"], space_after=12)
+    if sub_id in ("all", "sub_4_4"):
+        h2(doc, "4.4 Pembahasan Hasil Penelitian")
+        for item in generate_sub_4_4_discussion(compiled_graph, pls_res):
+            p(doc, item["text"], space_after=12)
 
     # 7. Kesimpulan
-    h2(doc, "5.1 Kesimpulan Penelitian")
-    for item in generate_sub_5_1(compiled_graph, pls_res):
-        p(doc, item["text"], space_after=12)
+    if sub_id in ("all", "sub_5_1"):
+        h2(doc, "5.1 Kesimpulan Penelitian")
+        for item in generate_sub_5_1(compiled_graph, pls_res):
+            p(doc, item["text"], space_after=12)
 
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     doc.save(output_path)
@@ -436,6 +444,9 @@ def write_graph_subchapter_native(sub_id: str, compiled_graph: Dict[str, Any], p
     elif sub_id == "sub_3_5":
         paragraphs.append({"type": "heading2", "text": "3.5 Model Struktural PLS-SEM"})
         paragraphs.extend(generate_sub_3_5(compiled_graph))
+    elif sub_id == "sub_4_2":
+        paragraphs.append({"type": "heading2", "text": "4.2 Hasil Evaluasi Model Pengukuran dan Struktural"})
+        paragraphs.extend(generate_sub_4_2_results(compiled_graph, pls_res))
     elif sub_id == "sub_4_4":
         paragraphs.append({"type": "heading2", "text": "4.4 Pembahasan Hasil Penelitian"})
         paragraphs.extend(generate_sub_4_4_discussion(compiled_graph, pls_res))

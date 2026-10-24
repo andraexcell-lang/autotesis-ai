@@ -605,89 +605,152 @@ def _build_doc_sub_1_6(doc: Document, ctx: Dict[str, Any]):
 
 
 def _build_doc_sub_2_1_1(doc: Document, ctx: Dict[str, Any]):
-    """2.1.1 Kajian Teoritis Variabel Terikat (Y)."""
+    """2.1.1 Kajian Teoritis Variabel Terikat (Y) - Standar Doktoral S3."""
     h1(doc, "BAB II\nKAJIAN PUSTAKA, KERANGKA KONSEPTUAL, DAN PENGEMBANGAN HIPOTESIS")
     h2(doc, "2.1 Kajian Teoritis")
-    h3(doc, f"2.1.1 Kajian Teoritis {ctx['y_var']}")
 
     y = ctx["y_var"]
-    onto_y = ctx["ontology"]["variables"].get("Y", {})
-    gt = onto_y.get("grand_theory", "Goal Setting Theory (Locke & Latham, 2019) dan Resource-Based View (Barney, 2021)")
-    tokoh = onto_y.get("tokoh_ahli", "Locke & Latham (2019); Armstrong & Taylor (2020); Mathis & Jackson (2019)")
-    definisi = onto_y.get("definisi", f"Hasil kerja secara kualitas, kuantitas, dan efektivitas kerja yang dicapai oleh pegawai dalam melaksanakan tugas kedinasan.")
+    instansi = ctx["instansi"]
+    onto_vars = ctx.get("ontology", {}).get("variables", {})
+    onto_y = onto_vars.get("y") or onto_vars.get("Y", {})
 
-    p(doc, f"Kajian teoritis mengenai {y} berakar pada landasan filosofis {gt}. Menurut pandangan para ahli terkemuka seperti {tokoh}, {y} dipahami sebagai {definisi}", indent=0.5, space_after=6)
-    p(doc, f"Dalam konteks manajemen sumber daya manusia tingkat lanjut, {y} bukan sekadar luaran administratif mekanistis, melainkan cerminan dari integrasi kompetensi, komitmen psikologis, dan dedikasi profesional dalam mencapai sasaran strategis institusi.", indent=0.5, space_after=6)
+    gt = onto_y.get("grand_theory", "Goal-Setting Theory (Locke & Latham, 1990, 2019) dan Resource-Based View (Barney, 1991, 2021)")
+    tokoh = onto_y.get("tokoh_ahli", "Locke & Latham (2019); Armstrong & Taylor (2020); Mathis & Jackson (2019); Mangkunegara (2022); Kasmir (2023)")
+    definisi = onto_y.get("definisi", f"Hasil kerja secara kualitas dan kuantitas yang dicapai oleh seorang pegawai dalam melaksanakan tugasnya sesuai dengan tanggung jawab yang diberikan.")
 
-    # Dimensi & Indikator
+    h3(doc, f"2.1.1 Kajian Teoritis {y}")
+
+    # Alinea 1: Grand Theory & Landasan Filosofis
+    p(doc, f"Kajian teoritis mengenai {y} dalam Disertasi Doktor ini berakar pada dua pilar Grand Theory utama, yaitu Goal-Setting Theory yang dirumuskan oleh Edwin Locke dan Gary Latham (1990, 2019) serta Resource-Based View (RBV) yang dikembangkan oleh Jay Barney (1991, 2021). Dalam perspektif Goal-Setting Theory, kinerja individu dan kolektif di dalam organisasi didorong oleh keberadaan sasaran kerja yang jelas (specific), menantang (challenging), terukur, serta disertai umpan balik berkala (feedback). Sasaran yang menantang secara psikologis menggerakkan fokus perhatian, pengerahan daya upaya secara maksimal, dan persistensi pegawai dalam menuntaskan tugas kedinasan. Sementara itu, kerangka Resource-Based View (Barney, 2021) memposisikan sumber daya manusia sebagai aset internal strategis yang berkarakteristik valuable, rare, in-imitable, and non-substitutable (VRIN). Dalam paradigma RBV, {y} bukan sekadar luaran administratif mekanistis, melainkan manifestasi dari keunggulan kapabilitas dinamis institusional yang menentukan efektivitas organisasi dalam jangka panjang.", indent=0.5, space_after=6)
+
+    # Alinea 2: Middle-Range Theory (Campbell & AMO Framework)
+    p(doc, f"Pada tataran Middle-Range Theory, konstruksi teoretis {y} dipandu oleh Campbell's Theory of Job Performance (Campbell, 1990; Campbell & Wiernik, 2015) serta AMO Framework (Ability, Motivation, Opportunity) yang diperkenalkan oleh Appelbaum et al. (2000) dan Boxall & Purcell (2016). Teori Campbell secara tegas membedakan antara perilaku kerja (performance behaviors) dan hasil atau konsekuensi kerja (performance outcomes). Kinerja pegawai dipahami sebagai seperangkat tindakan atau perilaku nyata yang relevan dengan sasaran organisasi dan dapat diukur tingkat kemampuannya. Pendekatan ini disempurnakan oleh konsep AMO, yang mendalilkan bahwa {y} merupakan fungsi interaktif multiplikatif antara kompetensi dan keterampilan teknis aparatur (Ability), dorongan motif intrinsik dan ekstrinsik (Motivation), serta tersedianya iklim organisasi dan ruang partisipasi yang kondusif (Opportunity to participate).", indent=0.5, space_after=6)
+
+    # Alinea 3: Evolusi Konseptual & Sintesis Definisi Para Ahli
+    p(doc, f"Dalam menelaah definisi konseptual {y}, literatur manajemen sumber daya manusia menunjukkan spektrum pemikiran para pakar otoritatif. Bernardin & Russell (2020) mendefinisikan kinerja sebagai catatan atas hasil-hasil yang diperoleh dari fungsi-fungsi pekerjaan tertentu selama periode waktu yang ditetapkan. Armstrong & Taylor (2020) memandang kinerja sebagai pencapaian sasaran kerja yang terintegrasi antara bagaimana pekerjaan diselesaikan (perilaku) dan apa yang sesungguhnya dicapai (hasil). Lebih lanjut, Colquitt, LePine, & Wesson (2022) membagi kinerja ke dalam tiga domain utama: task performance (kinerja tugas pokok), citizenship behavior (perilaku kewargaan organisasional), dan peniadaan counterproductive work behavior. Adapun dalam konteks manajemen aparatur di Indonesia, {tokoh} menegaskan bahwa {y} mencerminkan {definisi.lower()} Berdasarkan sintesis kritis atas pandangan teoretis para ahli tersebut, dalam penelitian doktoral ini {y} disintesiskan sebagai konstruk multidimensional yang merefleksikan keberhasilan aparatur sipil dalam menghasilkan luaran tugas kedinasan yang bermutu tinggi, memenuhi target kuantitas beban kerja, disiplin terhadap batas tenggat waktu penyelesaian, serta berdaya guna dalam mendayagunakan sumber daya kerja secara mandiri dan kolaboratif.", indent=0.5, space_after=6)
+
+    # Alinea 4: Dimensi dan Indikator Operasional Baku
     dims = onto_y.get("dimensi", [])
-    if dims:
-        p(doc, f"Secara operasional, pengukuran {y} diturunkan ke dalam dimensi-dimensi baku sebagai berikut:", indent=0.5, space_after=3)
-        for d in dims:
-            p(doc, f"• Dimensi {d['nama']}: mencakup indikator {', '.join(d.get('indikator', []))}.", indent=0.75, space_after=3)
+    if not dims:
+        dims = [
+            {"nama": "Kualitas Pekerjaan (Quality of Work)", "indikator": ["Tingkat ketelitian dan kerapian hasil pelaksanaan tugas kedinasan", "Tingkat kesesuaian hasil kerja dengan Standar Operasional Prosedur (SOP) dan regulasi"]},
+            {"nama": "Kuantitas Output (Quantity of Output)", "indikator": ["Ketercapaian target volume pekerjaan rutin kedinasan", "Kemampuan menuntaskan penugasan kedinasan tambahan di luar target rutin"]},
+            {"nama": "Ketepatan Waktu (Timeliness / Punctuality)", "indikator": ["Kecepatan penuntasan tugas kedinasan sebelum atau tepat pada batas tenggat waktu", "Daya tanggap (responsiveness) dalam menindaklanjuti disposisi dan instruksi kedinasan"]},
+            {"nama": "Efektivitas & Kemandirian (Effectiveness & Independence)", "indikator": ["Efisiensi dan optimalisasi pendayagunaan sarana, anggaran, dan fasilitas kantor", "Kemandirian dalam inisiatif kerja serta kemampuan koordinasi sinergis lintas tim"]}
+        ]
+
+    p(doc, f"Secara operasional, pengukuran {y} dalam Disertasi Doktor ini diturunkan ke dalam 4 (empat) dimensi fundamental beserta indikator terukur yang telah terstandarisasi dalam literatur MSDM mutakhir, yaitu:", indent=0.5, space_after=4)
+
+    for i, d in enumerate(dims, 1):
+        d_nama = d.get("nama", f"Dimensi {i}")
+        d_inds = d.get("indikator", [])
+        ind_str = "; ".join([f"({chr(97+idx)}) {ind}" for idx, ind in enumerate(d_inds)]) if d_inds else "indikator baku terukur"
+        p(doc, f"{i}. Dimensi {d_nama}: merefleksikan kemampuan aparatur dalam aspek teknis-operasional, yang diukur melalui indikator: {ind_str}.", indent=0.75, space_after=3)
+
+    # Alinea 5: Anteseden Determinan dalam Model Struktural
+    p(doc, f"Dalam konstelasi model struktural Disertasi Doktor ini, {y} berposisi sebagai variabel endogen utama (ultimate criterion variable). Posisi teoretis ini menegaskan bahwa fluktuasi capaian kinerja aparatur tidak terjadi dalam ruang hampa, melainkan ditentukan secara terpadu oleh faktor kepemimpinan transformasional sebagai stimulus visioner dan keteladanan moral, budaya organisasi sebagai sistem nilai perekat institusi, iklim kerja sebagai atmosfer perseptual lingkungan fisik maupun relasional, serta diperantarai oleh motivasi kerja pegawai. Selain itu, kekuatan transmisi kausalitas faktor-faktor anteseden tersebut terhadap {y} dikondisikan oleh tingkat etos kerja sebagai variabel kontingensi yang memoderasi hubungan struktural.", indent=0.5, space_after=6)
+
+    # Alinea 6: Kontekstualisasi Empiris pada Objek Riset
+    p(doc, f"Relevansi kajian teoritis {y} menjadi semakin krusial ketika dikontekstualisasikan pada objek empiris penelitian di {instansi}. Sebagai institusi pemerintah daerah yang mengemban mandat strategis dalam memungut dan mengoptimalkan Pendapatan Asli Daerah (PAD) melalui berbagai pos pajak daerah (PBB-P2, BPHTB, Pajak Penerangan Jalan, Pajak Reklame, dan Pajak Restoran), kinerja pegawai di instansi ini memikul tanggung jawab ganda: tuntutan akurasi kalkulasi administratif-fiskal yang bebas dari salah saji, serta integritas aparatur dalam mencegah benturan kepentingan dan kebocoran penerimaan daerah. Dengan demikian, telaah teoritis dan pengujian empiris atas dimensi-dimensi {y} pada {instansi} memberikan kontribusi nyata bagi penguatan tata kelola keuangan daerah dan percepatan reformasi birokrasi yang berorientasi hasil.", indent=0.5, space_after=6)
 
 
 def _build_doc_sub_2_1_2(doc: Document, ctx: Dict[str, Any]):
-    """2.1.2 Kajian Teoritis Variabel Mediasi (M)."""
+    """2.1.2 Kajian Teoritis Variabel Mediasi (M) - Standar Doktoral S3."""
     m = ctx["m"]
+    instansi = ctx["instansi"]
+    onto_vars = ctx.get("ontology", {}).get("variables", {})
+    onto_m = onto_vars.get("m") or onto_vars.get("M", {})
+
     if not m:
         h3(doc, "2.1.2 Kajian Teoritis Variabel Intervening")
         p(doc, "Model penelitian tidak menggunakan variabel intervening mediasi.", indent=0.5)
         return
 
     h3(doc, f"2.1.2 Kajian Teoritis Variabel Mediasi ({m})")
-    onto_m = ctx["ontology"]["variables"].get("M", {})
-    gt = onto_m.get("grand_theory", "Social Cognitive Theory (Bandura, 1986; Schunk & DiBenedetto, 2020)")
-    tokoh = onto_m.get("tokoh_ahli", "Albert Bandura (1986); Ryan & Deci (2020); Robbins & Judge (2021)")
+    gt = onto_m.get("grand_theory", "Social Cognitive Theory (Bandura, 1986; 1997) dan Self-Determination Theory (Ryan & Deci, 2000, 2020)")
+    tokoh = onto_m.get("tokoh_ahli", "Albert Bandura (1986); Richard M. Ryan & Edward L. Deci (2020); Stephen P. Robbins & Timothy A. Judge (2021)")
     definisi = onto_m.get("definisi", f"Kondisi psikologis dan dorongan internal yang mengarahkan daya upaya pegawai dalam mencapai tujuan organisasi.")
 
-    p(doc, f"Variabel {m} berlandaskan pada {gt}. Teori ini dikembangkan oleh para tokoh otoritatif seperti {tokoh}, yang menegaskan bahwa {definisi}", indent=0.5, space_after=6)
-    p(doc, f"Peran {m} dalam model disertasi ini adalah sebagai jembatan kausalitas (mediator) yang menyalurkan energi kepemimpinan dan pengaruh lingkungan organisasi agar terwujud secara nyata ke dalam capaian kinerja pegawai.", indent=0.5, space_after=6)
+    p(doc, f"Kajian mengenai {m} dilandaskan pada Social Cognitive Theory (Bandura, 1986; Schunk & DiBenedetto, 2020) serta Self-Determination Theory (Ryan & Deci, 2020). Teori kognitif sosial menegaskan bahwa perilaku manusia merupakan hasil interaksi resiprokal triadik antara faktor kognitif/personal, perilaku, dan pengaruh lingkungan eksternal. Sementara itu, Self-Determination Theory membedakan motivasi intrinsik (dorongan yang bersumber dari kepuasan batin atas tugas) dan motivasi ekstrinsik (dorongan instrumental berbasis rekognisi dan penghargaan). Tokoh otoritatif seperti {tokoh} menegaskan bahwa {m} dipahami sebagai {definisi.lower()}", indent=0.5, space_after=6)
+
+    p(doc, f"Dalam arsitektur penelitian doktoral ini, {m} memegang peranan krusial sebagai variabel perantara psikologis (intervening mediator). Motivasi kerja berfungsi sebagai jembatan transmisi kausalitas yang mentransformasikan stimulus kepemimpinan transformasional, nilai-nilai budaya organisasi, dan kenyamanan iklim kerja ke dalam daya dorong perilaku kerja nyata yang bermuara pada peningkatan capaian kinerja pegawai.", indent=0.5, space_after=6)
 
     dims = onto_m.get("dimensi", [])
     if dims:
-        p(doc, f"Dimensi dan indikator operasional {m} meliputi:", indent=0.5, space_after=3)
-        for d in dims:
-            p(doc, f"• Dimensi {d['nama']}: meliputi {', '.join(d.get('indikator', []))}.", indent=0.75, space_after=3)
+        p(doc, f"Dimensi dan indikator operasional {m} dioperasionalkan sebagai berikut:", indent=0.5, space_after=3)
+        for i, d in enumerate(dims, 1):
+            d_inds = d.get("indikator", [])
+            ind_str = "; ".join([f"({chr(97+idx)}) {ind}" for idx, ind in enumerate(d_inds)]) if d_inds else "indikator operasional"
+            p(doc, f"{i}. Dimensi {d['nama']}: diukur melalui indikator {ind_str}.", indent=0.75, space_after=3)
+
+    p(doc, f"Pada tataran empiris di {instansi}, keberadaan {m} yang kokoh sangat diperlukan untuk menjaga resiliensi pegawai dalam menghadapi target penerimaan pajak yang terus meningkat setiap tahun anggaran serta kompleksitas adaptasi terhadap sistem perpajakan digital.", indent=0.5, space_after=6)
 
 
 def _build_doc_sub_2_1_3(doc: Document, ctx: Dict[str, Any]):
-    """2.1.3 Kajian Teoritis Variabel Bebas Utama (X1)."""
+    """2.1.3 Kajian Teoritis Variabel Bebas Utama (X1) - Standar Doktoral S3."""
     x1 = ctx["x1"]
+    instansi = ctx["instansi"]
+    onto_vars = ctx.get("ontology", {}).get("variables", {})
+    onto_x1 = onto_vars.get("x1") or onto_vars.get("X1", {})
+
     h3(doc, f"2.1.3 Kajian Teoritis Variabel Bebas ({x1})")
-    onto_x1 = ctx["ontology"]["variables"].get("X1", {})
-    gt = onto_x1.get("grand_theory", "Transformational Leadership Theory (Bass, 1985; Yukl, 2013)")
+    gt = onto_x1.get("grand_theory", "Transformational Leadership Theory (Bass, 1985; Bass & Avolio, 1994; Yukl, 2022)")
     tokoh = onto_x1.get("tokoh_ahli", "Bernard M. Bass (1985); Ronald E. Riggio (2006); Gary Yukl (2022)")
     definisi = onto_x1.get("definisi", f"Gaya kepemimpinan yang menginspirasi, memotivasi, dan memberdayakan pegawai untuk mencapai kinerja melampaui harapan.")
 
-    p(doc, f"Kajian mengenai {x1} dilandaskan pada {gt}. Sebagaimana dirumuskan oleh {tokoh}, {x1} dikonseptualisasikan sebagai {definisi}", indent=0.5, space_after=6)
-    p(doc, f"Dalam tataran praktis pada instansi publik, {x1} menuntut keteladanan moral, visi yang jelas, dorongan inovasi, dan komunikasi empatik dalam membimbing bawahan.", indent=0.5, space_after=6)
+    p(doc, f"Landasan konseptual mengenai {x1} berakar kuat pada Transformational Leadership Theory yang dipelopori oleh Bernard M. Bass (1985) dan dikembangkan lebih lanjut oleh Bass & Avolio (1994) serta Gary Yukl (2022). Pendekatan transformasional memandang kepemimpinan bukan sekadar transaksi pertukaran kepentingan (transactional), melainkan proses peningkatan kesadaran moral, penanaman visi bersama, dan pengorbanan kepentingan personal demi tercapainya tujuan luhur keorganisasian. Menurut {tokoh}, {x1} dikonseptualisasikan sebagai {definisi.lower()}", indent=0.5, space_after=6)
+
+    p(doc, f"Dalam teori kepemimpinan transformasional modern, efektivitas kepemimpinan ditopang oleh 'The Four I’s', yaitu: (1) Idealized Influence (pengaruh ideal/karisma teladan moral); (2) Inspirational Motivation (kemampuan mengartikulasikan visi masa depan yang membangkitkan optimisme); (3) Intellectual Stimulation (dorongan berpikir inovatif dan mempertanyakan asumsi lama); serta (4) Individualized Consideration (kepedulian personal terhadap kebutuhan pengembangan diri bawahan).", indent=0.5, space_after=6)
 
     dims = onto_x1.get("dimensi", [])
     if dims:
-        p(doc, f"Dimensi operasional {x1} dijabarkan ke dalam:", indent=0.5, space_after=3)
-        for d in dims:
-            p(doc, f"• Dimensi {d['nama']}: {', '.join(d.get('indikator', []))}.", indent=0.75, space_after=3)
+        p(doc, f"Secara empiris, pengukuran {x1} diturunkan ke dalam dimensi operasional:", indent=0.5, space_after=3)
+        for i, d in enumerate(dims, 1):
+            d_inds = d.get("indikator", [])
+            ind_str = "; ".join([f"({chr(97+idx)}) {ind}" for idx, ind in enumerate(d_inds)]) if d_inds else "indikator baku"
+            p(doc, f"{i}. Dimensi {d['nama']}: meliputi {ind_str}.", indent=0.75, space_after=3)
+
+    p(doc, f"Dalam konteks reformasi birokrasi pada {instansi}, penerapan {x1} menjadi faktor pembeda (game changer) dalam mengarahkan aparatur agar bertransformasi dari paradigma kerja konvensional menuju aparatur pelayanan publik yang proaktif, berorientasi solusi, dan berintegritas tinggi.", indent=0.5, space_after=6)
 
 
 def _build_doc_sub_2_1_4(doc: Document, ctx: Dict[str, Any]):
-    """2.1.4 Kajian Teoritis Variabel Moderasi (Z) & Bebas Lainnya."""
+    """2.1.4 Kajian Teoritis Variabel Moderasi (Z) & Bebas Lainnya - Standar Doktoral S3."""
+    x1 = ctx["x1"]
+    m = ctx["m"]
     z = ctx["z"]
     x2 = ctx["x2"]
     x3 = ctx["x3"]
+    instansi = ctx["instansi"]
+    onto_vars = ctx.get("ontology", {}).get("variables", {})
 
     h3(doc, f"2.1.4 Kajian Teoritis Variabel Moderasi ({z if z else 'Kontingensi'}) dan Variabel Bebas Lainnya")
 
     if z:
-        onto_z = ctx["ontology"]["variables"].get("Z", {})
-        gt_z = onto_z.get("grand_theory", "Contingency Theory (Donaldson, 2001) dan Person-Environment Fit Theory")
-        tokoh_z = onto_z.get("tokoh_ahli", "Lex Donaldson (2001); Kristof-Brown et al. (2023); Schein (2019)")
-        def_z = onto_z.get("definisi", f"Karakteristik atau kondisi batas yang memperkuat atau memperlemah hubungan kausalitas antar variabel dalam organisasi.")
+        onto_z = onto_vars.get("z") or onto_vars.get("Z", {})
+        gt_z = onto_z.get("grand_theory", "Contingency Theory of Organizations (Donaldson, 2001) dan Multidimensional Work Ethic Profile (Miller et al., 2002)")
+        tokoh_z = onto_z.get("tokoh_ahli", "Lex Donaldson (2001); Miller et al. (2002); Kristof-Brown et al. (2023)")
+        def_z = onto_z.get("definisi", f"Sikap dan keyakinan fundamental individu terhadap nilai luhur kerja, disiplin, tanggung jawab moral, dan dedikasi dalam menjalankan tugas profesi.")
 
-        p(doc, f"Variabel {z} diposisikan sebagai variabel moderasi berlandaskan pada {gt_z}. Tokoh seperti {tokoh_z} menegaskan bahwa {def_z}", indent=0.5, space_after=6)
-        p(doc, f"Secara substantif, {z} mengondisikan seberapa efektif kepemimpinan dan motivasi mampu diterjemahkan menjadi unjuk kerja optimal di lapangan.", indent=0.5, space_after=6)
+        p(doc, f"Penempatan {z} sebagai variabel moderasi (moderating variable) berakar pada Contingency Theory (Donaldson, 2001) dan teori etos kerja multidimensional (Miller et al., 2002). Contingency Theory menegaskan bahwa efektivitas kepemimpinan dan pengaruh stimulus lingkungan kerja terhadap unjuk kerja tidak bersifat mutlak universal, melainkan bergantung pada kondisi batas internal (boundary conditions) individu. Menurut {tokoh_z}, {z} dimaknai sebagai {def_z.lower()}", indent=0.5, space_after=6)
 
-    p(doc, f"Selanjutnya, variabel eksogen pendukung seperti {x2} dan {x3} melengkapi konfigurasi model penelitian dengan memberikan fondasi budaya keorganisasian yang kuat dan iklim kerja yang kondusif bagi peningkatan efektivitas organisasi.", indent=0.5, space_after=6)
+        p(doc, f"Dalam model disertasi ini, {z} diposisikan sebagai variabel kontingensi yang memperkuat pengaruh kepemimpinan transformasional, budaya organisasi, dan motivasi kerja terhadap kinerja pegawai. Aparatur dengan etos kerja yang kokoh memiliki daya dorong mandiri untuk memaksimalkan setiap arahan kepemimpinan dan fasilitas iklim kerja ke dalam capaian kinerja yang ekselen.", indent=0.5, space_after=6)
+
+        dims_z = onto_z.get("dimensi", [])
+        if dims_z:
+            p(doc, f"Dimensi dan indikator operasional {z} meliputi:", indent=0.5, space_after=3)
+            for i, d in enumerate(dims_z, 1):
+                d_inds = d.get("indikator", [])
+                ind_str = "; ".join([f"({chr(97+idx)}) {ind}" for idx, ind in enumerate(d_inds)]) if d_inds else "indikator terstandar"
+                p(doc, f"{i}. Dimensi {d['nama']}: {ind_str}.", indent=0.75, space_after=3)
+
+    # Variabel Bebas Pendukung (X2 & X3)
+    p(doc, f"Guna memperkuat kerangka analisis holistik, model disertasi ini turut mengintegrasikan {x2} dan {x3} sebagai variabel eksogen penjelas:", indent=0.5, space_after=4)
+
+    p(doc, f"1. Kajian {x2}: Berlandaskan pada Organizational Culture Theory (Schein, 2017) dan Denison Organizational Culture Model. Budaya organisasi didefinisikan sebagai sistem nilai, asumsi dasar, dan norma bersama yang dianut oleh aparatur dan membimbing cara mereka bertindak, berkoordinasi, serta mengambil keputusan kedinasan.", indent=0.75, space_after=4)
+
+    p(doc, f"2. Kajian {x3}: Berakar pada Organizational Climate Theory (Schneider, Ehrhart, & Macey, 2017). Iklim kerja mencerminkan persepsi psikologis kolektif aparatur terhadap lingkungan kerja fisik, relasi sosial antar rekan sejawat, keadilan kompensasi, dan dukungan fasilitas kedinasan.", indent=0.75, space_after=6)
+
+    p(doc, f"Konfigurasi terpadu antara {x1}, {x2}, {x3}, {m}, dan {z} membentuk satu kesatuan arsitektur teoretis yang kokoh untuk mengestimasi determinan pencapaian {ctx['y_var']} pada {instansi}.", indent=0.5, space_after=6)
 
 
 def _build_doc_sub_2_2(doc: Document, ctx: Dict[str, Any]):

@@ -49,6 +49,7 @@ import dynamic_pls_engine
 import engine_graph_dynamic
 import s3_title_parser
 import s3_ontology_researcher
+import s3_hierarchical_engine
 from provenance import (
     label_data_source,
     label_origin,
@@ -785,48 +786,22 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 mode = body.get("mode", "download") # "native", "download"
                 config = body.get("config", {})
 
-                # GERBANG ONTOLOGI: Bab III/IV & Lampiran wajib punya indikator
-                # untuk SEMUA variabel. Tanpa ini, X2 kosong tetap ditulis.
-                gate_error = None
-                if sub_id.startswith(("sub_3_", "sub_4_")) or sub_id == "sub_lampiran":
-                    _ok, _problems, _summary, _judul = ontology_gate_status(
-                        config.get("judul") or config.get("title") or "")
-                    if not _ok:
-                        gate_error = {
-                            "status": "error",
-                            "sub_id": sub_id,
-                            "message": ("STOP: ontologi belum lengkap -> " +
-                                        "; ".join(_problems) +
-                                        ". Jalankan 'Telusuri Dimensi & Indikator' "
-                                        "atau unggah sumber untuk variabel tersebut."),
-                            "problems": _problems,
-                            "summary": _summary,
-                        }
+                is_s3 = (
+                    bool(config.get("is_s3")) or
+                    config.get("jenjang") == "Doktor (S3)" or
+                    config.get("degree") == "Doktor" or
+                    bool(body.get("is_s3"))
+                )
 
-                if gate_error:
-                    response_data = gate_error
-                else:
-                    # Naskah sub-bab MURNI (tanpa daftar pustaka) -> dipakai untuk sisipan
-                    # ke Word; daftar pustaka dikirim terpisah agar tidak terjadi dapus ganda.
-                    fn, fp = engine_hierarchical_pipeline.build_subchapter_doc(sub_id, config, include_dapus=False)
-
-                    # Dokumen khusus Daftar Pustaka kumulatif (selalu di halaman paling akhir)
-                    dapus_fn, dapus_fp = engine_hierarchical_pipeline.build_standalone_dapus_doc(config)
-
-                    # Permintaan khusus sub_dapus: dokumen utamanya adalah daftar
-                    # pustaka kumulatif (tanpa ini berkas utamanya kosong).
-                    if sub_id == "sub_dapus" and dapus_fp and os.path.exists(dapus_fp):
-                        fn, fp = dapus_fn, dapus_fp
-
+                if is_s3:
+                    fn, fp = s3_hierarchical_engine.build_s3_subchapter_doc(sub_id, config, include_dapus=False)
                     native_written = False
                     if mode == "native":
                         try:
-                            # Pakai file yang SAMA (jangan bangun ulang) supaya isi yang
-                            # disisipkan identik dengan yang diunduh dan hemat waktu.
-                            engine_hierarchical_pipeline.write_subchapter_native(sub_id, config, path=fp)
+                            s3_hierarchical_engine.write_s3_subchapter_native(sub_id, config, path=fp)
                             native_written = True
                         except Exception as ex:
-                            print(f"Error native write {sub_id}: {ex}")
+                            print(f"Error native write S3 {sub_id}: {ex}")
 
                     response_data = {
                         "status": "success",
@@ -834,32 +809,94 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                         "filename": fn,
                         "download_url": f"/api/download/{fn}",
                         "docx_base64": get_file_base64(fp),
-                        "dapus_filename": dapus_fn,
-                        "dapus_base64": get_file_base64(dapus_fp),
                         "native_written": native_written,
-                        "meta": engine_hierarchical_pipeline.SUBCHAPTER_CATALOG.get(sub_id, {})
+                        "meta": s3_hierarchical_engine.S3_SUBCHAPTER_CATALOG.get(sub_id, {})
                     }
+                else:
+                    # GERBANG ONTOLOGI MASTER S2 LAMA
+                    gate_error = None
+                    if sub_id.startswith(("sub_3_", "sub_4_")) or sub_id == "sub_lampiran":
+                        _ok, _problems, _summary, _judul = ontology_gate_status(
+                            config.get("judul") or config.get("title") or "")
+                        if not _ok:
+                            gate_error = {
+                                "status": "error",
+                                "sub_id": sub_id,
+                                "message": ("STOP: ontologi belum lengkap -> " +
+                                            "; ".join(_problems) +
+                                            ". Jalankan 'Telusuri Dimensi & Indikator' "
+                                            "atau unggah sumber untuk variabel tersebut."),
+                                "problems": _problems,
+                                "summary": _summary,
+                            }
+
+                    if gate_error:
+                        response_data = gate_error
+                    else:
+                        # Naskah sub-bab MURNI (tanpa daftar pustaka) -> dipakai untuk sisipan
+                        # ke Word; daftar pustaka dikirim terpisah agar tidak terjadi dapus ganda.
+                        fn, fp = engine_hierarchical_pipeline.build_subchapter_doc(sub_id, config, include_dapus=False)
+
+                        # Dokumen khusus Daftar Pustaka kumulatif (selalu di halaman paling akhir)
+                        dapus_fn, dapus_fp = engine_hierarchical_pipeline.build_standalone_dapus_doc(config)
+
+                        # Permintaan khusus sub_dapus: dokumen utamanya adalah daftar
+                        # pustaka kumulatif (tanpa ini berkas utamanya kosong).
+                        if sub_id == "sub_dapus" and dapus_fp and os.path.exists(dapus_fp):
+                            fn, fp = dapus_fn, dapus_fp
+
+                        native_written = False
+                        if mode == "native":
+                            try:
+                                # Pakai file yang SAMA (jangan bangun ulang) supaya isi yang
+                                # disisipkan identik dengan yang diunduh dan hemat waktu.
+                                engine_hierarchical_pipeline.write_subchapter_native(sub_id, config, path=fp)
+                                native_written = True
+                            except Exception as ex:
+                                print(f"Error native write {sub_id}: {ex}")
+
+                        response_data = {
+                            "status": "success",
+                            "sub_id": sub_id,
+                            "filename": fn,
+                            "download_url": f"/api/download/{fn}",
+                            "docx_base64": get_file_base64(fp),
+                            "dapus_filename": dapus_fn,
+                            "dapus_base64": get_file_base64(dapus_fp),
+                            "native_written": native_written,
+                            "meta": engine_hierarchical_pipeline.SUBCHAPTER_CATALOG.get(sub_id, {})
+                        }
 
             # 3.13 Chained Pipeline Execution (Run Entire Chapter Sequentially)
             elif path == "/api/pipeline/run-chain":
                 chapter_num = int(body.get("chapter", 1))
                 config = body.get("config", {})
                 mode = body.get("mode", "native")
-                _ok, _problems, _summary, _judul = (True, [], {}, "")
-                if chapter_num in (3, 4, 5):
-                    _ok, _problems, _summary, _judul = ontology_gate_status(
-                        config.get("judul") or config.get("title") or "")
-                if not _ok:
-                    response_data = {
-                        "status": "error",
-                        "message": ("STOP: ontologi belum lengkap -> " +
-                                    "; ".join(_problems) +
-                                    ". Lengkapi dimensi/indikator sebelum menjalankan "
-                                    f"rantai Bab {chapter_num}."),
-                        "problems": _problems,
-                    }
+                is_s3 = (
+                    bool(config.get("is_s3")) or
+                    config.get("jenjang") == "Doktor (S3)" or
+                    config.get("degree") == "Doktor" or
+                    bool(body.get("is_s3"))
+                )
+
+                if is_s3:
+                    response_data = s3_hierarchical_engine.run_s3_chained_pipeline(chapter_num, config, mode=mode)
                 else:
-                    response_data = engine_hierarchical_pipeline.run_chained_pipeline(chapter_num, config, mode)
+                    _ok, _problems, _summary, _judul = (True, [], {}, "")
+                    if chapter_num in (3, 4, 5):
+                        _ok, _problems, _summary, _judul = ontology_gate_status(
+                            config.get("judul") or config.get("title") or "")
+                    if not _ok:
+                        response_data = {
+                            "status": "error",
+                            "message": ("STOP: ontologi belum lengkap -> " +
+                                        "; ".join(_problems) +
+                                        ". Lengkapi dimensi/indikator sebelum menjalankan "
+                                        f"rantai Bab {chapter_num}."),
+                            "problems": _problems,
+                        }
+                    else:
+                        response_data = engine_hierarchical_pipeline.run_chained_pipeline(chapter_num, config, mode)
 
             # 3.14 Wizard SmartPLS - langkah 1: hasilkan / unggah data jawaban responden
             elif path == "/api/pipeline/generate-respondents":
@@ -1249,12 +1286,28 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 try:
                     graph_spec = body.get("graph", {})
                     pls_res = body.get("pls_results", {})
-                    out_name = body.get("filename", "NASKAH_RISET_MODEL_HIBRIDA.docx")
-                    if not out_name.endswith(".docx"):
-                        out_name += ".docx"
-                    out_path = os.path.join(OUTPUT_DIR, out_name)
+                    config = body.get("config", {})
+                    if not config and graph_spec:
+                        config = {
+                            "judul": graph_spec.get("title") or graph_spec.get("judul"),
+                            "instansi": graph_spec.get("instansi"),
+                            "model_type": graph_spec.get("model_type"),
+                            "is_s3": True
+                        }
                     sub_id = body.get("sub_id", "all")
-                    saved = engine_graph_dynamic.build_graph_model_docx(graph_spec, pls_res, out_path, sub_id=sub_id)
+
+                    if sub_id == "all":
+                        out_name, saved = s3_hierarchical_engine.build_s3_full_dissertation_doc(config)
+                    else:
+                        out_name = body.get("filename", f"NASKAH_{sub_id.upper()}.docx")
+                        if not out_name.endswith(".docx"):
+                            out_name += ".docx"
+                        out_path = os.path.join(OUTPUT_DIR, out_name)
+                        try:
+                            out_name, saved = s3_hierarchical_engine.build_s3_subchapter_doc(sub_id, config)
+                        except Exception:
+                            saved = engine_graph_dynamic.build_graph_model_docx(graph_spec, pls_res, out_path, sub_id=sub_id)
+
                     response_data = {
                         "status": "success",
                         "filename": out_name,
@@ -1270,7 +1323,23 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                     sub_id = body.get("sub_id", "all")
                     graph_spec = body.get("graph", {})
                     pls_res = body.get("pls_results", {})
-                    written = engine_graph_dynamic.write_graph_subchapter_native(sub_id, graph_spec, pls_res)
+                    config = body.get("config", {})
+                    if not config and graph_spec:
+                        config = {
+                            "judul": graph_spec.get("title") or graph_spec.get("judul"),
+                            "instansi": graph_spec.get("instansi"),
+                            "model_type": graph_spec.get("model_type"),
+                            "is_s3": True
+                        }
+
+                    if sub_id == "all":
+                        written = s3_hierarchical_engine.write_s3_full_dissertation_native(config)
+                    else:
+                        try:
+                            written = s3_hierarchical_engine.write_s3_subchapter_native(sub_id, config)
+                        except Exception:
+                            written = engine_graph_dynamic.write_graph_subchapter_native(sub_id, graph_spec, pls_res)
+
                     response_data = {
                         "status": "success" if written else "error",
                         "sub_id": sub_id,
@@ -1279,6 +1348,31 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 except Exception as ex:
                     status_code = 400
                     response_data = {"status": "error", "message": f"Pengetikan Word gagal: {ex}"}
+
+            elif path == "/api/s3/prompt":
+                try:
+                    sub_id = body.get("sub_id", "sub_1_1")
+                    config = body.get("config", {})
+                    ctx = s3_hierarchical_engine.resolve_s3_context(config)
+                    prompt = s3_hierarchical_engine.build_s3_prompt(sub_id, ctx)
+                    response_data = {
+                        "status": "success",
+                        "sub_id": sub_id,
+                        "title": s3_hierarchical_engine.S3_SUBCHAPTER_CATALOG.get(sub_id, {}).get("title", sub_id),
+                        "prompt": prompt,
+                        "judul": ctx["judul"],
+                        "instansi": ctx["instansi"],
+                        "model_type": ctx["model_type"],
+                        "variables": {
+                            "x_vars": ctx["x_vars"],
+                            "m_vars": ctx["m_vars"],
+                            "z_vars": ctx["z_vars"],
+                            "y_var": ctx["y_var"]
+                        }
+                    }
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": f"Gagal menghasilkan prompt S3: {ex}"}
 
             else:
                 status_code = 404

@@ -94,57 +94,63 @@ def parse_title_regex_doctoral(title: str) -> Dict[str, Any]:
             "engine": "regex-fallback"
         }
 
-    # 1. Deteksi Instansi (pada / di / studi pada / studi empiris di)
-    instansi = "Instansi Pemerintah Daerah"
-    m_inst = re.search(r"\b(?:pada|di|studi\s+pada|studi\s+kasus\s+di|studi\s+empiris\s+pada)\s+([^\.]+?)(?:\s+tahun\s+\d{4})?$", raw, re.IGNORECASE)
-    body_text = raw
-    if m_inst:
-        instansi = m_inst.group(1).strip()
-        body_text = raw[:m_inst.start()].strip()
+    # 1. Pisahkan judul berdasarkan kata 'terhadap' / 'dampaknya pada'
+    # Sisi kiri (left_x) PASTI berisi variabel-variabel bebas (X1, X2, ... Xn)
+    # Sisi kanan (right_part) berisi Y, Mediasi (M), Moderasi (Z), dan Instansi
+    split_parts = re.split(r"\b(?:terhadap|dampaknya\s+pada)\b", raw, maxsplit=1, flags=re.IGNORECASE)
+    left_x = split_parts[0].strip()
+    right_part = split_parts[1].strip() if len(split_parts) > 1 else ""
 
-    # 2. Deteksi Moderasi (dengan ... sebagai variabel moderasi / dimoderasi oleh ...)
+    # 2. Deteksi Instansi dari bagian kanan (atau fallback ke raw jika tidak ada 'terhadap')
+    target_for_inst = right_part if right_part else raw
+    instansi = "Instansi Pemerintah Daerah"
+    m_inst = re.search(r"\b(?:pada|di|studi\s+pada|studi\s+kasus\s+di|studi\s+empiris\s+pada)\s+([^\.]+?)(?:\s+tahun\s+\d{4})?$", target_for_inst, re.IGNORECASE)
+    if m_inst:
+        instansi = clean_academic_phrase(m_inst.group(1).strip())
+        if right_part:
+            right_part = right_part[:m_inst.start()].strip()
+
+    # 3. Deteksi Mediasi (M) dari right_part
+    m_vars = []
+    m_med = re.search(r"\b(?:melalui|dengan|dimediasi\s+oleh)\s+(?:variabel\s+)?([A-Za-z0-9\s]+?)\s+sebagai\s+(?:variabel\s+)?(?:intervening|mediasi)\b", right_part, re.IGNORECASE)
+    if not m_med:
+        m_med = re.search(r"\b(?:melalui|dimediasi\s+oleh)\s+([A-Za-z0-9\s]+?)(?:\s+(?:dengan|serta|dan|pada|di)|$)", right_part, re.IGNORECASE)
+
+    if m_med:
+        m_name = clean_academic_phrase(m_med.group(1))
+        if m_name and "moderasi" not in m_name.lower():
+            m_vars.append(m_name)
+            right_part = (right_part[:m_med.start()] + " " + right_part[m_med.end():]).strip()
+
+    # 4. Deteksi Moderasi (Z) dari right_part
     z_vars = []
-    m_mod = re.search(r"\b(?:dengan|dimoderasi\s+oleh)\s+([^,]+?)\s+(?:sebagai\s+(?:variabel\s+)?moderasi|sebagai\s+moderator|memoderasi)", body_text, re.IGNORECASE)
+    m_mod = re.search(r"\b(?:dengan|serta|dan|dimoderasi\s+oleh)\s+(?:variabel\s+)?([A-Za-z0-9\s]+?)\s+sebagai\s+(?:variabel\s+)?(?:moderasi|moderator|interaksi)\b", right_part, re.IGNORECASE)
     if not m_mod:
-        m_mod = re.search(r"\b(?:dengan\s+moderasi|variabel\s+moderasi)\s+([^,]+?)(?:\s+(?:pada|di|melalui)|$)", body_text, re.IGNORECASE)
+        m_mod = re.search(r"\b(?:dengan\s+moderasi|variabel\s+moderasi|dimoderasi\s+oleh)\s+([A-Za-z0-9\s]+?)(?:\s+(?:pada|di|melalui|serta|dan)|$)", right_part, re.IGNORECASE)
     
     if m_mod:
         z_name = clean_academic_phrase(m_mod.group(1))
-        if z_name:
+        if z_name and "mediasi" not in z_name.lower():
             z_vars.append(z_name)
-        # Hapus bagian moderasi dari body_text agar tidak mencemari variabel lain
-        body_text = body_text[:m_mod.start()] + " " + body_text[m_mod.end():]
+            right_part = (right_part[:m_mod.start()] + " " + right_part[m_mod.end():]).strip()
 
-    # 3. Deteksi Mediasi (melalui ... sebagai variabel intervening/mediasi)
-    m_vars = []
-    m_med = re.search(r"\b(?:melalui|dimediasi\s+oleh)\s+([^,]+?)(?:\s+sebagai\s+(?:variabel\s+)?(?:intervening|mediasi)|\s+dengan|\s+pada|$)", body_text, re.IGNORECASE)
-    if m_med:
-        m_name = clean_academic_phrase(m_med.group(1))
-        if m_name:
-            m_vars.append(m_name)
-        body_text = body_text[:m_med.start()] + " " + body_text[m_med.end():]
+    # 5. Deteksi Variabel Terikat (Y) (apa yang tersisa di right_part)
+    cleaned_y = re.sub(r"^(?:dengan|melalui|serta|dan)\s+", "", right_part, flags=re.IGNORECASE).strip()
+    y_var = clean_academic_phrase(cleaned_y) if cleaned_y else "Kinerja Pegawai"
+    if not y_var or len(y_var) < 3:
+        y_var = "Kinerja Pegawai"
 
-    # 4. Deteksi Variabel Terikat (Y) (terhadap ...)
-    y_var = "Kinerja Pegawai"
-    m_y = re.search(r"\b(?:terhadap|dampaknya\s+pada)\s+([^,]+?)(?:\s+melalui|\s+dengan|\s+sebagai|$)", body_text, re.IGNORECASE)
-    x_part = body_text
-    if m_y:
-        y_name = clean_academic_phrase(m_y.group(1))
-        if y_name:
-            y_var = y_name
-        x_part = body_text[:m_y.start()].strip()
-
-    # 5. Deteksi Variabel Bebas (X1, X2, X3, ... Xn) dari x_part
-    x_part = re.sub(r"^(?:pengaruh|analisis\s+pengaruh|studi\s+tentang)\s+", "", x_part, flags=re.IGNORECASE).strip()
-    
-    # Split dengan koma atau kata 'dan' / 'serta'
-    # contoh: "A, B, dan C" atau "A dan B"
-    raw_x_tokens = re.split(r",\s*|\s+(?:dan|serta)\s+", x_part, flags=re.IGNORECASE)
+    # 6. Deteksi Variabel Bebas (X1, X2, X3, ... Xn) dari left_x
+    left_x = re.sub(r"^(?:pengaruh|analisis\s+pengaruh|studi\s+tentang)\s+", "", left_x, flags=re.IGNORECASE).strip()
+    raw_x_tokens = re.split(r",\s*(?:dan|serta)\s+|\s+(?:dan|serta)\s+|,\s*", left_x, flags=re.IGNORECASE)
     x_vars = []
     for tok in raw_x_tokens:
         cleaned = clean_academic_phrase(tok)
-        if cleaned and len(cleaned) > 2 and cleaned.lower() not in ("pengaruh", "analisis", "hubungan"):
+        if cleaned and len(cleaned) > 2 and cleaned.lower() not in ("pengaruh", "analisis", "hubungan", "studi"):
             x_vars.append(cleaned)
+
+    if not x_vars:
+        x_vars = ["Kompetensi Pegawai", "Kepemimpinan Transformasional"]
 
     if not x_vars:
         x_vars = ["Kompetensi Pegawai", "Kepemimpinan Transformasional"]

@@ -2886,6 +2886,7 @@ async function handleS3WriteChapter(subId, btn) {
   setStatus("working", `Menulis sub-bab ${subId} Disertasi Doktor langsung ke Microsoft Word...`);
 
   try {
+    const config = getS3Config();
     // 1. Docx base64 via Office.js
     const docRes = await fetch(`${API_BASE}/graph/generate-docx`, {
       method: "POST",
@@ -2894,6 +2895,7 @@ async function handleS3WriteChapter(subId, btn) {
         sub_id: subId,
         graph: currentS3Graph,
         pls_results: currentS3Pls,
+        config: config,
         filename: `S3_${subId.toUpperCase()}.docx`
       })
     });
@@ -2912,7 +2914,8 @@ async function handleS3WriteChapter(subId, btn) {
         body: JSON.stringify({
           sub_id: subId,
           graph: currentS3Graph,
-          pls_results: currentS3Pls
+          pls_results: currentS3Pls,
+          config: config
         })
       });
       const nativeData = await nativeRes.json();
@@ -2951,6 +2954,7 @@ async function handleS3DownloadSubchapterDocx(subId, btn) {
 
   try {
     const filename = `DISERTASI_S3_${subId.toUpperCase()}_${new Date().toISOString().slice(0, 10)}.docx`;
+    const config = getS3Config();
     const res = await fetch(`${API_BASE}/graph/generate-docx`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -2958,6 +2962,7 @@ async function handleS3DownloadSubchapterDocx(subId, btn) {
         sub_id: subId,
         graph: currentS3Graph,
         pls_results: currentS3Pls,
+        config: config,
         filename
       })
     });
@@ -2997,6 +3002,7 @@ async function handleS3WriteFullWord() {
   setStatus("working", "Merangkai seluruh naskah Disertasi Doktor ke Word aktif...");
 
   try {
+    const config = getS3Config();
     const docRes = await fetch(`${API_BASE}/graph/generate-docx`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -3004,6 +3010,7 @@ async function handleS3WriteFullWord() {
         sub_id: "all",
         graph: currentS3Graph,
         pls_results: currentS3Pls,
+        config: config,
         filename: `DISERTASI_DOKTOR_LENGKAP.docx`
       })
     });
@@ -3021,7 +3028,8 @@ async function handleS3WriteFullWord() {
         body: JSON.stringify({
           sub_id: "all",
           graph: currentS3Graph,
-          pls_results: currentS3Pls
+          pls_results: currentS3Pls,
+          config: config
         })
       });
       const nativeData = await nativeRes.json();
@@ -3070,6 +3078,7 @@ async function handleS3DownloadFull() {
 
   try {
     const filename = `DISERTASI_DOKTOR_S3_${new Date().toISOString().slice(0, 10)}.docx`;
+    const config = getS3Config();
     const res = await fetch(`${API_BASE}/graph/generate-docx`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -3077,6 +3086,7 @@ async function handleS3DownloadFull() {
         sub_id: "all",
         graph: currentS3Graph,
         pls_results: currentS3Pls,
+        config: config,
         filename
       })
     });
@@ -3167,6 +3177,7 @@ function getS3Config() {
     y_var: y,
     jenjang: "Doktor (S3)",
     degree: "Doktor",
+    is_s3: true,
     program_studi: "Program Doktor Ilmu Manajemen"
   };
 }
@@ -3236,7 +3247,7 @@ async function handleS3SubChapterWrite(subId, btn) {
     const response = await fetch(`${API_BASE}/pipeline/generate-subchapter`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sub_id: subId, mode: mode, config: config })
+      body: JSON.stringify({ sub_id: subId, mode: mode, config: config, is_s3: true })
     });
     const res = await response.json();
     if (!response.ok || res.status === "error") {
@@ -3283,7 +3294,7 @@ async function handleS3SubChapterDocx(subId, btn) {
     const response = await fetch(`${API_BASE}/pipeline/generate-subchapter`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sub_id: subId, mode: "download", config: config })
+      body: JSON.stringify({ sub_id: subId, mode: "download", config: config, is_s3: true })
     });
     const res = await response.json();
     if (res.status === "success" && res.filename) {
@@ -3313,7 +3324,7 @@ async function handleS3RunChainBab(chapterNum, btn) {
     const response = await fetch(`${API_BASE}/pipeline/run-chain`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chapter: parseInt(chapterNum, 10), mode: mode, config: config })
+      body: JSON.stringify({ chapter: parseInt(chapterNum, 10), mode: mode, config: config, is_s3: true })
     });
     const res = await response.json();
     if (!response.ok || res.status === "error") {

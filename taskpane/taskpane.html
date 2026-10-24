@@ -30,6 +30,7 @@
       <button class="tab-btn" data-tab="chapters">2. Tulis Bab</button>
       <button class="tab-btn" data-tab="smartpls">3. Analisis PLS-SEM</button>
       <button class="tab-btn" data-tab="full">4. 1 Unduh Lengkap</button>
+      <button class="tab-btn" data-tab="graph" style="color: #4f46e5; font-weight: 700;">★ 5. Hibrida & Moderasi</button>
     </nav>
 
     <!-- Main Content Panels -->
@@ -934,6 +935,140 @@
           <p class="hint">Gunakan generator per sub-bab: siapkan data di Tab 3, klik <strong>Olah Data Sekarang</strong>, lalu tulis Bab I–V secara berurutan. Jalur ini menjaga sumber data dan gerbang Bab IV/V.</p>
           <div id="full-download-link" class="hidden mt-3">
             <a href="#" class="btn btn-success" id="link-download" target="_blank">📥 Unduh File Dokumen (.docx)</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 5: Graph Engine (Multi-X, Moderasi & Mediasi Termoderasi) -->
+      <section id="panel-graph" class="tab-panel">
+        <!-- Card 1: Konfigurasi Model Dinamis -->
+        <div class="card highlight-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h2 class="card-title" style="margin-bottom: 0;">★ Structural Graph Compiler (V3.0)</h2>
+            <span style="font-size: 10px; background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 10px; font-weight: 700;">Model Hibrida</span>
+          </div>
+          <p class="hint">Modul kompilasi otomatis untuk model penelitian kuantitatif lanjutan: Mediasi Dinamis (N Variabel Bebas), Moderasi Murni, dan Mediasi Termoderasi (Hayes PROCESS & SmartPLS 4).</p>
+
+          <div class="form-group">
+            <label for="graph-model-type"><strong>Pilih Arsitektur Model Penelitian:</strong></label>
+            <select id="graph-model-type" style="width: 100%; padding: 7px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; font-weight: 600; background: #ffffff;">
+              <option value="moderated_mediation" selected>🌟 Mediasi Termoderasi (X1, X2... ➔ M ➔ Y dimoderasi Z) [Rekomendasi S2/S3]</option>
+              <option value="moderation">🛡️ Moderasi Murni (X1, X2... ➔ Y dimoderasi Z)</option>
+              <option value="mediation">⚡ Mediasi Dinamis Multi-X (X1, X2, X3... ➔ M ➔ Y)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="graph-instansi"><strong>Objek / Instansi Penelitian:</strong></label>
+            <input type="text" id="graph-instansi" value="Badan Pengelola Keuangan dan Aset Daerah (BPKAD) Kabupaten Penukal Abab Lematang Ilir (PALI)" style="width: 100%; padding: 6px 10px; font-size: 11px;">
+          </div>
+
+          <!-- Dynamic X Variables Container -->
+          <div class="form-group" style="margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label><strong>Daftar Variabel Bebas (X):</strong></label>
+              <button type="button" class="btn btn-outline btn-xs" id="btn-add-x-var" style="padding: 2px 8px;">+ Tambah Variabel X</button>
+            </div>
+            <div id="x-vars-container" style="display: flex; flex-direction: column; gap: 6px;">
+              <!-- Dynamic inputs for X1, X2, etc. -->
+              <div class="x-var-row" style="display: flex; gap: 6px; align-items: center;">
+                <span style="font-size: 11px; font-weight: 700; width: 28px; color: #475569;">X1:</span>
+                <input type="text" class="input-graph-x" value="Kepemimpinan Transformasional" style="flex: 1; padding: 6px 10px; font-size: 11px;">
+              </div>
+              <div class="x-var-row" style="display: flex; gap: 6px; align-items: center;">
+                <span style="font-size: 11px; font-weight: 700; width: 28px; color: #475569;">X2:</span>
+                <input type="text" class="input-graph-x" value="Lingkungan Kerja Non-Fisik" style="flex: 1; padding: 6px 10px; font-size: 11px;">
+                <button type="button" class="btn btn-outline btn-xs btn-remove-x" style="color: #ef4444; border-color: #fca5a5;">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Variable Mediasi (M) -->
+          <div class="form-group" id="group-var-m">
+            <label for="graph-var-m"><strong>Variabel Mediasi / Intervening (M):</strong></label>
+            <input type="text" id="graph-var-m" value="Etos Kerja Pegawai" style="width: 100%; padding: 6px 10px; font-size: 11px;">
+          </div>
+
+          <!-- Variable Moderasi (Z) -->
+          <div class="form-group" id="group-var-z">
+            <label for="graph-var-z"><strong>Variabel Moderasi (Z):</strong></label>
+            <input type="text" id="graph-var-z" value="Budaya Organisasi" style="width: 100%; padding: 6px 10px; font-size: 11px;">
+          </div>
+
+          <!-- Variable Terikat (Y) -->
+          <div class="form-group">
+            <label for="graph-var-y"><strong>Variabel Terikat / Dependen (Y):</strong></label>
+            <input type="text" id="graph-var-y" value="Kinerja Pegawai" style="width: 100%; padding: 6px 10px; font-size: 11px;">
+          </div>
+
+          <button type="button" class="btn btn-accent btn-large" id="btn-compile-graph" style="margin-top: 10px;">
+            ⚡ Kompilasi Graph & Rumuskan Hipotesis
+          </button>
+        </div>
+
+        <!-- Card 2: Hasil Kompilasi Hipotesis & Model -->
+        <div class="card hidden" id="card-graph-result" style="background: #f8fafc; border: 1px solid #cbd5e1;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h3 class="card-title" style="margin-bottom: 0;">📌 Pratinjau Model & Hipotesis Formal</h3>
+            <span id="badge-total-hipo" style="font-size: 11px; background: #dbeafe; color: #1e40af; padding: 3px 10px; border-radius: 12px; font-weight: 700;">12 Hipotesis</span>
+          </div>
+
+          <!-- Skema Jalur -->
+          <div style="font-size: 11px; margin-bottom: 8px; padding: 8px; background: #ffffff; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <strong style="color: #1e293b;">Persamaan Model Struktural:</strong>
+            <div id="graph-equations-list" style="margin-top: 4px; font-family: monospace; font-size: 11px; color: #4338ca; line-height: 1.6;"></div>
+          </div>
+
+          <!-- Daftar Hipotesis -->
+          <div style="max-height: 220px; overflow-y: auto; font-size: 11px; line-height: 1.6; color: #334155; padding-right: 4px;" id="graph-hypotheses-list"></div>
+
+          <!-- Action Card PLS -->
+          <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
+            <div class="form-row" style="margin-bottom: 8px;">
+              <div class="form-group half">
+                <label for="graph-sample-size" style="font-size: 11px;">Ukuran Sampel (N):</label>
+                <input type="number" id="graph-sample-size" value="92" style="padding: 4px 8px; font-size: 11px;">
+              </div>
+              <div class="form-group half" style="display: flex; align-items: flex-end;">
+                <button type="button" class="btn btn-primary" id="btn-simulate-graph-pls" style="width: 100%; font-size: 11px; padding: 6px;">
+                  📊 Jalankan PLS-SEM
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Hasil Evaluasi PLS-SEM & Uji Hipotesis -->
+        <div class="card hidden" id="card-graph-pls-results" style="background: #f0fdf4; border: 1px solid #86efac;">
+          <h3 class="card-title" style="color: #166534; margin-bottom: 6px;">✅ Hasil Uji Statistik SmartPLS 4 (Bootstrapping 5.000)</h3>
+          <p class="hint" style="color: #15803d; margin-bottom: 8px;">Seluruh pengujian memenuhi kaidah baku Hair et al. (2022) & Hayes PROCESS.</p>
+
+          <div style="font-size: 11px; background: #ffffff; padding: 8px; border-radius: 6px; border: 1px solid #bbf7d0; max-height: 240px; overflow-y: auto;">
+            <div id="graph-pls-summary-table"></div>
+          </div>
+
+          <!-- Generator Naskah Word -->
+          <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #bbf7d0;">
+            <label for="graph-select-subchapter" style="font-size: 11px; font-weight: 700; color: #166534;">Pilih Bagian yang Ingin Digenerate:</label>
+            <select id="graph-select-subchapter" style="width: 100%; padding: 6px; margin: 4px 0 8px 0; font-size: 11px; border: 1px solid #86efac; border-radius: 4px;">
+              <option value="all">📚 Seluruh Bab Terkait Model Hibrida (Lengkap dengan Tabel)</option>
+              <option value="sub_1_2">1.2 Rumusan Masalah Dinamis</option>
+              <option value="sub_1_3">1.3 Tujuan Penelitian Dinamis</option>
+              <option value="sub_2_3">2.3 Kerangka Konseptual & Model Hipotesis</option>
+              <option value="sub_3_5">3.5 Rancangan PLS-SEM & Persamaan Struktural</option>
+              <option value="sub_4_4">4.4 Pembahasan Komprehensif (4 Alinea Baku)</option>
+              <option value="sub_5_1">5.1 Kesimpulan Penelitian Berbasis Statistik</option>
+            </select>
+
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn btn-primary" id="btn-graph-write-native" style="flex: 1; font-size: 11px;">
+                ✍️ Ketik ke Dokumen Word
+              </button>
+              <button type="button" class="btn btn-success" id="btn-graph-download-docx" style="flex: 1; font-size: 11px;">
+                📥 Unduh .docx Standar
+              </button>
+            </div>
+            <div id="graph-action-status" style="margin-top: 6px; font-size: 11px; font-weight: 600; text-align: center;"></div>
           </div>
         </div>
       </section>

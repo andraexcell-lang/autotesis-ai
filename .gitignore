@@ -57,6 +57,9 @@ Thumbs.db
 venv/
 env/
 .venv/
+cloudflared.exe
+*.log
+current_tunnel_url.txt
 
 # === Temporary test scripts & local artifacts ===
 _*

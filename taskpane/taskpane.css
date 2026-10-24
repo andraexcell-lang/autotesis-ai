@@ -79,8 +79,8 @@ body {
 /* Navigation Tabs */
 .nav-tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3px;
   margin-bottom: 14px;
   background-color: #ede9fe;
   padding: 3px;

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp 
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" 
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" 
+  xsi:type="TaskPaneApp">
+
+  <Id>b78291f0-4a81-4b72-91d5-89f4b01e7a91</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Independent Researcher Engine</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Independent Researcher" />
+  <Description DefaultValue="Asisten Penulisan Tesis Magister Manajemen &amp; Olah Data SmartPLS Standar By SkripsiPlg" />
+  <IconUrl DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/assets/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/assets/icon-64.png" />
+  <SupportUrl DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com" />
+  
+  <AppDomains>
+    <AppDomain>https://thousand-jvc-procedure-scale.trycloudflare.com</AppDomain>
+    <AppDomain>https://thousand-jvc-procedure-scale.trycloudflare.com</AppDomain>
+  </AppDomains>
+
+  <Hosts>
+    <Host Name="Document" />
+  </Hosts>
+
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/taskpane.html" />
+  </DefaultSettings>
+
+  <Permissions>ReadWriteDocument</Permissions>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Document">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title"/>
+            <Description resid="GetStarted.Description"/>
+            <LearnMoreUrl resid="GetStarted.LearnMoreUrl"/>
+          </GetStarted>
+          <FunctionFile resid="Commands.Url" />
+
+          <!-- Ribbon Extension -->
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <CustomTab id="AutoTesisTab">
+              <Group id="AutoTesisGroup">
+                <Label resid="GroupLabel" />
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16" />
+                  <bt:Image size="32" resid="Icon.32" />
+                  <bt:Image size="80" resid="Icon.80" />
+                </Icon>
+
+                <Control xsi:type="Button" id="ShowTaskpaneButton">
+                  <Label resid="ButtonLabel" />
+                  <Supertip>
+                    <Title resid="ButtonTitle" />
+                    <Description resid="ButtonDesc" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16" />
+                    <bt:Image size="32" resid="Icon.32" />
+                    <bt:Image size="80" resid="Icon.80" />
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>AutoTesisTaskpane</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url" />
+                  </Action>
+                </Control>
+              </Group>
+              <Label resid="TabLabel" />
+            </CustomTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16" DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/assets/icon-16.png" />
+        <bt:Image id="Icon.32" DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/assets/icon-32.png" />
+        <bt:Image id="Icon.80" DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/assets/icon-80.png" />
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="Commands.Url" DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/taskpane.html" />
+        <bt:Url id="Taskpane.Url" DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/taskpane.html" />
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com" />
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GetStarted.Title" DefaultValue="Selamat Datang di Independent Researcher" />
+        <bt:String id="TabLabel" DefaultValue="Independent Researcher" />
+        <bt:String id="GroupLabel" DefaultValue="Tesis Magister" />
+        <bt:String id="ButtonLabel" DefaultValue="Buka Asisten Tesis" />
+        <bt:String id="ButtonTitle" DefaultValue="Independent Researcher" />
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Description" DefaultValue="Asisten penulisan tesis Magister Manajemen lengkap dengan SmartPLS." />
+        <bt:String id="ButtonDesc" DefaultValue="Buka panel samping penulisan tesis otomatis dan olah data statistik." />
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

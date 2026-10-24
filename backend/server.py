@@ -44,6 +44,9 @@ import engine_hierarchical_pipeline
 import semantic_title_parser
 import llm_title_parser
 import academic_dimension_researcher
+import structural_graph_compiler
+import dynamic_pls_engine
+import engine_graph_dynamic
 from provenance import (
     label_data_source,
     label_origin,
@@ -1099,6 +1102,78 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                     "status": "success",
                     "ontology": ontology
                 }
+
+            # =========================================================================
+            # DYNAMIC RESEARCH GRAPH ENGINE (V3.0) - MULTI-X, MODERASI & MEDIASI TERMODERASI
+            # (Modul Terpisah - 100% Tidak Mengganggu Mesin Master)
+            # =========================================================================
+            elif path == "/api/graph/compile":
+                try:
+                    m_type = body.get("model_type", "mediation")
+                    x_list = body.get("x_vars", [])
+                    m_list = body.get("m_vars", [])
+                    z_list = body.get("z_vars", [])
+                    y_val = body.get("y_var", "Kinerja Pegawai")
+                    inst = body.get("instansi", "Instansi Terkait")
+                    focus = body.get("focus_topic", "Manajemen Sumber Daya Manusia")
+
+                    compiled = structural_graph_compiler.compile_research_graph(
+                        model_type=m_type,
+                        x_vars=x_list,
+                        m_vars=m_list,
+                        z_vars=z_list,
+                        y_var=y_val,
+                        instansi=inst,
+                        focus_topic=focus
+                    )
+                    response_data = {"status": "success", "graph": compiled}
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": f"Kompilasi Graph gagal: {ex}"}
+
+            elif path == "/api/graph/simulate-pls":
+                try:
+                    graph_spec = body.get("graph", {})
+                    n_sample = int(body.get("sample_size", 92))
+                    pls_res = dynamic_pls_engine.simulate_dynamic_pls(graph_spec, sample_size=n_sample)
+                    response_data = {"status": "success", "pls_results": pls_res}
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": f"Simulasi PLS gagal: {ex}"}
+
+            elif path == "/api/graph/generate-docx":
+                try:
+                    graph_spec = body.get("graph", {})
+                    pls_res = body.get("pls_results", {})
+                    out_name = body.get("filename", "NASKAH_RISET_MODEL_HIBRIDA.docx")
+                    if not out_name.endswith(".docx"):
+                        out_name += ".docx"
+                    out_path = os.path.join(OUTPUT_DIR, out_name)
+                    saved = engine_graph_dynamic.build_graph_model_docx(graph_spec, pls_res, out_path)
+                    response_data = {
+                        "status": "success",
+                        "filename": out_name,
+                        "download_url": f"/api/download/{out_name}",
+                        "docx_base64": get_file_base64(saved)
+                    }
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": f"Pembuatan DOCX gagal: {ex}"}
+
+            elif path == "/api/graph/write-word":
+                try:
+                    sub_id = body.get("sub_id", "all")
+                    graph_spec = body.get("graph", {})
+                    pls_res = body.get("pls_results", {})
+                    written = engine_graph_dynamic.write_graph_subchapter_native(sub_id, graph_spec, pls_res)
+                    response_data = {
+                        "status": "success" if written else "error",
+                        "sub_id": sub_id,
+                        "message": "Naskah berhasil diketik ke dokumen Word aktif!" if written else "Gagal mengetik ke Word aktif (pastikan Microsoft Word terbuka)."
+                    }
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": f"Pengetikan Word gagal: {ex}"}
 
             else:
                 status_code = 404

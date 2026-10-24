@@ -414,12 +414,125 @@ def build_s3_prompt(sub_id: str, ctx: Dict[str, Any]) -> str:
     m_type = ctx["model_type"].replace("_", " ").title()
     total_h = ctx["graph"].get("total_hypotheses", 0)
 
+    instruksi_khusus = ""
+    if sub_id == "sub_2_1_1":
+        instruksi_khusus = f"""
+=== PETUNJUK SPESIFIK WAJIB KAJIAN TEORITIS {y_var.upper()} (SUB-BAB 2.1.1) ===
+1. Karakteristik Murni Teoretis: DILARANG menyebut nama instansi lokal ({instansi}) atau data lapangan. Kajian harus murni konseptual universal.
+2. Grand & Middle-Range Theory Wajib Disertakan:
+   - Goal-Setting Theory: Locke & Latham (1990), dalam Schunk, (2022)
+   - Resource-Based View: Barney (1991), dalam Hitt et al., (2023)
+   - Campbell's Theory of Job Performance: Campbell (1990), dalam Campbell & Wiernik, (2022)
+   - AMO Framework: Appelbaum et al. (2000), dalam Boxall & Purcell, (2022)
+3. Wajib Memuat 10 Definisi Pakar Terkemuka:
+   (1) Bernardin & Russell (1993), dalam Kasmir, (2023)
+   (2) Armstrong & Taylor, (2023)
+   (3) Colquitt, LePine, & Wesson, (2022)
+   (4) Campbell & Wiernik, (2022)
+   (5) Mathis & Jackson (2011), dalam Kasmir, (2023)
+   (6) Robbins & Judge, (2022)
+   (7) Dessler, (2023)
+   (8) Mangkunegara, (2022)
+   (9) Kasmir, (2023)
+   (10) Afandi, (2023)
+4. Tabel Matriks Komparasi 10 Definisi (Tabel 2.1): Kolom No, Tokoh & Tahun, Intisari Definisi Konseptual, Fokus Penekanan, Orientasi Teoretis.
+5. Rumusan Sintesis Konseptual Peneliti Doktoral.
+6. Tabel Dimensi dan Indikator Operasional Baku (Tabel 2.2):
+   - Kualitas Pekerjaan (Quality of Work) -> 3 indikator terukur
+   - Kuantitas Output (Quantity of Output) -> 3 indikator terukur
+   - Ketepatan Waktu (Timeliness / Punctuality) -> 3 indikator terukur
+   - Efektivitas & Kemandirian (Effectiveness & Independence) -> 3 indikator terukur
+   - Kerjasama Tim (Teamwork & Collaboration) -> 2 indikator terukur
+7. Dinamika Anteseden: Paparkan posisi {y_var} sebagai variabel endogen utama (ultimate criterion variable).
+"""
+    elif sub_id == "sub_2_1_2":
+        instruksi_khusus = f"""
+=== PETUNJUK SPESIFIK WAJIB KAJIAN TEORITIS {ctx['m'].upper()} (SUB-BAB 2.1.2) ===
+1. Karakteristik Murni Teoretis: DILARANG menyebut nama instansi lokal ({instansi}) atau data lapangan. Kajian harus murni konseptual universal.
+2. Grand & Middle-Range Theory Wajib Disertakan:
+   - Social Cognitive Theory: Bandura (1986), dalam Ryan & Deci, (2022)
+   - Self-Determination Theory: Ryan & Deci, (2022)
+   - Expectancy Theory: Vroom (1964), dalam Kreitner & Kinicki, (2022)
+   - Two-Factor Theory: Herzberg (1966), dalam Luthans et al., (2022)
+3. Wajib Memuat 10 Definisi Pakar Terkemuka:
+   (1) Robbins & Judge, (2022)
+   (2) Ryan & Deci, (2022)
+   (3) McClelland (1961), dalam Schunk, (2022)
+   (4) Bandura (1986), dalam Schunk & DiBenedetto, (2022)
+   (5) Vroom (1964), dalam Kreitner & Kinicki, (2022)
+   (6) Herzberg (1966), dalam Luthans et al., (2022)
+   (7) Locke & Latham (1990), dalam Schunk, (2022)
+   (8) Hasibuan, (2022)
+   (9) Sedarmayanti, (2022)
+   (10) Uno, (2023)
+4. Tabel Matriks Komparasi 10 Definisi (Tabel 2.3): Kolom No, Tokoh & Tahun, Intisari Definisi Konseptual, Fokus Penekanan, Orientasi Teoretis.
+5. Rumusan Sintesis Konseptual Peneliti Doktoral.
+6. Tabel Dimensi dan Indikator Operasional Baku (Tabel 2.4):
+   - Dorongan Berprestasi (Need for Achievement) -> 3 indikator terukur
+   - Ketekunan & Daya Tahan (Persistence of Effort) -> 3 indikator terukur
+   - Kebutuhan Berafiliasi (Need for Affiliation) -> 2 indikator terukur
+   - Komitmen Sasaran (Goal Commitment) -> 2 indikator terukur
+7. Posisi Mediasi Transmisi: Penyalur energi kepemimpinan transformasional dan iklim kerja ke unjuk kerja pegawai.
+"""
+    elif sub_id == "sub_2_1_3":
+        instruksi_khusus = f"""
+=== PETUNJUK SPESIFIK WAJIB KAJIAN TEORITIS {ctx['x1'].upper()} (SUB-BAB 2.1.3) ===
+1. Karakteristik Murni Teoretis: DILARANG menyebut nama instansi lokal ({instansi}) atau data lapangan. Kajian harus murni konseptual universal.
+2. Grand & Middle-Range Theory Wajib Disertakan:
+   - Transformational Leadership Theory: Bass (1985), dalam Yukl, (2022) serta Burns (1978), dalam Antonakis & Day, (2022)
+   - Full Range of Leadership Model (The Four I’s): Avolio & Bass (2004), dalam Antonakis & Day, (2022)
+3. Wajib Memuat 10 Definisi Pakar Terkemuka:
+   (1) Bass (1985), dalam Yukl, (2022)
+   (2) Yukl, (2022)
+   (3) Northouse, (2022)
+   (4) Avolio, Yammarino, & Bass (1991), dalam Antonakis & Day, (2022)
+   (5) Burns (1978), dalam Antonakis & Day, (2022)
+   (6) Robbins & Coulter, (2022)
+   (7) Luthans, Luthans, & Luthans, (2022)
+   (8) Siagian (1997), dalam Thoha, (2023)
+   (9) Kartono, (2022)
+   (10) Thoha, (2023)
+4. Tabel Matriks Komparasi 10 Definisi (Tabel 2.5): Kolom No, Tokoh & Tahun, Intisari Definisi Konseptual, Fokus Penekanan, Orientasi Teoretis.
+5. Rumusan Sintesis Konseptual Peneliti Doktoral.
+6. Tabel Dimensi dan Indikator Operasional Baku (Tabel 2.6):
+   - Pengaruh Ideal (Idealized Influence / Charisma) -> 3 indikator terukur
+   - Motivasi Menginspirasi (Inspirational Motivation) -> 3 indikator terukur
+   - Stimulasi Intelektual (Intellectual Stimulation) -> 3 indikator terukur
+   - Perhatian Individual (Individualized Consideration) -> 3 indikator terukur
+7. Posisi Determinan Eksogen Utama: Pengaruh langsung ke kinerja dan tidak langsung via motivasi kerja.
+"""
+    elif sub_id == "sub_2_1_4":
+        instruksi_khusus = f"""
+=== PETUNJUK SPESIFIK WAJIB KAJIAN TEORITIS {ctx['z'].upper()} & BEBAS LAINNYA (SUB-BAB 2.1.4) ===
+1. Karakteristik Murni Teoretis: DILARANG menyebut nama instansi lokal ({instansi}) atau data lapangan. Kajian harus murni konseptual universal.
+2. Bagian A: Kajian Teoritis {ctx['z']} (Variabel Moderasi):
+   - Contingency Theory: Donaldson (2001), dalam Donaldson, (2023)
+   - Multidimensional Work Ethic: Weber (1905), dalam Donaldson, (2023) & Miller et al. (2002), dalam Meriac et al., (2023)
+   - 10 Definisi Pakar: Miller et al. (2002), dalam Meriac et al., (2023); Weber (1905), dalam Donaldson, (2023); Furnham (1990), dalam Furnham, (2022); Merrens & Garrett (1975), dalam Cherrington, (2022); Petty & Hill, (2022); Sinamo, (2022); Tasmara (2002), dalam Ndraha, (2023); Anoraga, (2022); Keraf, (2022); Ndraha, (2023).
+   - Tabel Matriks Komparasi 10 Definisi (Tabel 2.7)
+   - Rumusan Sintesis Konseptual Peneliti Doktoral
+   - Tabel Dimensi & Indikator Baku (Tabel 2.8): Kerja Keras, Moralitas & Integritas, Efisiensi Waktu, Kemandirian Profesional.
+3. Bagian B: Kajian Teoritis {ctx['x2']} (Variabel Bebas):
+   - Organizational Culture Theory: Schein (1985), dalam Denison, (2022) & Model Denison (Denison, 2022)
+   - 10 Definisi Pakar: Schein (1985), dalam Denison, (2022); Denison, (2022); Cameron & Quinn, (2022); Robbins & Judge, (2022); O'Reilly et al. (1991), dalam Chatman, (2022); Kotter & Heskett (1992), dalam Daft, (2022); Hofstede (1980), dalam Minkov, (2022); Kusdi, (2022); Sutrisno, (2022); Sobirin, (2023).
+   - Tabel Matriks Komparasi 10 Definisi (Tabel 2.9)
+   - Rumusan Sintesis Konseptual Peneliti Doktoral
+   - Tabel Dimensi & Indikator Baku Model Denison (Tabel 2.10): Keterlibatan, Konsistensi, Adaptabilitas, Misi.
+4. Bagian C: Kajian Teoritis {ctx['x3']} (Variabel Bebas):
+   - Organizational Climate Theory: Schneider et al. (2013), dalam Schneider et al., (2022) & Litwin & Stringer (1968), dalam Moran, (2022)
+   - 10 Definisi Pakar: Schneider et al. (2013), dalam Schneider et al., (2022); Litwin & Stringer (1968), dalam Moran, (2022); James & Jones (1974), dalam James et al., (2022); Pritchard & Karasick (1973), dalam Denison, (2022); Denison, (2022); Gellerman (1963), dalam Luthans, (2022); Stringer, (2022); Wirawan, (2022); Simamora, (2022); Wibowo, (2023).
+   - Tabel Matriks Komparasi 10 Definisi (Tabel 2.11)
+   - Rumusan Sintesis Konseptual Peneliti Doktoral
+   - Tabel Dimensi & Indikator Baku (Tabel 2.12): Kenyamanan Fisik, Relasi Interpersonal, Standar & Tanggung Jawab, Dukungan Kepemimpinan.
+5. Sintesis Terpadu: Penjelasan integratif seluruh variabel eksogen dan kontingensi terhadap {y_var}.
+"""
+
     prompt = f"""Anda adalah Guru Besar dan Pakar Metodologi Penelitian Manajemen yang bertindak sebagai Penulis Ahli Disertasi Doktor (S3) Ilmu Manajemen Pascasarjana Indonesia.
 
 Tugas Anda adalah menyusun naskah akademik tingkat doktoral untuk:
 BAGIAN / SUB-BAB: {meta['code']} - {meta['title']}
 DESKRIPSI KONTEN: {meta['desc']}
-
+{instruksi_khusus}
 === ANCHOR UTAMA: JUDUL DISERTASI DOKTORAL (WAJIB DISINKRONKAN) ===
 "{judul}"
 
@@ -435,16 +548,22 @@ DESKRIPSI KONTEN: {meta['desc']}
 • Sampel & Alat Analisis   : n = {ctx['n']} Responden, SmartPLS 4 & PROCESS Hayes Model
 
 === PEDOMAN SUBSTANSI AKADEMIK DOKTORAL BERDASARKAN JUDUL ===
-1. Keterikatan Judul & Variabel: Seluruh argumentasi, logika kausalitas, dan elaborasi teoretis WAJIB merujuk secara konsisten pada variabel-variabel di dalam judul ({y_var}, {m_vars_str}, {z_vars_str}, {x_vars_str}) dan konteks empiris {instansi}.
+1. Keterikatan Judul & Variabel: Seluruh argumentasi, logika kausalitas, dan elaborasi teoretis WAJIB merujuk secara konsisten pada variabel-variabel di dalam judul ({y_var}, {m_vars_str}, {z_vars_str}, {x_vars_str}). Khusus untuk sub-bab 2.1 (kajian teori murni), kajian wajib universal tanpa menyebut nama instansi lokal.
 2. Kedalaman Teori Doktoral: Sertakan telaah Grand Theory yang relevan (Resource-Based View, Contingency Theory, Social Cognitive Theory, Transformational Leadership Theory, Goal Setting Theory), Middle Range Theory, dan Applied Theory.
 3. Telaah Variabel Kajian Pustaka: Setiap variabel penelitian (Variabel Terikat Y, Mediasi M, Bebas Utama X1, Moderasi Z, serta Bebas Lainnya X2 & X3) WAJIB memuat minimal 10 (sepuluh) definisi konseptual dari pakar terkemuka, tabel matriks komparasi definisi, rumusan sintesis konseptual peneliti, serta dimensi operasional dan indikator terukurnya secara lengkap.
 4. Standar Kebaruan Pustaka (2022-2026) & Format Sitasi Teori Lama:
    • Seluruh buku dan artikel jurnal ilmiah yang dirujuk WAJIB diterbitkan dalam kurun waktu 5 tahun terakhir (2022–2026).
-   • Jika merujuk pada teori lama/klasik (sebelum 2022), WAJIB menggunakan format kutipan sekunder persis seperti contoh berikut:
+   • Jika merujuk pada teori lama/klasik (sebelum 2022), WAJIB menggunakan format kutipan sekunder persis seperti formula ini:
+     [Tokoh Asli] ([Tahun Asli]), dalam [Penulis Mutakhir], ([Tahun Mutakhir 2022-2026])
+     Contoh wajib:
      - Locke & Latham (1990), dalam Schunk, (2022)
      - Barney (1991), dalam Hitt et al., (2023)
      - Bass (1985), dalam Yukl, (2022)
      - Weber (1905), dalam Donaldson, (2023)
+     - Bernardin & Russell (1993), dalam Kasmir, (2023)
+     - Bandura (1986), dalam Ryan & Deci, (2022)
+     - Vroom (1964), dalam Kreitner & Kinicki, (2022)
+     - Herzberg (1966), dalam Luthans et al., (2022)
    • Seluruh entri pada Daftar Pustaka (References) WAJIB 100% memuat angka tahun terbitan antara 2022 s.d. 2026.
 5. Kebaruan Ilmiah (Novelty): Tegaskan celah penelitian (research gap) dan kontribusi teoretis baru yang membedakan riset doktoral ini dari riset-riset magister sebelumnya.
 6. Gaya Bahasa & Format: Bahasa Indonesia akademik formal baku (EYD V), bernas, kohesif, menggunakan alur paragraf deduktif yang mengalir tanpa repetisi kata.

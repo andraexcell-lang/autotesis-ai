@@ -1359,6 +1359,8 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
 
             elif path == "/api/s3/prompt":
                 try:
+                    import importlib
+                    importlib.reload(s3_hierarchical_engine)
                     sub_id = body.get("sub_id", "sub_1_1")
                     config = body.get("config", {})
                     ctx = s3_hierarchical_engine.resolve_s3_context(config)

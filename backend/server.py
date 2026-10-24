@@ -796,7 +796,20 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 if is_s3:
                     import importlib
                     importlib.reload(s3_hierarchical_engine)
-                    fn, fp = s3_hierarchical_engine.build_s3_subchapter_doc(sub_id, config, include_dapus=False)
+                    is_custom = bool(body.get("is_custom")) or str(sub_id).startswith("custom_")
+                    custom_meta = body.get("custom_meta", {})
+                    if is_custom:
+                        fn, fp = s3_hierarchical_engine.build_s3_custom_subchapter_doc(custom_meta, config)
+                        meta_info = {
+                            "code": custom_meta.get("code", "E"),
+                            "title": f"{custom_meta.get('code', 'E')}. {custom_meta.get('title', 'Sub-Bab Kustom')}",
+                            "chapter": custom_meta.get("chapter", 1),
+                            "is_custom": True
+                        }
+                    else:
+                        fn, fp = s3_hierarchical_engine.build_s3_subchapter_doc(sub_id, config, include_dapus=False)
+                        meta_info = s3_hierarchical_engine.S3_SUBCHAPTER_CATALOG.get(sub_id, {})
+
                     native_written = False
                     if mode == "native":
                         try:
@@ -812,7 +825,7 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                         "download_url": f"/api/download/{fn}",
                         "docx_base64": get_file_base64(fp),
                         "native_written": native_written,
-                        "meta": s3_hierarchical_engine.S3_SUBCHAPTER_CATALOG.get(sub_id, {})
+                        "meta": meta_info
                     }
                 else:
                     # GERBANG ONTOLOGI MASTER S2 LAMA
@@ -1364,11 +1377,19 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                     sub_id = body.get("sub_id", "sub_1_1")
                     config = body.get("config", {})
                     ctx = s3_hierarchical_engine.resolve_s3_context(config)
-                    prompt = s3_hierarchical_engine.build_s3_prompt(sub_id, ctx)
+                    is_custom = bool(body.get("is_custom")) or str(sub_id).startswith("custom_")
+                    if is_custom:
+                        custom_meta = body.get("custom_meta", {})
+                        prompt = s3_hierarchical_engine.build_s3_custom_prompt(custom_meta, ctx)
+                        title_info = f"{custom_meta.get('code', 'E')}. {custom_meta.get('title', 'Sub-Bab Kustom')}"
+                    else:
+                        prompt = s3_hierarchical_engine.build_s3_prompt(sub_id, ctx)
+                        title_info = s3_hierarchical_engine.S3_SUBCHAPTER_CATALOG.get(sub_id, {}).get("title", sub_id)
+
                     response_data = {
                         "status": "success",
                         "sub_id": sub_id,
-                        "title": s3_hierarchical_engine.S3_SUBCHAPTER_CATALOG.get(sub_id, {}).get("title", sub_id),
+                        "title": title_info,
                         "prompt": prompt,
                         "judul": ctx["judul"],
                         "instansi": ctx["instansi"],

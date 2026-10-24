@@ -1156,7 +1156,7 @@
                   <span class="chapter-badge" style="background: #7c3aed;">BAB I</span>
                   <div class="chapter-title-group">
                     <h3>BAB I: Pendahuluan</h3>
-                    <span class="subchapter-count">Sub-Bab A s/d F • Est. 12-18 Halaman</span>
+                    <span class="subchapter-count" id="count-s3-ch-1">Sub-Bab A s/d D (Default) • Est. 12-15 Halaman</span>
                   </div>
                 </div>
                 <div class="chapter-header-actions">
@@ -1221,31 +1221,30 @@
                   </div>
                 </div>
 
-                <div class="subchapter-row" id="row-s3-sub_1_5">
-                  <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">E</span>
-                    <div class="sub-text">
-                      <strong>E. Ruang Lingkup Penelitian</strong>
-                      <span class="sub-meta">🎯 1 Hlm | Lingkup Variabel, Objek, Subjek, PLS-SEM &amp; Temporal</span>
-                    </div>
-                  </div>
-                  <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_1_5">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_1_5">📄 .docx</button>
-                  </div>
-                </div>
+                <!-- KONTINER SUB-BAB KUSTOM DITAMBAHKAN USER -->
+                <div id="s3-custom-sub-list-1"></div>
 
-                <div class="subchapter-row" id="row-s3-sub_1_6">
-                  <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">F</span>
-                    <div class="sub-text">
-                      <strong>F. Sistematika Penulisan</strong>
-                      <span class="sub-meta">🎯 1 Hlm | Penjabaran Logis 5 Bab Disertasi Standar Pascasarjana</span>
-                    </div>
+                <!-- MENU TAMBAH SUB-BAB BEBAS JUDUL -->
+                <div class="add-subchapter-box" style="margin-top: 8px; padding: 8px 12px; background: #faf5ff; border: 1px dashed #c084fc; border-radius: 6px;">
+                  <div id="btn-add-sub-trigger-ch-1" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <span style="font-size: 11px; font-weight: 600; color: #7c3aed;">➕ Tambah Sub-Bab Baru (Bebas Judul)</span>
+                    <span class="badge-mini" style="background: #ede9fe; color: #6d28d9; cursor: pointer;">+ Tambah</span>
                   </div>
-                  <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_1_6">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_1_6">📄 .docx</button>
+                  <div id="form-add-sub-ch-1" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f3e8ff;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                      <div style="flex: 0 0 55px;">
+                        <label style="font-size: 10px; color: #6b7280; font-weight: 600; display: block; margin-bottom: 2px;">Kode</label>
+                        <input type="text" id="input-custom-sub-code-1" placeholder="E" value="E" maxlength="3" style="width: 100%; font-size: 11px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 4px; text-transform: uppercase; font-weight: bold; text-align: center;">
+                      </div>
+                      <div style="flex: 1;">
+                        <label style="font-size: 10px; color: #6b7280; font-weight: 600; display: block; margin-bottom: 2px;">Judul Sub-Bab (Ketik Bebas)</label>
+                        <input type="text" id="input-custom-sub-title-1" placeholder="Contoh: Ruang Lingkup Penelitian atau Spesifikasi Model" style="width: 100%; font-size: 11px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                      </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                      <button type="button" class="btn btn-outline btn-xs" id="btn-cancel-custom-sub-1">Batal</button>
+                      <button type="button" class="btn btn-primary btn-xs" id="btn-save-custom-sub-1" style="background: #7c3aed; border-color: #7c3aed;">💾 Simpan Sub-Bab</button>
+                    </div>
                   </div>
                 </div>
               </div>

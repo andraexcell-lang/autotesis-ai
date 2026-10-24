@@ -2369,6 +2369,9 @@ function initMasterS3() {
     });
   });
 
+  // Inisialisasi Sub-Bab Kustom Dinamis Bab I
+  initS3CustomSubchaptersUI();
+
   // 8. Wizard Olah Data PLS-SEM Doktoral (Panel 3)
   document.getElementById("btn-s3-generate-gform")?.addEventListener("click", handleS3GoogleFormScript);
   document.getElementById("btn-s3-copy-gform")?.addEventListener("click", handleS3CopyGform);
@@ -3178,7 +3181,8 @@ function getS3Config() {
     jenjang: "Doktor (S3)",
     degree: "Doktor",
     is_s3: true,
-    program_studi: "Program Doktor Ilmu Manajemen"
+    program_studi: "Program Doktor Ilmu Manajemen",
+    custom_subchapters: getS3CustomSubchapters(1)
   };
 }
 
@@ -3359,6 +3363,255 @@ async function handleS3RunChainBab(chapterNum, btn) {
     setTimeout(() => setProgress(0), 1000);
     btn.disabled = false;
     btn.innerHTML = originalHtml;
+  }
+}
+
+// =============================================================
+// SUB-BAB KUSTOM DINAMIS BAB I DISERTASI DOKTOR (S3)
+// =============================================================
+
+function escapeHtmlS3(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function getS3CustomSubchapters(chapterNum = 1) {
+  try {
+    const raw = localStorage.getItem(`autothesis_s3_custom_subchapters_${chapterNum}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.warn("Gagal membaca custom subchapters:", e);
+    return [];
+  }
+}
+
+function saveS3CustomSubchapters(chapterNum = 1, list) {
+  try {
+    localStorage.setItem(`autothesis_s3_custom_subchapters_${chapterNum}`, JSON.stringify(list));
+  } catch (e) {
+    console.warn("Gagal menyimpan custom subchapters:", e);
+  }
+  updateS3Chapter1Count(list);
+}
+
+function updateS3Chapter1Count(customList) {
+  const countEl = document.getElementById("count-s3-ch-1");
+  if (!countEl) return;
+  const count = (customList || getS3CustomSubchapters(1)).length;
+  if (count === 0) {
+    countEl.textContent = "Sub-Bab A s/d D (Default) • Est. 12-15 Halaman";
+  } else {
+    const lastLetter = String.fromCharCode(68 + count); // 68 adalah 'D'
+    countEl.textContent = `Sub-Bab A s/d ${lastLetter} (+${count} Kustom) • Est. ${12 + count * 2}-${15 + count * 3} Halaman`;
+  }
+}
+
+function renderS3CustomSubchapters(chapterNum = 1) {
+  const container = document.getElementById(`s3-custom-sub-list-${chapterNum}`);
+  if (!container) return;
+  const list = getS3CustomSubchapters(chapterNum);
+  container.innerHTML = "";
+
+  list.forEach((item) => {
+    const row = document.createElement("div");
+    row.className = "subchapter-row custom-subchapter-row";
+    row.id = `row-s3-${item.id}`;
+    row.style.background = "#faf5ff";
+    row.style.borderLeft = "3px solid #a855f7";
+    row.style.marginTop = "6px";
+    row.innerHTML = `
+      <div class="sub-info">
+        <span class="sub-badge" style="background: #f3e8ff; color: #7e22ce;">${escapeHtmlS3(item.code)}</span>
+        <div class="sub-text">
+          <strong>${escapeHtmlS3(item.code)}. ${escapeHtmlS3(item.title)}</strong>
+          <span class="sub-meta" style="color: #9333ea;">✨ Sub-Bab Kustom • Adaptif Ontologi S3</span>
+        </div>
+      </div>
+      <div class="sub-actions">
+        <button class="btn btn-primary btn-xs btn-s3-custom-write" data-id="${item.id}">✍️ Tulis</button>
+        <button class="btn btn-outline btn-xs btn-s3-custom-docx" data-id="${item.id}">📄 .docx</button>
+        <button class="btn btn-outline btn-xs btn-s3-custom-del" data-id="${item.id}" title="Hapus Sub-Bab" style="color: #dc2626; border-color: #fca5a5; padding: 2px 6px;">🗑️</button>
+      </div>
+    `;
+
+    const btnWrite = row.querySelector(".btn-s3-custom-write");
+    const btnDocx = row.querySelector(".btn-s3-custom-docx");
+    const btnDel = row.querySelector(".btn-s3-custom-del");
+
+    btnWrite?.addEventListener("click", () => handleS3CustomSubChapterWrite(item, btnWrite));
+    btnDocx?.addEventListener("click", () => handleS3CustomSubChapterDocx(item, btnDocx));
+    btnDel?.addEventListener("click", () => {
+      if (confirm(`Hapus sub-bab kustom "${item.code}. ${item.title}"?`)) {
+        const currentList = getS3CustomSubchapters(chapterNum).filter(x => x.id !== item.id);
+        saveS3CustomSubchapters(chapterNum, currentList);
+        renderS3CustomSubchapters(chapterNum);
+        setStatus("ready", `Sub-bab kustom ${item.code} berhasil dihapus.`);
+      }
+    });
+
+    container.appendChild(row);
+  });
+
+  updateS3Chapter1Count(list);
+}
+
+function initS3CustomSubchaptersUI() {
+  const triggerBtn = document.getElementById("btn-add-sub-trigger-ch-1");
+  const formBox = document.getElementById("form-add-sub-ch-1");
+  const cancelBtn = document.getElementById("btn-cancel-custom-sub-1");
+  const saveBtn = document.getElementById("btn-save-custom-sub-1");
+  const inputCode = document.getElementById("input-custom-sub-code-1");
+  const inputTitle = document.getElementById("input-custom-sub-title-1");
+
+  if (!triggerBtn || !formBox) return;
+
+  // Toggle buka tutup form
+  triggerBtn.addEventListener("click", () => {
+    const isHidden = formBox.style.display === "none" || !formBox.style.display;
+    formBox.style.display = isHidden ? "block" : "none";
+    if (isHidden) {
+      const list = getS3CustomSubchapters(1);
+      const nextCharCode = 69 + list.length; // 69 = 'E'
+      if (inputCode) inputCode.value = String.fromCharCode(nextCharCode);
+      inputTitle?.focus();
+    }
+  });
+
+  cancelBtn?.addEventListener("click", () => {
+    formBox.style.display = "none";
+    if (inputTitle) inputTitle.value = "";
+  });
+
+  saveBtn?.addEventListener("click", () => {
+    const code = (inputCode?.value || "E").trim().toUpperCase();
+    const title = (inputTitle?.value || "").trim();
+
+    if (!title) {
+      alert("Silakan masukkan judul sub-bab terlebih dahulu.");
+      inputTitle?.focus();
+      return;
+    }
+
+    const currentList = getS3CustomSubchapters(1);
+    const newItem = {
+      id: `custom_1_${code}_${Date.now()}`,
+      chapter: 1,
+      code: code,
+      title: title,
+      created_at: Date.now()
+    };
+
+    currentList.push(newItem);
+    saveS3CustomSubchapters(1, currentList);
+    renderS3CustomSubchapters(1);
+
+    if (inputTitle) inputTitle.value = "";
+    formBox.style.display = "none";
+    setStatus("ready", `Sub-bab kustom "${code}. ${title}" berhasil ditambahkan ke Bab I.`);
+  });
+
+  renderS3CustomSubchapters(1);
+}
+
+async function handleS3CustomSubChapterWrite(item, btn) {
+  const mode = getSelectedWriteModeS3();
+  const row = document.getElementById(`row-s3-${item.id}`);
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = "Mengetik...";
+  setStatus("working", `Mengetikkan sub-bab kustom "${item.code}. ${item.title}" Disertasi Doktor langsung ke Word...`);
+  setProgress(40);
+
+  try {
+    const config = getS3Config();
+    const response = await fetch(`${API_BASE}/pipeline/generate-subchapter`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sub_id: item.id,
+        is_custom: true,
+        custom_meta: {
+          id: item.id,
+          code: item.code,
+          title: item.title,
+          chapter: 1
+        },
+        mode: mode,
+        config: config,
+        is_s3: true
+      })
+    });
+    const res = await response.json();
+    if (!response.ok || res.status === "error") {
+      throw new Error(res.message || `HTTP ${response.status}`);
+    }
+
+    if (res.status === "success") {
+      if (res.docx_base64 && mode === "officejs") {
+        await insertDocxBase64ToActiveWord(res.docx_base64);
+      }
+      if (row) row.classList.add("row-success");
+      btn.textContent = "✅ Selesai";
+      setStatus("ready", `Sub-bab "${item.code}. ${item.title}" Disertasi Doktor berhasil ditulis langsung ke dokumen Word!`);
+    } else {
+      throw new Error(res.message || "Gagal menghasilkan sub-bab kustom");
+    }
+  } catch (err) {
+    console.error("Error writing custom subchapter:", err);
+    btn.textContent = "❌ Gagal";
+    setStatus("error", `Gagal menulis sub-bab kustom "${item.code}. ${item.title}": ${err.message}`);
+  } finally {
+    setTimeout(() => {
+      setProgress(0);
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }, 2000);
+  }
+}
+
+async function handleS3CustomSubChapterDocx(item, btn) {
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = "⏳...";
+  setStatus("working", `Menyiapkan berkas .docx sub-bab kustom "${item.code}. ${item.title}" Disertasi Doktor...`);
+
+  try {
+    const config = getS3Config();
+    const response = await fetch(`${API_BASE}/pipeline/generate-subchapter`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sub_id: item.id,
+        is_custom: true,
+        custom_meta: {
+          id: item.id,
+          code: item.code,
+          title: item.title,
+          chapter: 1
+        },
+        mode: "download",
+        config: config,
+        is_s3: true
+      })
+    });
+    const res = await response.json();
+    if (res.status === "success" && res.filename) {
+      setStatus("ready", `Dokumen kustom ${res.filename} siap diunduh!`);
+      window.open(`${API_BASE}/download/${res.filename}`, "_blank");
+    } else {
+      throw new Error(res.message || "Gagal mengunduh dokumen kustom");
+    }
+  } catch (err) {
+    console.error("Error download custom docx:", err);
+    setStatus("error", `Gagal mengunduh berkas sub-bab kustom: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
 }
 

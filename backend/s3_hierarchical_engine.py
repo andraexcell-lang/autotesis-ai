@@ -92,16 +92,6 @@ S3_SUBCHAPTER_CATALOG = {
         "title": "D. Manfaat Penelitian",
         "desc": "Kontribusi teoretis pengembangan grand theory dan novelty keilmuan serta manfaat praktis rekomendasi strategis bagi instansi objek penelitian."
     },
-    "sub_1_5": {
-        "chapter": 1, "code": "E",
-        "title": "E. Ruang Lingkup Penelitian",
-        "desc": "Batasan substansi variabel judul, unit analisis instansi, metodologi kuantitatif PLS-SEM, dan batasan temporal penelitian."
-    },
-    "sub_1_6": {
-        "chapter": 1, "code": "F",
-        "title": "F. Sistematika Penulisan",
-        "desc": "Sistematika naskah Disertasi 5 Bab sesuai buku pedoman resmi Program Doktor Ilmu Manajemen."
-    },
 
     # Bab II: Kajian Pustaka & Hipotesis
     "sub_2_1_1": {
@@ -1981,6 +1971,116 @@ S3_BUILDER_MAP = {
 # 5. ENTRY POINTS UTAMA: DOCX, NATIVE COM, & CHAINED RUNNER
 # ==============================================================================
 
+
+
+# ==============================================================================
+# SUB-BAB KUSTOM DINAMIS (BEBAS KETIK JUDUL & SUB-BAB OLEH PENGGUNA)
+# ==============================================================================
+
+def build_s3_custom_subchapter_doc(custom_meta: Dict[str, Any], config: Optional[Dict[str, Any]] = None) -> Tuple[str, str]:
+    """
+    Menghasilkan berkas Word .docx untuk Sub-Bab Kustom buatan pengguna
+    yang beradaptasi penuh terhadap JUDUL, VARIABEL, dan INSTANSI PENELITIAN.
+    """
+    ctx = resolve_s3_context(config)
+    code = custom_meta.get("code", "E").strip().upper()
+    raw_title = custom_meta.get("title", "Sub-Bab Kustom").strip()
+    
+    # Normalisasi judul agar tidak duplikasi kode ("E. E. Judul")
+    if raw_title.upper().startswith(f"{code}."):
+        title = raw_title[len(code)+1:].strip()
+    elif raw_title.upper().startswith(f"{code} "):
+        title = raw_title[len(code):].strip()
+    else:
+        title = raw_title
+
+    doc = Document()
+    setup_page(doc, continuous=True)
+
+    h2(doc, f"{code}. {title}")
+
+    y_var = ctx["y_var"]
+    instansi = ctx["instansi"]
+    x_vars_str = ", ".join(ctx["x_vars"])
+    m_vars_str = ", ".join(ctx["m_vars"]) if ctx["m_vars"] else "(Tanpa variabel mediasi)"
+    z_vars_str = ", ".join(ctx["z_vars"]) if ctx["z_vars"] else "(Tanpa variabel moderasi)"
+    model_acronym = _generate_doctoral_model_acronym(ctx)
+
+    title_upper = title.upper()
+
+    if any(k in title_upper for k in ["RUANG LINGKUP", "BATASAN", "DELIMITASI"]):
+        p(doc, f"Ruang lingkup dan batasan dalam penelitian Disertasi Doktor ini ditetapkan secara terukur dan spesifik agar pengujian Model {model_acronym} memiliki fokus yang tajam, mendalam, dan memenuhi kaidah ketat riset ilmiah pascasarjana sebagai berikut:", indent=0.5, space_after=6)
+        p(doc, f"1. Lingkup Konseptual & Model Struktural: Penelitian difokuskan pada pengujian hubungan kausalitas struktural terintegrasi antara variabel terikat ({y_var}), variabel mediasi ({m_vars_str}), variabel moderasi ({z_vars_str}), dan variabel bebas ({x_vars_str}).", indent=0.75, space_after=3)
+        p(doc, f"2. Lingkup Lokus & Objek Empiris: Penelitian dilaksanakan pada lingkungan institusi {instansi} guna menjawab dinamika tata kelola dan pencapaian kinerja riil aparatur.", indent=0.75, space_after=3)
+        p(doc, f"3. Lingkup Subjek & Unit Analisis: Subjek penelitian adalah aparatur sipil yang bertugas pada {instansi} dengan ukuran sampel representatif n = {ctx['n']} responden.", indent=0.75, space_after=3)
+        p(doc, f"4. Lingkup Metodologis: Menggunakan metode kuantitatif kausal-eksplanatori dengan teknik pemodelan persamaan struktural berbasis varian (PLS-SEM) menggunakan SmartPLS 4 dan Hayes PROCESS Macro.", indent=0.75, space_after=3)
+        p(doc, f"5. Lingkup Temporal: Pengumpulan data primer kuesioner dan observasi empiris dilaksanakan pada kurun waktu tahun {ctx['tahun']}.", indent=0.75, space_after=6)
+
+    elif any(k in title_upper for k in ["SISTEMATIKA"]):
+        p(doc, "Naskah Disertasi Doktor ini disusun ke dalam 5 (lima) bab yang saling terkait secara logis dan terstruktur sebagai berikut:", indent=0.5, space_after=6)
+        p(doc, "BAB I PENDAHULUAN: Memuat latar belakang masalah berbasis 7 lapisan deduktif doktoral, rumusan masalah sekuensial kontinu, tujuan penelitian yang selaras, manfaat penelitian teoretis dan praktis, serta ruang lingkup penelitian.", indent=0.5, space_after=3)
+        p(doc, f"BAB II KAJIAN PUSTAKA, KERANGKA KONSEPTUAL, DAN PENGEMBANGAN HIPOTESIS: Menguraikan telaah Grand Theory, Middle Theory, kajian teoritis mendalam per variabel ({y_var}, {m_vars_str}, {z_vars_str}, {x_vars_str}), telaah 12 jurnal internasional bereputasi terdahulu, kerangka konseptual Model {model_acronym}, dan formulasi hipotesis formal.", indent=0.5, space_after=3)
+        p(doc, f"BAB III METODE PENELITIAN: Menguraikan desain penelitian, populasi dan sampel {instansi}, operasionalisasi variabel indikator, instrumen penelitian, serta rancangan evaluasi pengukuran dan struktural PLS-SEM.", indent=0.5, space_after=3)
+        p(doc, "BAB IV HASIL PENELITIAN DAN PEMBAHASAN: Menyajikan karakteristik responden, statistik deskriptif, evaluasi Outer Model dan Inner Model PLS-SEM, uji hipotesis bootstrapping, analisis mediasi dan moderasi, serta pembahasan 4 alinea pascasarjana.", indent=0.5, space_after=3)
+        p(doc, "BAB V KESIMPULAN, IMPLIKASI, DAN SARAN: Menyajikan kesimpulan menyeluruh, implikasi teoretis (doctoral novelty), implikasi manajerial praktis bagi institusi, keterbatasan penelitian, dan agenda riset lanjutan.", indent=0.5, space_after=6)
+
+    elif any(k in title_upper for k in ["KEBARUAN", "NOVELTY", "SPESIFIKASI", "ORISINALITAS"]):
+        p(doc, f"Sebagai penelitian tingkat doktoral, Disertasi ini memformulasikan kebaruan ilmiah (doctoral novelty) melalui integrasi konseptual Model {model_acronym} yang menjawab anomali kinerja birokrasi pada {instansi}.", indent=0.5, space_after=6)
+        p(doc, f"1. Orisinalitas Teoretis: Mensintesiskan proposisi-proposisi teoretis dari Grand Theory dan Middle-Range Theory ke dalam satu kerangka struktural kontingensi hibrida, membuktikan bahwa infrastruktur formal tata kelola ({x_vars_str}) membutuhkan jembatan transmisi eksekusi perilaku ({m_vars_str}) dan perlindungan integritas ({z_vars_str}) untuk menghasilkan unjuk kerja optimal ({y_var}).", indent=0.75, space_after=3)
+        p(doc, f"2. Orisinalitas Kontekstual-Empiris: Menempatkan pengujian model pada institusi sektor publik {instansi} yang memiliki karakteristik beban target dan dinamika birokrasi yang kompleks.", indent=0.75, space_after=3)
+        p(doc, f"3. Orisinalitas Metodologis: Mengkombinasikan pengujian model mediasi termoderasi secara simultan menggunakan pendekatan PLS-SEM mutakhir dengan pengujian efek bersyarat (conditional indirect effect) yang presisi.", indent=0.75, space_after=6)
+
+    else:
+        # Generik Doktoral Adaptif untuk Judul Kustom Apapun yang Diketik Pengguna
+        p(doc, f"Kajian mengenai {title} dalam Disertasi Doktor ini diposisikan sebagai bagian integral dari pengembangan kerangka kerja komprehensif dalam menelaah optimalisasi {y_var} pada {instansi}. Secara konseptual, aspek ini memberikan landasan operasional dan telaah mendalam yang memperkaya dialektika teoretis maupun metodologis dalam pemodelan kausalitas struktural Model {model_acronym}.", indent=0.5, space_after=6)
+        p(doc, f"Dalam kaitannya dengan pilar-pilar kapasitas organisasi ({x_vars_str}), perumusan {title} berfungsi sebagai parameter penjelas guna memastikan bahwa seluruh instrumen kebijakan dan interaksi manajerial mampu bertransformasi secara efektif melalui peran {m_vars_str} serta terproteksi oleh kondisi batas {z_vars_str}. Hal ini sangat esensial mengingat realitas dinamika tugas dan akuntabilitas kinerja aparatur pada {instansi} menuntut adanya kejelasan arahan, konsistensi implementasi, dan pengawalan integritas yang kokoh.", indent=0.5, space_after=6)
+        p(doc, f"Dengan demikian, keberadaan {title} dalam struktur penelitian ini tidak hanya mempertegas batasan keilmuan yang dikaji, melainkan juga memperkuat orisinalitas kontribusi akademik Disertasi dalam menjawab kesenjangan penelitian (research gap) serta memberikan rekomendasi manajerial yang aplikatif bagi pengambil kebijakan pada {instansi}.", indent=0.5, space_after=6)
+
+    fn = f"DISERTASI_S3_CUSTOM_{code}_{int(time.time())}.docx"
+    fp = os.path.join(OUTPUT_DIR, fn)
+    doc.save(fp)
+    return fn, fp
+
+
+def build_s3_custom_prompt(custom_meta: Dict[str, Any], ctx: Dict[str, Any]) -> str:
+    """
+    Menghasilkan Prompt Doktoral AI untuk Sub-Bab Kustom buatan pengguna.
+    """
+    code = custom_meta.get("code", "E").strip().upper()
+    title = custom_meta.get("title", "Sub-Bab Kustom").strip()
+    y_var = ctx["y_var"]
+    instansi = ctx["instansi"]
+    x_vars_str = ", ".join(ctx["x_vars"])
+    m_vars_str = ", ".join(ctx["m_vars"]) if ctx["m_vars"] else "(Tanpa variabel mediasi)"
+    z_vars_str = ", ".join(ctx["z_vars"]) if ctx["z_vars"] else "(Tanpa variabel moderasi)"
+    model_acronym = _generate_doctoral_model_acronym(ctx)
+
+    return f"""Anda adalah Guru Besar dan Pakar Metodologi Penelitian Manajemen yang bertindak sebagai Penulis Ahli Disertasi Doktor (S3) Ilmu Manajemen Pascasarjana Indonesia.
+
+Tugas Anda adalah menyusun naskah akademik tingkat doktoral untuk:
+BAGIAN / SUB-BAB: {code}. {title}
+BAB INDUK: BAB I: Pendahuluan (Disertasi Doktor)
+
+JUDUL DISERTASI: {ctx['judul']}
+LOKUS PENELITIAN: {instansi}
+VARIABEL PENELITIAN:
+- Variabel Terikat (Y): {y_var}
+- Variabel Bebas (X): {x_vars_str}
+- Variabel Mediasi (M): {m_vars_str}
+- Variabel Moderasi (Z): {z_vars_str}
+- Model Orisinal: Model {model_acronym}
+
+=== PETUNJUK SPESIFIK PENULISAN DOKTORAL (SUB-BAB {code}. {title}) ===
+1. Judul Sub-bab WAJIB ditulis persis: {code}. {title}
+2. Karakteristik Naskah:
+   - Bahasa Indonesia akademik tingkat doktoral (EYD V), mendalam, analitis, kaya rujukan mutakhir (2022-2026).
+   - Hubungkan secara dialektis pembahasan {title} dengan fenomena empiris pada {instansi} dan model struktural yang mengintegrasikan {y_var}, {x_vars_str}, {m_vars_str}, dan {z_vars_str}.
+   - Susun dalam 3-5 paragraf epistemologis yang padat, terstruktur rapi, dan bebas dari kalimat klise esai umum.
+3. Kepatuhan Format:
+   - Dilarang membuat sub-judul kelompok yang tidak relevan.
+   - Naskah harus langsung siap disisipkan ke dalam lembar naskah Disertasi resmi.
+"""
+
 def build_s3_subchapter_doc(sub_id: str, config: Optional[Dict[str, Any]] = None, include_dapus: bool = False) -> Tuple[str, str]:
     """
     Menghasilkan berkas Word .docx untuk 1 sub-bab Disertasi Doktor (S3)
@@ -2080,6 +2180,29 @@ def run_s3_chained_pipeline(chapter_num: int, config: Optional[Dict[str, Any]] =
             "title": S3_SUBCHAPTER_CATALOG.get(sid, {}).get("title", sid)
         })
 
+    # Sertakan sub-bab kustom jika ada pada bab terkait
+    custom_subs = (config or {}).get("custom_subchapters", [])
+    custom_in_chapter = [c for c in custom_subs if c.get("chapter", 1) == chapter_num]
+    for csub in custom_in_chapter:
+        c_code = csub.get("code", "E")
+        c_sid = csub.get("id") or f"custom_{chapter_num}_{c_code}"
+        fn, fp = build_s3_custom_subchapter_doc(csub, ctx)
+        with open(fp, "rb") as f:
+            import base64
+            b64 = base64.b64encode(f.read()).decode("utf-8")
+
+        written = False
+        if mode == "native":
+            written = write_s3_subchapter_native(c_sid, ctx, path=fp)
+
+        details.append({
+            "sub_id": c_sid,
+            "filename": fn,
+            "docx_base64": b64,
+            "native_written": written,
+            "title": f"{c_code}. {csub.get('title', 'Sub-Bab Kustom')}"
+        })
+
     return {
         "status": "success",
         "chapter": chapter_num,
@@ -2102,7 +2225,7 @@ def build_s3_full_dissertation_doc(config: Optional[Dict[str, Any]] = None) -> T
 
     all_keys = [
         "sub_bagian_awal",
-        "sub_1_1", "sub_1_2", "sub_1_3", "sub_1_4", "sub_1_5", "sub_1_6",
+        "sub_1_1", "sub_1_2", "sub_1_3", "sub_1_4",
         "sub_2_1_1", "sub_2_1_2", "sub_2_1_3", "sub_2_1_4", "sub_2_2", "sub_2_3", "sub_2_4",
         "sub_3_1", "sub_3_2", "sub_3_3", "sub_3_4", "sub_3_5", "sub_3_6",
         "sub_4_1_1", "sub_4_1_2", "sub_4_1_3", "sub_4_1_4", "sub_4_1_5",
@@ -2112,6 +2235,9 @@ def build_s3_full_dissertation_doc(config: Optional[Dict[str, Any]] = None) -> T
         "sub_lampiran"
     ]
 
+    custom_subs = (config or {}).get("custom_subchapters", [])
+    custom_ch1 = [c for c in custom_subs if c.get("chapter", 1) == 1]
+
     for k in all_keys:
         builder = S3_BUILDER_MAP.get(k)
         if builder:
@@ -2119,6 +2245,19 @@ def build_s3_full_dissertation_doc(config: Optional[Dict[str, Any]] = None) -> T
             if k in ("sub_1_1", "sub_2_1_1", "sub_3_1", "sub_4_1_1", "sub_5_1", "sub_dapus", "sub_lampiran") and k != all_keys[0]:
                 doc.add_page_break()
             builder(doc, ctx)
+
+        # Sisipkan sub-bab kustom Bab 1 setelah D. Manfaat Penelitian
+        if k == "sub_1_4" and custom_ch1:
+            for csub in custom_ch1:
+                _, c_fp = build_s3_custom_subchapter_doc(csub, ctx)
+                try:
+                    c_doc = Document(c_fp)
+                    for el in c_doc.element.body:
+                        if el.tag.endswith('sectPr'):
+                            continue
+                        doc.element.body.append(el)
+                except Exception as c_err:
+                    print(f"Error appending custom subchapter to full doc: {c_err}")
 
     for para in doc.paragraphs:
         if para.text.strip():

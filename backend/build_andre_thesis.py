@@ -409,11 +409,6 @@ dk_vals = parse_matrix(DK_RAW)
 ee_vals = parse_matrix(EE_RAW)
 kp_vals = parse_matrix(KP_RAW)
 
-print(f"Total MK values: {len(mk_vals)} (Expected {92*15} = {92*15})")
-print(f"Total DK values: {len(dk_vals)} (Expected {92*9} = {92*9})")
-print(f"Total EE values: {len(ee_vals)} (Expected {92*9} = {92*9})")
-print(f"Total KP values: {len(kp_vals)} (Expected {92*15} = {92*15})")
-
 # Strukturkan per responden
 respondents = []
 for i in range(92):
@@ -428,8 +423,6 @@ for i in range(92):
         "EE": r_ee,
         "KP": r_kp
     })
-
-print(f"Parsed {len(respondents)} respondents successfully.")
 
 # BUAT EXCEL DATASET
 def generate_excel():
@@ -486,4 +479,13 @@ def generate_excel():
     wb.save(excel_path)
     print(f"Saved Excel dataset to: {excel_path}")
 
-generate_excel()
+
+if __name__ == "__main__":
+    # Efek samping (cetak + tulis Excel) hanya saat dijalankan langsung.
+    # Impor modul oleh server TIDAK boleh menghasilkan berkas data diam-diam.
+    print(f"Total MK values: {len(mk_vals)} (Expected {92*15} = {92*15})")
+    print(f"Total DK values: {len(dk_vals)} (Expected {92*9} = {92*9})")
+    print(f"Total EE values: {len(ee_vals)} (Expected {92*9} = {92*9})")
+    print(f"Total KP values: {len(kp_vals)} (Expected {92*15} = {92*15})")
+    print(f"Parsed {len(respondents)} respondents successfully.")
+    generate_excel()

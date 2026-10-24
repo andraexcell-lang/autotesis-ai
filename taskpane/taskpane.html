@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AutoTesis AI - Asisten Penulisan Tesis Magister</title>
+  <title>Independent Researcher - Asisten Penulisan Tesis Magister</title>
   <!-- Office JavaScript API -->
   <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
   <!-- Google Fonts Inter -->
@@ -17,19 +17,19 @@
     <!-- Header -->
     <header class="app-header">
       <div class="logo-row">
-        <span class="logo-badge">AutoTesis AI</span>
-        <span class="version-tag">v2.5 Standar Yurahadi</span>
+        <span class="logo-badge">Independent Researcher</span>
+        <span class="version-tag">v2.5 Standar By SkripsiPlg</span>
       </div>
       <h1 class="header-title">Asisten Tesis Magister</h1>
-      <p class="header-desc">Penulisan otomatis 5 Bab & Olah Data SmartPLS langsung ke dokumen Microsoft Word.</p>
+      <p class="header-desc">Penulisan otomatis 5 Bab & Olah Data PLS-SEM langsung ke dokumen Microsoft Word.</p>
     </header>
 
     <!-- Navigation Tabs -->
     <nav class="nav-tabs">
       <button class="tab-btn active" data-tab="config">1. Konfigurasi</button>
       <button class="tab-btn" data-tab="chapters">2. Tulis Bab</button>
-      <button class="tab-btn" data-tab="smartpls">3. SmartPLS</button>
-      <button class="tab-btn" data-tab="full">4. 1-Klik Tesis</button>
+      <button class="tab-btn" data-tab="smartpls">3. Analisis PLS-SEM</button>
+      <button class="tab-btn" data-tab="full">4. 1 Unduh Lengkap</button>
     </nav>
 
     <!-- Main Content Panels -->
@@ -46,6 +46,16 @@
               <button type="button" class="btn btn-outline btn-xs" id="btn-auto-detect" style="flex: 1;">⚡ Deteksi Otomatis Objek & Variabel</button>
             </div>
             <div id="detect-status" style="display: none; font-size: 11px; margin-top: 5px; color: #059669; font-weight: 600;"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="input-populasi">Jumlah Populasi (N)</label>
+              <input type="number" id="input-populasi" value="119">
+            </div>
+            <div class="form-group half">
+              <label for="input-sampel">Jumlah Sampel (otomatis)</label>
+              <input type="text" id="input-sampel" value="92" readonly title="Populasi > 100 dihitung dengan Rumus Slovin; populasi ≤ 100 memakai Sampling Jenuh">
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group half">
@@ -144,12 +154,43 @@
           </div>
 
           <div class="pipeline-alert">
-            <strong>✅ Solusi Arsitektur Hierarkis Aktif:</strong> Memecah tesis menjadi 33 unit sub-bab/sub-sub-bab mandiri untuk menjamin elaborasi ilmiah mendalam (110-150 halaman) tanpa batas token LLM, tanpa terpotong, dan anti-summarization. Anda dapat mengeksekusi per sub-bab atau menjalankan eksekusi berantai otomatis (Run Chain).
+            <strong>✅ Solusi Arsitektur Hierarkis Aktif:</strong> Memecah tesis menjadi 36 unit sub-bab/sub-sub-bab mandiri (termasuk Bagian Awal / Front Matter) untuk menjamin elaborasi ilmiah mendalam (110-150 halaman) tanpa batas token LLM, tanpa terpotong, dan anti-summarization. Anda dapat mengeksekusi per sub-bab atau menjalankan eksekusi berantai otomatis (Run Chain).
           </div>
 
           <!-- POHON HIERARKI SUB-BAB -->
           <div class="pipeline-section">
-            
+
+            <!-- BAGIAN AWAL (FRONT MATTER) -->
+            <div class="pipeline-chapter-card" id="card-ch-0">
+              <div class="chapter-accordion-header" data-toggle="list-ch-0">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge">AWAL</span>
+                  <div class="chapter-title-group">
+                    <h3>Bagian Awal (Front Matter)</h3>
+                    <span class="subchapter-count">1 Unit • Est. 8-10 Halaman • Disisipkan di Awal Dokumen</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-accordion-toggle">▼</button>
+                </div>
+              </div>
+              <div class="subchapter-list" id="list-ch-0">
+                <div class="subchapter-row" id="row-sub_bagian_awal">
+                  <div class="sub-info">
+                    <span class="sub-badge">Awal</span>
+                    <div class="sub-text">
+                      <strong>Bagian Awal (Front Matter)</strong>
+                      <span class="sub-meta">🎯 8-10 Hlm | Halaman Judul, Lembar Persetujuan Komisi Pembimbing &amp; Penguji, Kata Pengantar, Abstrak, Riwayat Hidup, Daftar Isi/Tabel/Gambar/Lampiran — tanpa sitasi &amp; tanpa angka PLS</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-sub-write" data-sub="sub_bagian_awal">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-sub-docx" data-sub="sub_bagian_awal">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- BAB I -->
             <div class="pipeline-chapter-card" id="card-ch-1">
               <div class="chapter-accordion-header" data-toggle="list-ch-1">
@@ -227,7 +268,7 @@
                     <span class="sub-badge">1.5</span>
                     <div class="sub-text">
                       <strong>Tujuan Penelitian</strong>
-                      <span class="sub-meta">🎯 1-2 Hlm | 7 butir tujuan pembuktian statistik SmartPLS</span>
+                      <span class="sub-meta">🎯 1-2 Hlm | 7 butir tujuan pembuktian statistik PLS-SEM</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -272,8 +313,8 @@
                   <div class="sub-info">
                     <span class="sub-badge">2.1.1</span>
                     <div class="sub-text">
-                      <strong>Kajian Teoritis Kinerja Pegawai</strong>
-                      <span class="sub-meta">🎯 5-7 Hlm | 4 Ahli, 10 Faktor Rakhmalina, 5 Dimensi Ulya & Rahmah</span>
+                      <strong>Kajian Teoritis Variabel Terikat (Y)</strong>
+                      <span class="sub-meta">🎯 5-7 Hlm | Pengertian para ahli + Faktor-faktor Yang Mempengaruhi + Dimensi & Indikator</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -286,8 +327,8 @@
                   <div class="sub-info">
                     <span class="sub-badge">2.1.2</span>
                     <div class="sub-text">
-                      <strong>Kajian Teoritis Employee Engagement</strong>
-                      <span class="sub-meta">🎯 4-6 Hlm | Kaswan, Rivai & Sagala; 3 Dimensi Harefa (Vigor, Dedication, Absorption)</span>
+                      <strong>Kajian Teoritis Variabel Mediasi (M)</strong>
+                      <span class="sub-meta">🎯 4-6 Hlm | Pengertian para ahli terkini + Dimensi & Indikator (otomatis mengikuti judul)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -300,8 +341,8 @@
                   <div class="sub-info">
                     <span class="sub-badge">2.1.3</span>
                     <div class="sub-text">
-                      <strong>Kajian Teoritis Motivasi Kerja</strong>
-                      <span class="sub-meta">🎯 4-6 Hlm | Sutrisno, Kasmir, Afandi; 5 Dimensi Hierarki Maslow Farhan</span>
+                      <strong>Kajian Teoritis Variabel Bebas 1 (X1)</strong>
+                      <span class="sub-meta">🎯 4-6 Hlm | Pengertian para ahli terkini + Dimensi & Indikator (otomatis mengikuti judul)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -314,8 +355,8 @@
                   <div class="sub-info">
                     <span class="sub-badge">2.1.4</span>
                     <div class="sub-text">
-                      <strong>Kajian Teoritis Disiplin Kerja</strong>
-                      <span class="sub-meta">🎯 4-6 Hlm | Ridwan, Kasmir, Wibowo; 3 Dimensi Prasetio (Ketaatan, Waktu, Tanggung Jawab)</span>
+                      <strong>Kajian Teoritis Variabel Bebas 2 (X2)</strong>
+                      <span class="sub-meta">🎯 4-6 Hlm | Pengertian para ahli terkini + Dimensi & Indikator (otomatis mengikuti judul)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -389,7 +430,7 @@
                     <span class="sub-badge">3.1</span>
                     <div class="sub-text">
                       <strong>Tempat & Waktu Penelitian</strong>
-                      <span class="sub-meta">🎯 1-2 Hlm | Lokus DPMPTSP Sumsel & Tabel 3.1 Jadwal Riset 6 Bulan</span>
+                      <span class="sub-meta">🎯 1-2 Hlm | Tabel 3.1 Jadwal Riset (otomatis dari tanggal hari ini)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -402,8 +443,8 @@
                   <div class="sub-info">
                     <span class="sub-badge">3.2</span>
                     <div class="sub-text">
-                      <strong>Populasi & Sampel (Slovin n=92)</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | Populasi N=119 aparatur, batas toleransi 5% n=92 responden</span>
+                      <strong>Populasi & Sampel</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | Identifikasi Populasi & Penentuan Sampel Penelitian</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -416,8 +457,8 @@
                   <div class="sub-info">
                     <span class="sub-badge">3.3</span>
                     <div class="sub-text">
-                      <strong>Variabel & Kisi-Kisi 48 Indikator</strong>
-                      <span class="sub-meta">🎯 6-8 Hlm | Tabel 3.2 (KP 15), Tabel 3.3 (EE 9), Tabel 3.4 (MK 15), Tabel 3.5 (DK 9)</span>
+                      <strong>Variabel, Definisi & Kisi-Kisi Instrumen</strong>
+                      <span class="sub-meta">🎯 6-9 Hlm | Definisi Konseptual + Operasional + Tabel 3.2-3.5 Kisi-Kisi Instrumen</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -445,7 +486,7 @@
                     <span class="sub-badge">3.5</span>
                     <div class="sub-text">
                       <strong>Teknik Analisis Data PLS-SEM</strong>
-                      <span class="sub-meta">🎯 5-6 Hlm | Outer Model, Inner Model, Formulasi Sub-struktur 1 & 2</span>
+                      <span class="sub-meta">🎯 5-6 Hlm | Inventaris uji rinci: outer/inner model, f², Q², SRMR, VIF, bootstrapping & VAF (selaras Bab IV)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -477,7 +518,7 @@
                   <span class="chapter-badge">BAB IV</span>
                   <div class="chapter-title-group">
                     <h3>BAB IV: Hasil & Pembahasan</h3>
-                    <span class="subchapter-count">10 Sub-Bab • Est. 35-50 Halaman</span>
+                    <span class="subchapter-count">12 Sub-Bab • Est. 35-50 Halaman</span>
                   </div>
                 </div>
                 <div class="chapter-header-actions">
@@ -485,13 +526,26 @@
                   <button class="btn-accordion-toggle">▼</button>
                 </div>
               </div>
+
+              <!-- Gerbang data Bab IV: arahkan peneliti ke Tab 3. SmartPLS -->
+              <div id="bab4-data-gate" class="data-gate hidden">
+                <div class="data-gate-head">📄 Sebelum menulis Bab IV: siapkan data jawaban responden</div>
+                <p class="data-gate-text">
+                  Silakan masukkan hasil kuesioner Anda dalam bentuk Excel (<strong>.xlsx</strong>) atau CSV,
+                  atau biarkan kami membuatkan jawaban responden. Kedua pilihan tersedia di
+                  <a href="#" id="link-buka-tab-smartpls" class="data-gate-link">Tab 3. Analisis PLS-SEM →</a>
+                </p>
+                <div id="bab4-data-warn" class="data-gate-warn hidden"></div>
+              </div>
+              <div id="bab4-data-ok" class="data-gate-ok hidden"></div>
+
               <div class="subchapter-list" id="list-ch-4">
                 <div class="subchapter-row" id="row-sub_4_1_1">
                   <div class="sub-info">
                     <span class="sub-badge">4.1.1</span>
                     <div class="sub-text">
-                      <strong>Deskripsi Data Karakteristik Responden</strong>
-                      <span class="sub-meta">🎯 4-5 Hlm | Tabel 4.1 (Gender), Tabel 4.2 (Usia), Tabel 4.3 (Pendidikan 70,7% S1)</span>
+                      <strong>Deskripsi Karakteristik Responden</strong>
+                      <span class="sub-meta">🎯 4-5 Hlm | Tabel 4.1 (Gender), Tabel 4.2 (Usia), Tabel 4.3 (Pendidikan) + narasi AI</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -505,7 +559,7 @@
                     <span class="sub-badge">4.1.2</span>
                     <div class="sub-text">
                       <strong>Analisis Statistik Deskriptif Variabel</strong>
-                      <span class="sub-meta">🎯 3-4 Hlm | Tabel 4.4 Interval 1,33 & Tabel 4.5 Kategori Rata-rata Skor Capaian</span>
+                      <span class="sub-meta">🎯 3-4 Hlm | Tabel 4.4 Interval & Tabel 4.5 Kategori Rata-rata + narasi AI</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -518,8 +572,8 @@
                   <div class="sub-info">
                     <span class="sub-badge">4.1.3</span>
                     <div class="sub-text">
-                      <strong>Analisis Outer Model & Inner Model</strong>
-                      <span class="sub-meta">🎯 12-16 Hlm | Tabel 4.7 AVE/CR, Tabel 4.12 R2 Kinerja=0,832 & EE=0,683, Tabel 4.14 Uji 7 Hipotesis</span>
+                      <strong>Analisis Outer Model</strong>
+                      <span class="sub-meta">🎯 6-8 Hlm | Tabel 4.6-4.10: Outer Loadings, AVE/CA/CR, Fornell-Larcker, HTMT, VIF + narasi AI</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -528,13 +582,41 @@
                   </div>
                 </div>
 
+                <div class="subchapter-row" id="row-sub_4_1_4">
+                  <div class="sub-info">
+                    <span class="sub-badge">4.1.4</span>
+                    <div class="sub-text">
+                      <strong>Analisis Inner Model</strong>
+                      <span class="sub-meta">🎯 3-4 Hlm | Tabel 4.11-4.13: f-Square, R-Square, Q-Square & SRMR + narasi AI</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-sub-write" data-sub="sub_4_1_4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-sub-docx" data-sub="sub_4_1_4">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-sub_4_1_5">
+                  <div class="sub-info">
+                    <span class="sub-badge">4.1.5</span>
+                    <div class="sub-text">
+                      <strong>Pengujian Hipotesis</strong>
+                      <span class="sub-meta">🎯 3-4 Hlm | Tabel 4.14-4.15: Rekapitulasi 7 Hipotesis, Indirect Effect & VAF + narasi AI</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-sub-write" data-sub="sub_4_1_5">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-sub-docx" data-sub="sub_4_1_5">📄 .docx</button>
+                  </div>
+                </div>
+
                 <!-- 4.2 PEMBAHASAN PER POIN H1 s/d H7 -->
                 <div class="subchapter-row" id="row-sub_4_2_poin_1">
                   <div class="sub-info">
                     <span class="sub-badge">4.2.1</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H1: Motivasi &rarr; Employee Engagement</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | β=0,565; t=9,100; p=0,000; f²=0,920 (Sangat Besar) • Formula 4 Alinea</span>
+                      <strong>Pembahasan H1: X1 &rarr; M</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -547,8 +629,8 @@
                   <div class="sub-info">
                     <span class="sub-badge">4.2.2</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H2: Disiplin &rarr; Employee Engagement</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | β=0,459; t=6,318; p=0,000; f²=0,606 (Besar) • Formula 4 Alinea</span>
+                      <strong>Pembahasan H2: X2 &rarr; M</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -561,8 +643,8 @@
                   <div class="sub-info">
                     <span class="sub-badge">4.2.3</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H3: Motivasi &rarr; Kinerja Pegawai</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | β=0,191; t=3,271; p=0,001; f²=0,104 • Memecahkan Research Gap</span>
+                      <strong>Pembahasan H3: X1 &rarr; Y</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -575,8 +657,8 @@
                   <div class="sub-info">
                     <span class="sub-badge">4.2.4</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H4: Disiplin &rarr; Kinerja Pegawai</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | β=0,295; t=4,544; p=0,000; f²=0,294 • Menepis Anomali Kepatuhan Semu</span>
+                      <strong>Pembahasan H4: X2 &rarr; Y</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -589,8 +671,8 @@
                   <div class="sub-info">
                     <span class="sub-badge">4.2.5</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H5: Employee Engagement &rarr; Kinerja Pegawai</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | β=0,563; t=7,018; p=0,000; f²=0,599 (Besar) • Prediktor Paling Dominan</span>
+                      <strong>Pembahasan H5: M &rarr; Y</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -603,8 +685,8 @@
                   <div class="sub-info">
                     <span class="sub-badge">4.2.6</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H6: Motivasi &rarr; EE &rarr; Kinerja (Mediasi)</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | β=0,318; t=5,423; p=0,000; Mediasi Parsial Signifikan</span>
+                      <strong>Pembahasan H6: X1 &rarr; M &rarr; Y (Mediasi)</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -617,8 +699,8 @@
                   <div class="sub-info">
                     <span class="sub-badge">4.2.7</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H7: Disiplin &rarr; EE &rarr; Kinerja (Mediasi)</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | β=0,258; t=4,379; p=0,000; Mediasi Parsial Signifikan</span>
+                      <strong>Pembahasan H7: X2 &rarr; M &rarr; Y (Mediasi)</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -664,7 +746,7 @@
                     <span class="sub-badge">5.2</span>
                     <div class="sub-text">
                       <strong>Implikasi Kebijakan Manajerial</strong>
-                      <span class="sub-meta">🎯 3-4 Hlm | 4 Pilar kebijakan manajerial berbasis bukti bagi DPMPTSP Sumsel</span>
+                      <span class="sub-meta">🎯 3-4 Hlm | 4 Pilar kebijakan manajerial (disesuaikan dengan variabel & instansi judul)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -692,7 +774,7 @@
                     <span class="sub-badge">Dapus</span>
                     <div class="sub-text">
                       <strong>Daftar Pustaka APA 7th Edition</strong>
-                      <span class="sub-meta">🎯 4-5 Hlm | 42 Referensi Bereputasi (Hanging Indent 1.27 cm)</span>
+                      <span class="sub-meta">🎯 4-5 Hlm | Sitasi nyata yang benar-benar dipakai (Hanging Indent 1.27 cm)</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -703,79 +785,40 @@
               </div>
             </div>
 
-          </div>
-
-          <!-- SEKSI OPSIONAL: 1-KLIK PER BAB PENUH -->
-          <div class="mt-4 pt-3 border-top">
-            <h3 class="section-subtitle">Opsi Lain: Penulisan Sekaligus Dokumen Per Bab Penuh</h3>
-            <div class="chapter-actions mt-2">
-              <div class="action-item">
-                <div class="action-info">
-                  <strong>Bagian Awal (Front Matter)</strong>
-                  <span>Cover, Persetujuan, Pengesahan, Abstrak, Riwayat, Daftar Isi</span>
+            <!-- LAMPIRAN -->
+            <div class="pipeline-chapter-card" id="card-ch-6">
+              <div class="chapter-accordion-header" data-toggle="list-ch-6">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge">LAMPIRAN</span>
+                  <div class="chapter-title-group">
+                    <h3>Lampiran: Kuesioner Penelitian</h3>
+                    <span class="subchapter-count">1 Sub-Bab • Est. 4-6 Halaman</span>
+                  </div>
                 </div>
-                <div class="action-btns">
-                  <button class="btn btn-outline" data-action="front_matter">✍️ Tulis Word</button>
-                  <button class="btn btn-secondary btn-sm" id="btn-export-front-matter">📄 File .docx</button>
-                </div>
-              </div>
-
-              <div class="action-item">
-                <div class="action-info">
-                  <strong>BAB I: Pendahuluan Penuh</strong>
-                  <span>Latar Belakang (Tabel IKU), 7 Rumusan, 7 Tujuan</span>
-                </div>
-                <div class="action-btns">
-                  <button class="btn btn-outline" data-action="bab_1">✍️ Tulis Word</button>
-                  <button class="btn btn-secondary btn-sm" id="btn-export-bab-1">📄 File .docx</button>
+                <div class="chapter-header-actions">
+                  <button class="btn-chain" data-chapter="6">⚡ Run Chain Lampiran</button>
+                  <button class="btn-accordion-toggle">▼</button>
                 </div>
               </div>
-
-              <div class="action-item">
-                <div class="action-info">
-                  <strong>BAB II: Kajian Pustaka Penuh</strong>
-                  <span>Grand Theory, Matriks 15 Jurnal, 7 Hipotesis</span>
-                </div>
-                <div class="action-btns">
-                  <button class="btn btn-outline" data-action="bab_2">✍️ Tulis Word</button>
-                  <button class="btn btn-secondary btn-sm" id="btn-export-bab-2">📄 File .docx</button>
-                </div>
-              </div>
-
-              <div class="action-item">
-                <div class="action-info">
-                  <strong>BAB III: Metode Riset Penuh</strong>
-                  <span>Slovin N=92, Matriks Kisi 48 Indikator, PLS-SEM</span>
-                </div>
-                <div class="action-btns">
-                  <button class="btn btn-outline" data-action="bab_3">✍️ Tulis Word</button>
-                  <button class="btn btn-secondary btn-sm" id="btn-export-bab-3">📄 File .docx</button>
-                </div>
-              </div>
-
-              <div class="action-item">
-                <div class="action-info">
-                  <strong>BAB IV: Hasil & Pembahasan Penuh</strong>
-                  <span>Outer & Inner Model, 4 Alinea per Hipotesis</span>
-                </div>
-                <div class="action-btns">
-                  <button class="btn btn-outline" data-action="bab_4">✍️ Tulis Word</button>
-                  <button class="btn btn-secondary btn-sm" id="btn-export-bab-4">📄 File .docx</button>
-                </div>
-              </div>
-
-              <div class="action-item">
-                <div class="action-info">
-                  <strong>BAB V: Kesimpulan & Saran Penuh</strong>
-                  <span>Jawaban 7 Hipotesis, 4 Pilar Implikasi Kebijakan</span>
-                </div>
-                <div class="action-btns">
-                  <button class="btn btn-outline" data-action="bab_5">✍️ Tulis Word</button>
-                  <button class="btn btn-secondary btn-sm" id="btn-export-bab-5">📄 File .docx</button>
+              <div class="subchapter-list" id="list-ch-6">
+                <div class="subchapter-row" id="row-sub_lampiran">
+                  <div class="sub-info">
+                    <span class="sub-badge">Lampiran</span>
+                    <div class="sub-text">
+                      <strong>Lampiran Kuesioner per Variabel (Y, M, X1, X2)</strong>
+                      <span class="sub-meta">🎯 4-6 Hlm | Identitas responden, petunjuk, butir Likert 1-5 dengan kode item — ditaruh setelah Daftar Pustaka</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-sub-write" data-sub="sub_lampiran">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-sub-docx" data-sub="sub_lampiran">📄 .docx</button>
+                  </div>
                 </div>
               </div>
             </div>
+
           </div>
+
 
         </div>
       </section>
@@ -783,12 +826,12 @@
       <!-- Panel 3: SmartPLS & Kuesioner -->
       <section id="panel-smartpls" class="tab-panel">
         <div class="card">
-          <h2 class="card-title">Simulator Data SmartPLS 4 (100% Lolos)</h2>
-          <p class="hint">Generate dataset responden realistis skala Likert 1-5 tanpa straight-lining yang dijamin lolos seluruh uji Hair et al.:</p>
-          
+          <h2 class="card-title">Wizard Olah Data PLS-SEM</h2>
+          <p class="hint">Jalur utama: impor respons Google Form nyata (langsung dari link Google Sheets atau berkas ekspor). Data hasil pembangkitan mesin hanya dipakai bila peneliti secara sadar memilihnya. Analisis memakai mesin PLS-SEM (Path, 300 iterasi, stop 1e-7, bootstrap 5.000) agar angka Bab IV/V konsisten dengan sumber data yang tercatat.</p>
+
           <div class="form-row">
             <div class="form-group half">
-              <label for="input-responden">Jumlah Sampel (N)</label>
+              <label for="input-responden">Jumlah Sampel (N) — khusus data hasil pembangkitan mesin</label>
               <input type="number" id="input-responden" value="45">
             </div>
             <div class="form-group half">
@@ -797,44 +840,98 @@
             </div>
           </div>
 
-          <button class="btn btn-primary" id="btn-generate-data">📊 1. Generate Dataset & Evaluasi SmartPLS</button>
-          <button class="btn btn-secondary mt-2" id="btn-generate-gform">📋 2. Buat Google Form (Salin Apps Script)</button>
-          
+          <!-- Langkah 1 -->
+          <div class="wizard-step">
+            <div class="wizard-head"><span class="wizard-no">1</span> Kuesioner (Lampiran &amp; Google Form)</div>
+            <button class="btn btn-secondary" id="btn-generate-gform">📋 Buat Google Form + Spreadsheet Respons (Salin Apps Script)</button>
+            <p class="hint">Pastikan Bab III (3.3) &amp; Lampiran sudah dibuat agar butir kuesioner nyata tersedia. Skrip membuat Form dan Spreadsheet respons sekaligus.</p>
+
+            <div id="gform-result" class="hidden mt-2">
+              <p class="gform-ok" id="gform-ok"></p>
+              <textarea id="gform-script" class="gform-script" rows="6" readonly spellcheck="false"></textarea>
+              <div class="upload-row">
+                <button class="btn btn-secondary" id="btn-copy-gform">📋 Salin Ulang Skrip</button>
+                <button class="btn btn-secondary" id="btn-download-gform">📥 Unduh Skrip (.gs)</button>
+              </div>
+              <p class="hint">Cara pakai: buka <strong>script.google.com</strong> → buat proyek baru → tempel skrip → <strong>Run</strong>. Google Form dan Spreadsheet respons akan terbentuk otomatis di Google Drive.</p>
+              <p class="hint">Setelah <strong>Run</strong>, buka <strong>Execution log</strong>. Di sana tercatat <strong>URL Spreadsheet respons</strong> (dengan <code>#gid=...</code>). Bagikan Spreadsheet sebagai <strong>Pelihat — siapa saja yang memiliki link</strong>, lalu tempel link-nya di Langkah 2.</p>
+              <p class="hint">Jangan bagikan sebagai Editor. Respons dapat memuat identitas; hapus kolom identitas sebelum membagikan link bila perlu.</p>
+            </div>
+          </div>
+
+          <!-- Langkah 2 -->
+          <div class="wizard-step" id="wizard-step-2">
+            <div class="wizard-head"><span class="wizard-no">2</span> Siapkan Data Jawaban</div>
+
+            <p class="hint"><strong>Jalur utama (a):</strong> tempel link Spreadsheet respons Google Form. Server membaca respons terbaru langsung dari sheet; tidak perlu ekspor manual.</p>
+            <div class="upload-row mt-2">
+              <input type="url" id="input-sheet-url" aria-label="Link Spreadsheet respons Google Form" placeholder="https://docs.google.com/spreadsheets/d/.../edit#gid=0">
+              <button class="btn btn-primary" id="btn-import-sheet">🔗 (a) Impor dari Link Google Sheets</button>
+            </div>
+            <p class="hint">Spreadsheet harus dibagikan sebagai <strong>Pelihat — siapa saja yang memiliki link</strong> atau dipublikasikan ke web. Sertakan <code>#gid=...</code> bila sheet memiliki beberapa tab.</p>
+            <label class="confirm-line">
+              <input type="checkbox" id="input-konfirmasi-gform" aria-label="Konfirmasi Spreadsheet berisi respons Google Form responden nyata">
+              <span>Saya menyatakan Spreadsheet ini berisi respons Google Form yang diisi responden nyata, bukan data hasil pembangkitan mesin.</span>
+            </label>
+
+            <p class="hint mt-2"><strong>Cadangan (b):</strong> unggah berkas ekspor Google Form/Sheets atau berkas data lain.</p>
+            <div class="upload-row mt-2">
+              <select id="input-sumber-upload" title="Sumber berkas yang diimpor" aria-label="Sumber berkas data jawaban">
+                <option value="google_form">Respons Google Form</option>
+                <option value="upload">Berkas data lain</option>
+              </select>
+              <input type="file" id="input-upload-jawaban" accept=".csv,.txt,.xlsx" aria-label="Berkas data jawaban (.xlsx atau .csv)">
+              <button class="btn btn-secondary" id="btn-upload-data">📤 (b) Impor Berkas (.xlsx / .csv)</button>
+            </div>
+            <p class="hint">Format: baris pertama = judul kolom. Untuk ekspor Google Form, header boleh berbentuk <code>1. KODE01. Pernyataan...</code>; sistem mengambil kode butirnya. Kolom jenis kelamin/usia/pendidikan opsional (dipakai Tabel 4.1–4.3).</p>
+
+            <p class="hint mt-2"><strong>Fallback eksplisit (c):</strong> hanya bila peneliti memilih data hasil pembangkitan mesin.</p>
+            <button class="btn btn-secondary" id="btn-generate-data">🤖 (c) Bangkitkan Data (mesin)</button>
+            <p class="hint">Jalur (c) TIDAK boleh disebut data primer/responden. Angka Bab IV/V akan diberi label “data hasil pembangkitan mesin”.</p>
+          </div>
+
+          <!-- Langkah 3 -->
+          <div class="wizard-step">
+            <div class="wizard-head"><span class="wizard-no">3</span> Olah Data Sekarang</div>
+            <button class="btn btn-accent" id="btn-olah-data">⚙️ Olah Data Sekarang (PLS-SEM penuh)</button>
+            <p class="hint">Menghitung outer loading, AVE, CR, HTMT, VIF, R², Q², SRMR, dan pengujian H1–H7 (bootstrap 5.000).</p>
+          </div>
+
+          <div id="smartpls-src-note" class="src-note hidden"></div>
+
           <div id="smartpls-download-box" class="hidden mt-2">
-            <a href="#" class="btn btn-success" id="link-download-excel" target="_blank">📥 Unduh Dataset Excel (.xlsx)</a>
+            <a href="#" class="btn btn-success" id="link-download-excel" target="_blank">📥 Unduh Data (.xlsx)</a>
+            <a href="#" class="btn btn-secondary mt-2 hidden" id="link-download-panduan" target="_blank">📄 Unduh Panduan Olah Data SmartPLS 4</a>
           </div>
 
           <div id="smartpls-preview" class="results-box hidden mt-3">
-            <h4>Ringkasan Hasil Evaluasi Statistik:</h4>
-            <div class="metric-grid">
-              <div class="metric-card"><span class="label">Outer Loadings</span><span class="value valid">≥ 0.798 (Valid)</span></div>
-              <div class="metric-card"><span class="label">AVE</span><span class="value valid">> 0.680 (Valid)</span></div>
-              <div class="metric-card"><span class="label">Comp. Reliability</span><span class="value valid">> 0.890 (Tinggi)</span></div>
-              <div class="metric-card"><span class="label">HTMT Ratio</span><span class="value valid">< 0.700 (Valid)</span></div>
-            </div>
-            <p class="stat-status">Status Uji: <strong>7 Jalur Signifikan (p &lt; 0.05, T &gt; 1.96)</strong></p>
+            <h4>Ringkasan Hasil Olah Data:</h4>
+            <div class="metric-grid" id="smartpls-metrics"></div>
+            <p class="stat-status" id="smartpls-status"></p>
           </div>
         </div>
       </section>
 
-      <!-- Panel 4: 1-Klik Tesis Utuh -->
+      <!-- Panel 4: 1 Unduh Lengkap -->
       <section id="panel-full" class="tab-panel">
         <div class="card highlight-card">
-          <h2 class="card-title">1-Klik Tesis Lengkap (.docx Standar Yurahadi)</h2>
-          <p>Rangkai seluruh naskah Tesis utuh (Cover Luar/Dalam, Persetujuan, Pengesahan, Abstrak, Daftar Isi, Bab I s.d Bab V, Tabel Akademik Open-Border, dan Daftar Pustaka) langsung ke lembar kerja Word.</p>
+          <h2 class="card-title">1 Unduh Lengkap (.docx Standar By SkripsiPlg)</h2>
+          <p>Rangkai seluruh naskah Tesis utuh (Cover Luar/Dalam, Persetujuan, Pengesahan, Abstrak, Daftar Isi, Bab I s.d Bab V, Tabel Akademik, dan Daftar Pustaka) langsung ke lembar kerja Word.</p>
           
           <div class="specs-box">
             <ul>
               <li><strong>Ukuran Kertas:</strong> A4, Margin Atas 4cm, Kiri 4cm, Bawah 3cm, Kanan 3cm</li>
               <li><strong>Tipografi:</strong> Times New Roman 12 pt, Line Spacing 1.5, Indent 1.27 cm</li>
-              <li><strong>Tabel Akademik:</strong> Open-Border (Tanpa Garis Vertikal)</li>
+              <li><strong>Tabel Akademik:</strong> Format Standar Pascasarjana</li>
               <li><strong>Model:</strong> Mediasi 7 Hipotesis & Pembahasan 4 Alinea Baku</li>
             </ul>
           </div>
 
-          <button class="btn btn-accent btn-large" id="btn-generate-full">
-            🚀 GENERATE & BUKA DOKUMEN LENGKAP DI WORD
+          <button class="btn btn-accent btn-large" id="btn-generate-full" disabled
+                  title="Jalur ini dinonaktifkan agar data dan Bab IV/V tidak dibangkitkan tanpa provenance.">
+            🔒 DOKUMEN LENGKAP DINONAKTIFKAN
           </button>
+          <p class="hint">Gunakan generator per sub-bab: siapkan data di Tab 3, klik <strong>Olah Data Sekarang</strong>, lalu tulis Bab I–V secara berurutan. Jalur ini menjaga sumber data dan gerbang Bab IV/V.</p>
           <div id="full-download-link" class="hidden mt-3">
             <a href="#" class="btn btn-success" id="link-download" target="_blank">📥 Unduh File Dokumen (.docx)</a>
           </div>
@@ -850,12 +947,12 @@
       </div>
       <div class="status-row">
         <span class="status-indicator ready" id="status-dot"></span>
-        <span class="status-text" id="status-text">AutoTesis Engine Siap Melayani.</span>
+        <span class="status-text" id="status-text">Independent Researcher Engine Siap Melayani.</span>
       </div>
     </footer>
 
   </div>
 
-  <script src="taskpane.js"></script>
+  <script src="taskpane.js?v=20261023b"></script>
 </body>
 </html>

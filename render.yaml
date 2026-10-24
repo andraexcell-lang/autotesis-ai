@@ -3,7 +3,7 @@
 
 services:
   - type: web
-    name: autotesis-ai
+    name: independent-researcher
     runtime: python
     region: oregon  # free tier hanya oregon; upgrade $7/bln untuk singapore
     branch: main

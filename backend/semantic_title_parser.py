@@ -68,7 +68,13 @@ def format_proper_instansi(inst):
     # Bersihkan tanda baca tepi
     s = inst.strip(" .,;:-()")
     # Tangani akronim umum agar tetap kapital
-    acronyms = {"BPKAD", "BRIDA", "BPPD", "BAPENDA", "DPMPTSP", "PTSP", "DPRD", "RSUD", "PUPR", "DLH", "OPD", "SKPD", "PALI", "OKI", "BPD", "ASN", "PNS", "SLA", "OSS", "PT", "CV", "SD", "SMP", "SMA", "SMK"}
+    acronyms = {
+        "BPKAD", "BRIDA", "BPPD", "BAPENDA", "DPMPTSP", "PTSP", "DPRD", "RSUD",
+        "PUPR", "DLH", "OPD", "SKPD", "PALI", "OKI", "BPD", "ASN", "PNS", "SLA",
+        "OSS", "PT", "CV", "SD", "SMP", "SMA", "SMK", "PPKBPPPA", "DPPKBPPPA",
+        "DP3AP2KB", "DP3A", "BKKBN", "BKPSDM", "BAPPEDA", "DISDIK", "DINKES",
+        "DINSOS", "DISNAKER", "DISPORA", "DISHUB", "KOMINFO", "BPSDM", "KPP", "PLN"
+    }
     words = s.split()
     res = []
     for w in words:
@@ -87,6 +93,24 @@ def format_proper_instansi(inst):
             res.append(w.capitalize())
     return " ".join(res)
 
+def _kw_hit(corpus, kws):
+    """Cocokkan kata kunci sektor; akronim pendek wajib berbatas kata.
+
+    Bug lama: ``"SD" in "SDM"`` membuat judul ber-``Kompetensi SDM``
+    terdeteksi sebagai sektor pendidikan.
+    """
+    for k in kws:
+        kk = (k or "").strip()
+        if not kk:
+            continue
+        if len(kk) <= 4 and kk.isalnum() and kk.upper() == kk:
+            if re.search(rf"(?<![A-Za-z0-9]){re.escape(kk)}(?![A-Za-z0-9])", corpus):
+                return True
+        elif kk in corpus:
+            return True
+    return False
+
+
 def detect_institutional_sector(instansi, judul):
     corpus = f"{instansi} {judul}".upper()
     if any(k in corpus for k in ["BPKAD", "KEUANGAN DAN ASET", "PERBENDAHARAAN", "KAS DAERAH", "PENGELOLAAN KEUANGAN"]):
@@ -103,10 +127,15 @@ def detect_institutional_sector(instansi, judul):
         return "Pelayanan Kesehatan dan Keselamatan Pasien"
     elif any(k in corpus for k in ["DPRD", "SEKRETARIAT DEWAN", "SEKWAN"]):
         return "Penyelenggaraan Administrasi dan Fasilitasi Tugas Legislatif Daerah"
-    elif any(k in corpus for k in ["PENDIDIKAN", "SEKOLAH", "GURU", "SMK", "SMA", "SMP", "SD", "MADRASAH"]):
+    elif _kw_hit(corpus, ["SATPOL", "PAMONG PRAJA", "KETERTIBAN UMUM", "TRANTIBUM",
+                          "PENEGAKAN PERDA", "PERATURAN DAERAH"]):
+        return "Penyelenggaraan Ketenteraman dan Ketertiban Umum serta Penegakan Peraturan Daerah"
+    elif _kw_hit(corpus, ["PENDIDIKAN", "SEKOLAH", "GURU", "SMK", "SMA", "SMP", "SD", "MADRASAH"]):
         return "Penyelenggaraan Pendidikan dan Peningkatan Mutu Pembelajaran"
     elif any(k in corpus for k in ["UNIVERSITAS", "DOSEN", "FAKULTAS", "POLITEKNIK", "INSTITUT", "KAMPUS"]):
         return "Penyelenggaraan Pendidikan Tinggi dan Tri Dharma Perguruan Tinggi"
+    elif any(k in corpus for k in ["PERKIMTAN", "PERKIM", "PERUMAHAN", "KAWASAN PERMUKIMAN", "PERTANAHAN"]):
+        return "Penyelenggaraan Urusan Perumahan, Kawasan Permukiman, Pertanahan, dan Infrastruktur Publik"
     elif any(k in corpus for k in ["PT ", "CV ", "PERUSAHAAN", "PERSEROAN", "INDUSTRI", "MANUFAKTUR", "RETAIL", "STORE"]):
         return "Dunia Usaha Industri Komersial dan Korporasi"
     else:
@@ -132,33 +161,32 @@ def parse_academic_title(raw_title):
     t = re.sub(r'\s+', ' ', raw_title.strip())
 
     x1, x2, m, y, instansi = "", "", "", "", ""
-
-    # Pisahkan lokus / instansi jika berada di akhir judul dengan penanda lokasi
-    lokus_patterns = [
-        r'(?:STUDI KASUS PADA|STUDI EMPIRIS PADA|STUDI PADA)\s+(.+)$',
-        r'(?:PADA|DI)\s+((?:BADAN|DINAS|KANTOR|BPKAD|BRIDA|BPPD|BAPENDA|DPMPTSP|SEKRETARIAT|BANK|RSUD|RUMAH SAKIT|PT|CV|SMA|SMP|SD|UNIVERSITAS|KECAMATAN|KABUPATEN|KOTA|INSPEKTORAT|PUSKESMAS).+)$',
-        r'\b(?:PADA|DI)\s+([A-Z0-9\s\(\)\.\,\-]+)$'
-    ]
-
     core_title = t
-    for lp in lokus_patterns:
-        m_lokus = re.search(lp, core_title, re.IGNORECASE)
-        if m_lokus:
-            instansi = m_lokus.group(1).strip()
-            core_title = core_title[:m_lokus.start()].strip()
-            break
 
-    # Fallback: instansi berada di tengah judul (tanpa PADA/DI), contoh:
-    # "... Kinerja Pegawai Dinas Pendidikan Kabupaten OKI Melalui ..."
-    # Instansi dipotong sampai bertemu kata penghubung variabel (MELALUI, SEBAGAI, DENGAN, YANG).
-    if not instansi:
-        mid_inst = re.search(
-            r'\b((?:DINAS|BADAN|KANTOR|SEKRETARIAT|INSPEKTORAT|RSUD|RUMAH SAKIT|BPKAD|BRIDA|BPPD|BAPENDA|DPMPTSP|DPRD)\s+.+?)(?=\s+(?:MELALUI|SEBAGAI|DENGAN|YANG)\b|$)',
-            core_title, re.IGNORECASE)
-        if mid_inst:
-            instansi = mid_inst.group(1).strip()
-            core_title = (core_title[:mid_inst.start()] + " " + core_title[mid_inst.end():]).strip()
-            core_title = re.sub(r'\s+', ' ', core_title)
+    # 1. Deteksi instansi di tengah judul jika diikuti kata sambung mediasi (MELALUI, SEBAGAI, DENGAN, YANG DIMEDIASI)
+    # Contoh: "... Terhadap Kinerja Pegawai Dinas Perkimtan Kota Palembang Dengan Motivasi Kerja Sebagai Variabel Intervening"
+    mid_inst = re.search(
+        r'(?:\b(?:PADA|DI)\s+)?\b((?:DINAS|BADAN|KANTOR|SEKRETARIAT|INSPEKTORAT|RSUD|RUMAH SAKIT|BPKAD|BRIDA|BPPD|BAPENDA|DPMPTSP|DPRD|PUSKESMAS|BKPSDM|BAPPEDA)\s+.+?)(?=\s+(?:MELALUI|SEBAGAI|DENGAN|YANG\s+DIMEDIASI)\b)',
+        core_title, re.IGNORECASE)
+    if mid_inst:
+        instansi = mid_inst.group(1).strip()
+        core_title = (core_title[:mid_inst.start()] + " " + core_title[mid_inst.end():]).strip()
+        core_title = re.sub(r'\s+', ' ', core_title)
+    else:
+        # 2. Pisahkan lokus / instansi jika berada di akhir judul dengan penanda lokasi
+        lokus_patterns = [
+            r'(?:STUDI KASUS PADA|STUDI EMPIRIS PADA|STUDI PADA)\s+(.+)$',
+            r'\b(?:PADA|DI)\s+(?!PENGARUH\b|HUBUNGAN\b|ANALISIS\b|VARIABEL\b)((?:BADAN|DINAS|KANTOR|BPKAD|BRIDA|BPPD|BAPENDA|DPMPTSP|SEKRETARIAT|BANK|RSUD|RUMAH SAKIT|PT|CV|SMA|SMP|SD|UNIVERSITAS|KECAMATAN|KABUPATEN|KOTA|INSPEKTORAT|PUSKESMAS|BKPSDM|BAPPEDA).+)$',
+            r'\b(?:PADA|DI)\s+(?!PENGARUH\b|HUBUNGAN\b|ANALISIS\b|VARIABEL\b)([A-Z0-9\s\(\)\.\,\-]+)$',
+            r'\b((?:BADAN|DINAS|KANTOR|BPKAD|BRIDA|BPPD|BAPENDA|DPMPTSP|SEKRETARIAT|BANK|RSUD|RUMAH SAKIT|PT|CV|SMA|SMP|SD|UNIVERSITAS|KECAMATAN|KABUPATEN|KOTA|INSPEKTORAT|PUSKESMAS|BKPSDM|BAPPEDA)\s+[A-Z0-9\s\(\)\.\,\-]+)$'
+        ]
+
+        for lp in lokus_patterns:
+            m_lokus = re.search(lp, core_title, re.IGNORECASE)
+            if m_lokus:
+                instansi = m_lokus.group(1).strip()
+                core_title = core_title[:m_lokus.start()].strip()
+                break
 
     # POLA 0 (BARU): JUDUL TANPA KATA "PENGARUH"/"PERAN"/"ANALISIS" DI AWAL
     # Contoh: "Kecerdasan Emosional Dan Kompetensi Terhadap Kinerja Pegawai Melalui OCB"
@@ -179,8 +207,8 @@ def parse_academic_title(raw_title):
                     if p0:
                         x1, x2, y = p0.group(1).strip(), p0.group(2).strip(), p0.group(3).strip()
 
-    # POLA 1: PERAN M DALAM MEMEDIASI PENGARUH X1 DAN X2 TERHADAP Y
-    p1 = re.search(r'PERAN\s+(.+?)\s+DALAM\s+MEMEDIASI\s+PENGARUH\s+(.+?)\s+DAN\s+(.+?)\s+TERHADAP\s+(.+)$', core_title, re.IGNORECASE)
+    # POLA 1: PERAN M DALAM MEMEDIASI PENGARUH X1 DAN X2 TERHADAP Y (atau PERAN MEDIASI M PADA PENGARUH X1 DAN X2 TERHADAP Y)
+    p1 = re.search(r'PERAN\s+(?:MEDIASI\s+)?(.+?)\s+(?:DALAM\s+MEMEDIASI\s+PENGARUH|PADA\s+PENGARUH)\s+(.+?)\s+DAN\s+(.+?)\s+TERHADAP\s+(.+)$', core_title, re.IGNORECASE)
     if p1:
         m = p1.group(1).strip()
         x1 = p1.group(2).strip()

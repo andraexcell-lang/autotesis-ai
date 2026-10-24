@@ -1,0 +1,156 @@
+{
+  "catatan": "Pool referensi metodologi TERVERIFIKASI untuk BAB III (3.2 Populasi & Sampel, 3.3 Variabel & Definisi Operasional, 3.4 Instrumen & Skala, 3.5 Teknik Analisis Data, 3.6 Pengujian Hipotesis). Setiap entri sudah dicek keberadaannya secara online (DOI Crossref resolve / bibliografi penerbit / katalog perpustakaan). Hanya buku/edisi TERBARU yang dipakai. Gemini hanya boleh mengutip dari daftar ini; sitasi di luar daftar akan DITOLAK oleh validator.",
+  "dibuat": "2026-10-17",
+  "sumber": [
+    {
+      "id": "sugiyono2022",
+      "tipe": "buku",
+      "tahun": 2022,
+      "sitasi": "(Sugiyono, 2022)",
+      "apa": "Sugiyono. (2022). Metode Penelitian Kuantitatif, Kualitatif, dan R&D. Bandung: CV Alfabeta.",
+      "topik": ["populasi", "sampel", "sampling jenuh", "sensus", "rumus slovin", "variabel penelitian", "definisi operasional", "skala likert", "instrumen penelitian", "metode penelitian"],
+      "catatan": "Rujukan utama metodologi kuantitatif di Indonesia: definisi populasi, sampel, variabel, definisi operasional, instrumen, skala pengukuran, dan rumus Slovin.",
+      "verifikasi": "OPAC Perpustakaan Nasional RI (opac.perpusnas.go.id id=1543971), ISBN 978-602-289-533-6"
+    },
+    {
+      "id": "creswell2023",
+      "tipe": "buku",
+      "tahun": 2023,
+      "sitasi": "(Creswell & Creswell, 2023)",
+      "apa": "Creswell, J. W., & Creswell, J. D. (2023). Research Design: Qualitative, Quantitative, and Mixed Methods Approaches (6th ed.). Thousand Oaks: SAGE Publications.",
+      "topik": ["populasi", "sampel", "variabel", "definisi operasional", "desain penelitian kuantitatif", "instrumen survei", "prosedur sampling"],
+      "catatan": "Edisi terbaru (6th, 2023). Definisi variabel, operasionalisasi konstruk, instrumen, dan prosedur sampling dalam desain kuantitatif.",
+      "verifikasi": "SAGE / Amazon / VitalSource, ISBN 9781071817971 (6th ed., 2023)"
+    },
+    {
+      "id": "hair2022",
+      "tipe": "buku",
+      "tahun": 2022,
+      "sitasi": "(Hair et al., 2022)",
+      "apa": "Hair, J. F., Hult, G. T. M., Ringle, C. M., & Sarstedt, M. (2022). A Primer on Partial Least Squares Structural Equation Modeling (PLS-SEM) (3rd ed.). Thousand Oaks: SAGE Publications.",
+      "topik": ["ukuran sampel minimum", "kecukupan sampel pls-sem", "outer model", "inner model", "validitas konvergen", "validitas diskriminan", "composite reliability", "AVE", "HTMT", "bootstrapping", "pengujian hipotesis", "R square", "effect size"],
+      "catatan": "Rujukan baku PLS-SEM: evaluasi model pengukuran (loading, AVE, CR, HTMT), evaluasi model struktural (R2, f2, Q2), dan pengujian hipotesis via bootstrapping.",
+      "verifikasi": "OpenLibrary / SAGE, ISBN 9781544396408 (3rd ed., 2022). Catatan: edisi ke-4 resmi Sage (2027) belum beredar luas."
+    },
+    {
+      "id": "hair2024adv",
+      "tipe": "buku",
+      "tahun": 2024,
+      "sitasi": "(Hair et al., 2024)",
+      "apa": "Hair, J. F., Sarstedt, M., Ringle, C. M., & Gudergan, S. P. (2024). Advanced Issues in Partial Least Squares Structural Equation Modeling (PLS-SEM) (2nd ed.). Thousand Oaks: SAGE Publications.",
+      "topik": ["analisis mediasi", "analisis moderasi", "konstruk higher-order", "IPMA", "analisis multigrup", "PLS-SEM lanjutan", "pengaruh tidak langsung"],
+      "catatan": "Lanjutan PLS-SEM (edisi 2024): mediasi, moderasi, konstruk tingkat tinggi, dan analisis lanjutan.",
+      "verifikasi": "Bibliografi resmi SmartPLS (smartpls.com/documentation/literature/books); SAGE, 2024"
+    },
+    {
+      "id": "ghozali2023",
+      "tipe": "buku",
+      "tahun": 2023,
+      "sitasi": "(Ghozali & Kusumadewi, 2023)",
+      "apa": "Ghozali, I., & Kusumadewi, K. A. (2023). Partial Least Squares: Konsep, Teknik dan Aplikasi Menggunakan Program SmartPLS 4.0 untuk Penelitian Empiris (Edisi 1). Semarang: Yoga Pratama.",
+      "topik": ["SmartPLS", "PLS-SEM", "outer model", "inner model", "evaluasi model pengukuran", "evaluasi model struktural", "teknik analisis data"],
+      "catatan": "Panduan operasional SmartPLS 4.0 berbahasa Indonesia untuk evaluasi model pengukuran dan struktural.",
+      "verifikasi": "Katalog Perpustakaan STIE Semarang & OPAC Perpustakaan Nasional RI (opac.perpusnas.go.id id=607377); 2023"
+    },
+    {
+      "id": "rogusz2026",
+      "tipe": "jurnal",
+      "tahun": 2026,
+      "sitasi": "(Rogusz, 2026)",
+      "apa": "Rogusz, A. (2026). Sample Size Justification in Quantitative Research. Nursing Research. https://doi.org/10.1097/nnr.0000000000000949",
+      "topik": ["justifikasi ukuran sampel", "penentuan ukuran sampel", "riset kuantitatif"],
+      "catatan": "Sumber terbaru tentang pentingnya justifikasi ukuran sampel dalam penelitian kuantitatif.",
+      "verifikasi": "Crossref DOI 10.1097/nnr.0000000000000949 (resolve 200)"
+    },
+    {
+      "id": "mukti2025",
+      "tipe": "jurnal",
+      "tahun": 2025,
+      "sitasi": "(Mukti, 2025)",
+      "apa": "Mukti, B. H. (2025). Methods in health research: Probability and non-probability sampling. Health Sciences International Journal. https://doi.org/10.71357/hsij.v3i2.64",
+      "topik": ["teknik sampling", "probability sampling", "non-probability sampling", "metode penelitian"],
+      "catatan": "Klasifikasi teknik sampling probabilita vs non-probabilita beserta penggunaannya.",
+      "verifikasi": "Crossref DOI 10.71357/hsij.v3i2.64 (resolve 200)"
+    },
+    {
+      "id": "widodo2023",
+      "tipe": "jurnal",
+      "tahun": 2023,
+      "sitasi": "(Widodo et al., 2023)",
+      "apa": "Widodo, V. G., Suparman, Y., & Darmawan, G. (2023). Sampling Design for Car Survey Using Stratified Random Sampling. Indonesian Journal of Contemporary Multidisciplinary Research, 2(5). https://doi.org/10.55927/modern.v2i5.5872",
+      "topik": ["desain sampling", "stratified random sampling", "penarikan sampel acak"],
+      "catatan": "Contoh penerapan desain penarikan sampel probabilita pada survei.",
+      "verifikasi": "Crossref DOI 10.55927/modern.v2i5.5872 (resolve 200)"
+    },
+    {
+      "id": "kim2022",
+      "tipe": "jurnal",
+      "tahun": 2022,
+      "sitasi": "(Kim, 2022)",
+      "apa": "Kim, K. S. (2022). Methodology of Non-probability Sampling in Survey Research. American Journal of Biomedical Science & Research. https://doi.org/10.34297/ajbsr.2022.15.002166",
+      "topik": ["non-probability sampling", "survei", "metodologi sampling"],
+      "catatan": "Pembahasan metodologis teknik sampling non-probabilita pada riset survei.",
+      "verifikasi": "Crossref DOI 10.34297/ajbsr.2022.15.002166 (resolve 200)"
+    },
+    {
+      "id": "ahmad2024",
+      "tipe": "jurnal",
+      "tahun": 2024,
+      "sitasi": "(Ahmad & Wilkins, 2024)",
+      "apa": "Ahmad, M., & Wilkins, S. (2024). Purposive sampling in qualitative research: A framework for the entire journey. Quality & Quantity. https://doi.org/10.1007/s11135-024-02022-5",
+      "topik": ["purposive sampling", "pertimbangan kriteria sampel", "kerangka sampling"],
+      "catatan": "Kerangka pertimbangan pemilihan sampel berdasar kriteria (relevan untuk sampel jenuh/pertimbangan tertentu).",
+      "verifikasi": "Crossref DOI 10.1007/s11135-024-02022-5 (resolve 200)"
+    },
+    {
+      "id": "cheah2026",
+      "tipe": "jurnal",
+      "tahun": 2026,
+      "sitasi": "(Cheah et al., 2026)",
+      "apa": "Cheah, J., Sarstedt, M., Hair, J. F., & Ringle, C. M. (2026). Consistent Partial Least Squares Structural Equation Modeling Using SmartPLS. Structural Equation Modeling: A Multidisciplinary Journal. https://doi.org/10.1080/10705511.2026.2633754",
+      "topik": ["PLS-SEM konsisten", "SmartPLS", "estimasi model", "pengujian model struktural", "teknik analisis"],
+      "catatan": "Prosedur terbaru estimasi PLS-SEM konsisten menggunakan SmartPLS.",
+      "verifikasi": "Crossref DOI 10.1080/10705511.2026.2633754 (resolve 200)"
+    },
+    {
+      "id": "hairalamer2022",
+      "tipe": "jurnal",
+      "tahun": 2022,
+      "sitasi": "(Hair & Alamer, 2022)",
+      "apa": "Hair, J., & Alamer, A. (2022). Partial Least Squares Structural Equation Modeling (PLS-SEM) in second language and education research: Guidelines using an applied example. Research Methods in Applied Linguistics, 1(3). https://doi.org/10.1016/j.rmal.2022.100027",
+      "topik": ["panduan PLS-SEM", "evaluasi outer model", "evaluasi inner model", "contoh terapan", "teknik analisis"],
+      "catatan": "Panduan langkah demi langkah evaluasi model pengukuran dan struktural PLS-SEM dengan contoh terapan.",
+      "verifikasi": "Crossref DOI 10.1016/j.rmal.2022.100027 (resolve 200)"
+    },
+    {
+      "id": "aybek2026",
+      "tipe": "jurnal",
+      "tahun": 2026,
+      "sitasi": "(Aybek & Karakas, 2026)",
+      "apa": "Aybek, G., & Karakas, H. (2026). A tutorial for building multi-type PLS-SEM in social research: Validating and testing reflective and formative constructs in a single model. Quality & Quantity. https://doi.org/10.1007/s11135-026-02792-0",
+      "topik": ["tutorial PLS-SEM", "konstruk reflektif", "konstruk formatif", "validasi model", "teknik analisis"],
+      "catatan": "Tutorial membangun model PLS-SEM dan memvalidasi konstruk reflektif-formatif.",
+      "verifikasi": "Crossref DOI 10.1007/s11135-026-02792-0 (resolve 200)"
+    },
+    {
+      "id": "hubatka2026",
+      "tipe": "jurnal",
+      "tahun": 2026,
+      "sitasi": "(Hubatka et al., 2026)",
+      "apa": "Hubatka, P., Cigler, H., & Elek, D. (2026). Spurious Reliability Increase? The Number of Response Options in the Likert-Type Scale Influences Only Internal Consistency, Not Criterion Validity. Assessment. https://doi.org/10.1177/10731911261452890",
+      "topik": ["skala likert", "jumlah opsi jawaban", "konsistensi internal", "reliabilitas instrumen"],
+      "catatan": "Bukti terbaru pengaruh jumlah opsi jawaban skala Likert terhadap konsistensi internal instrumen.",
+      "verifikasi": "Crossref DOI 10.1177/10731911261452890 (resolve 200)"
+    },
+    {
+      "id": "sundram2023",
+      "tipe": "jurnal",
+      "tahun": 2023,
+      "sitasi": "(Sundram & Romli, 2023)",
+      "apa": "Sundram, S., & Romli, N. (2023). A Pilot Study to Test the Reliability and Validity of The Research Instrument. Malaysian Journal of Social Sciences and Humanities (MJSSH), 8(3). https://doi.org/10.47405/mjssh.v8i3.2149",
+      "topik": ["uji instrumen", "studi pendahuluan", "validitas", "reliabilitas kuesioner"],
+      "catatan": "Prosedur uji validitas dan reliabilitas instrumen melalui studi pendahuluan (pilot study).",
+      "verifikasi": "Crossref DOI 10.47405/mjssh.v8i3.2149 (resolve 200)"
+    }
+  ]
+}

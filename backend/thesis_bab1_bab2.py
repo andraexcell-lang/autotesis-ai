@@ -2,7 +2,7 @@
 """Modul Pembangun BAB I dan BAB II Tesis Andre Juliansya"""
 
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from build_full_thesis_docx import p, h1, h2, h3, add_table_data
+from build_full_thesis_docx import p, h1, h2, h3, add_table_data, rapikan_tabel_dokumen
 
 def build_bab_1(doc):
     h1(doc, "BAB I\nPENDAHULUAN")
@@ -105,6 +105,7 @@ def build_bab_1(doc):
     p(doc, "a) Bagi Instansi (DPMPTSP Provinsi Sumatera Selatan): Hasil penelitian ini dapat menjadi landasan evaluasi dan masukan berbasis bukti (Evidence-Based Policy) bagi organisasi dalam menyusun strategi pemecahan masalah guna meningkatkan capaian target Indikator Kinerja Utama (IKU), khususnya terkait ketepatan waktu penerbitan izin.", indent=0.5, space_after=2)
     p(doc, "b) Bagi Pimpinan dan Pengambil Kebijakan: Memberikan gambaran objektif mengenai kondisi riil motivasi, tingkat kedisiplinan, dan keterikatan aparatur di lapangan. Hal ini sangat berguna sebagai bahan pertimbangan manajerial dalam memformulasikan kebijakan insentif, penataan ulang beban kerja, serta pendekatan penegakan disiplin yang lebih efektif untuk menekan angka pelanggaran jam kerja.", indent=0.5, space_after=2)
     p(doc, "c) Bagi Pegawai (ASN dan PPPK): Diharapkan dapat menumbuhkan kesadaran diri aparatur mengenai pentingnya memiliki keterikatan psikologis dan emosional (Employee Engagement) terhadap instansi, sehingga mampu bertransformasi dari sekadar pelaksana administratif yang menggugurkan kewajiban menjadi pelayan publik yang berdedikasi tinggi dan berkinerja prima.", indent=0.5, space_after=8)
+    rapikan_tabel_dokumen(doc)
     doc.add_page_break()
 
 def build_bab_2(doc):
@@ -228,6 +229,7 @@ def build_bab_2(doc):
     ]
     for h in hips:
         p(doc, h, indent=0.25, space_after=2)
+    rapikan_tabel_dokumen(doc)
     doc.add_page_break()
 
 print("Bab 1 & Bab 2 siap.")

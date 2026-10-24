@@ -126,7 +126,7 @@ def generate_bab_5_docx(config, output_path):
     format_h1(doc, "DAFTAR PUSTAKA")
 
     daftar_pustaka = [
-        "Arikunto, S. (2019). Prosedur Penelitian: Suatu Pendekatan Praktik. Jakarta: Rineka Cipta.",
+        "Creswell, J. W., & Creswell, J. D. (2023). Research Design: Qualitative, Quantitative, and Mixed Methods Approaches (6th ed.). Thousand Oaks, CA: SAGE Publications.",
         "Bandura, A. (1986). Social Foundations of Thought and Action: A Social Cognitive Theory. Englewood Cliffs, NJ: Prentice-Hall.",
         "Bandura, A. (1997). Self-Efficacy: The Exercise of Control. New York: W.H. Freeman and Company.",
         "Bernardin, H. J., & Russell, J. E. A. (2013). Human Resource Management: An Experiential Approach (6th ed.). New York: McGraw-Hill.",
@@ -158,7 +158,7 @@ def generate_bab_5_docx(config, output_path):
         "Sedarmayanti. (2017). Manajemen Sumber Daya Manusia: Reformasi Birokrasi dan Manajemen Pegawai Negeri Sipil. Bandung: Refika Aditama.",
         "Siagian, S. P. (2016). Manajemen Sumber Daya Manusia. Jakarta: Bumi Aksara.",
         "Sudjana. (2016). Metoda Statistika (Edisi ke-6). Bandung: Tarsito.",
-        "Sugiyono. (2019). Metode Penelitian Kuantitatif, Kualitatif, dan R&D. Bandung: Alfabeta.",
+        "Sugiyono. (2022). Metode Penelitian Kuantitatif, Kualitatif, dan R&D. Bandung: CV Alfabeta.",
         "Wibowo, A., & Kusuma, M. (2021). Peran mediasi kepuasan kerja pada pengaruh self-efficacy terhadap kinerja aparatur sipil negara. Jurnal Manajemen Pelayanan Publik, 5(1), 32-44.",
         "Yurahadi. (2024). Pengaruh Lingkungan Kerja dan Tunjangan Kinerja terhadap Kinerja Pegawai Melalui Kepuasan Kerja pada Organisasi Pemerintah Daerah (Tesis Magister Manajemen, Universitas Tridinanti). Pascasarjana Universitas Tridinanti."
     ]

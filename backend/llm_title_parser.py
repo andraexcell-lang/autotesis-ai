@@ -40,10 +40,34 @@ GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 # "gemini-3.5-flash-lite" terbukti 200 dan menang pada uji ekstraksi, sedangkan
 # "gemini-3.1-flash-lite" saat itu sering 503 sehingga diletakkan belakangan
 # (dengan pemutus sirkuit kesibukan agar tak membebankan jeda backoff).
+# URUTAN BARU (diuji 21 Okt 2026, 1 key sehat, 16 model dicek langsung):
+#   Model lama -> dipindah ke belakang karena ternyata SLOWEST di kelasnya:
+#     "gemini-flash-lite-latest" 12,4 dtk (tapi dipakai karena paling stabil)
+#     "gemini-3.5-flash-lite"    15,4 dtk
+#   Model baru -> paling cepat &output JSON valid:
+#     "gemini-3.1-flash-lite"     6,1 dtk  <- dipakai sebagai UTAMA
+#     "gemini-3.8-flash"         11,5 dtk
+#     "gemini-3.5-flash"         22,5 dtk
+#   Catatan: "gemini-4-argon", "gemini-3.1-pro-preview", "gemini-pro-latest" TIDAK
+#   bisa diakses (butuh allowlist preview); "gemini-2.5-flash"/"-lite"/"-pro"
+#   sudah dihapus Google (HTTP 404) -> tidak dicantumkan agar tak buang percobaan.
+#
+# CATATAN PENTING - chain PEMULIS harus PATUH format sitasi:
+#   "gemini-3.1-flash-lite" memang lebih cepat (6,1 dtk vs 12,4 dtk) tapi UJI
+#   NYATA: model ini SERING MELEWATI sitasi di sebagian paragraf -> validasi
+#   gagal 3x berturut-turut -> sub bab jatuh ke template minimal. Karena itu
+#   model ini TIDAK dipakai sebagai primer untuk penulisan naskah.
+#   "gemini-flash-lite-latest" terbukti paling patuh (sitasi lengkap, JSON
+#   valid) -> tetap PRIMER.
+# Model yang TIDAK bisa diakses (catat saja, jangan masuk chain):
+#   "gemini-4-argon", "gemini-3.1-pro-preview", "gemini-pro-latest" -> butuh allowlist.
+#   "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro" -> HTTP 404 (dihapus).
 MODEL_CHAIN = [
     "gemini-flash-lite-latest",
     "gemini-3.5-flash-lite",
     "gemini-3.1-flash-lite",
+    "gemini-3.8-flash",
+    "gemini-3.5-flash",
     "gemini-flash-latest",
     "nvidia/nemotron-3-ultra-550b-a55b",
 ]
@@ -63,9 +87,10 @@ MODEL_CHAIN = [
 # ============================================================================
 EXTRACT_CHAIN = [
     "nvidia/nemotron-3-ultra-550b-a55b",   # GRATIS, prioritas #1
+    "gemini-3.1-flash-lite",               # 6,1 dtk (tercepat & JSON valid)
+    "gemini-3.8-flash",
     "gemini-flash-lite-latest",
     "gemini-3.5-flash-lite",
-    "gemini-3.1-flash-lite",
     "gemini-flash-latest",
 ]
 

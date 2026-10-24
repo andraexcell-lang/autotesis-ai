@@ -2,7 +2,7 @@
 """Modul Pembangun BAB V, Daftar Pustaka, dan Lampiran Lengkap Tesis Andre Juliansya"""
 
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from build_full_thesis_docx import p, h1, h2, h3, add_table_data
+from build_full_thesis_docx import p, h1, h2, h3, add_table_data, rapikan_tabel_dokumen
 import build_andre_thesis
 
 def build_bab_5(doc):
@@ -43,6 +43,7 @@ def build_bab_5(doc):
 
     p(doc, "2. Saran Akademis (Bagi Peneliti Selanjutnya):", bold=True, space_after=2)
     p(doc, "a). Eksplorasi Variabel Baru: Meneliti faktor-faktor tambahan seperti Job Crafting, Perceived Organizational Support, atau Servant Leadership.\nb). Perluasan Objek Penelitian: Memperluas cakupan sampel pada instansi pemerintah daerah lain di wilayah Sumatera Selatan.\nc). Pendekatan Metode Campuran (Mixed-Methods): Mengombinasikan kuesioner dengan wawancara mendalam untuk menginvestigasi motif terdalam kepatuhan semu di lingkungan birokrasi.", indent=0.5, space_after=8)
+    rapikan_tabel_dokumen(doc)
     doc.add_page_break()
 
 def build_daftar_pustaka(doc):
@@ -279,5 +280,6 @@ def build_lampiran(doc):
     t_turnitin_headers = ["Indeks Kesamaan Keseluruhan", "Sumber Internet", "Publikasi", "Karya Mahasiswa"]
     t_turnitin_data = [["12%", "8%", "4%", "6%"]]
     add_table_data(doc, "Hasil Ringkasan Turnitin Digital Receipt", t_turnitin_headers, t_turnitin_data)
+    rapikan_tabel_dokumen(doc)
 
 print("Bab 5 & Lampiran siap.")

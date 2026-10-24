@@ -183,10 +183,10 @@ def generate_bab_3_docx(config, output_path):
     # 3.2 Populasi dan Sampel
     format_h2(doc, "3.2 Populasi dan Sampel")
     p = doc.add_paragraph()
-    format_p(p, f"3.2.1 Populasi\nMenurut Sugiyono (2019), populasi adalah wilayah generalisasi yang terdiri atas objek/subjek yang mempunyai kuantitas dan karakteristik tertentu yang ditetapkan oleh peneliti untuk dipelajari dan kemudian ditarik kesimpulannya. Populasi dalam penelitian ini adalah seluruh aparatur sipil negara (ASN) yang bertugas aktif pada {instansi}, yaitu sebanyak {n} orang pegawai.", indent=0.5)
+    format_p(p, f"3.2.1 Populasi\nPopulasi adalah wilayah generalisasi yang terdiri atas objek/subjek yang mempunyai kuantitas dan karakteristik tertentu yang ditetapkan oleh peneliti untuk dipelajari dan kemudian ditarik kesimpulannya (Sugiyono, 2022). Populasi dalam penelitian ini adalah seluruh aparatur sipil negara (ASN) yang bertugas aktif pada {instansi}, yaitu sebanyak {n} orang pegawai.", indent=0.5)
 
     p = doc.add_paragraph()
-    format_p(p, f"3.2.2 Sampel\nSampel adalah bagian dari jumlah dan karakteristik yang dimiliki oleh populasi tersebut. Mengingat jumlah total populasi pegawai terjangkau dan berada di bawah 100 orang (N = {n} orang), maka teknik penarikan sampel yang digunakan dalam penelitian ini adalah Teknik Sampling Jenuh (Sensus) sebagaimana direkomendasikan oleh Sugiyono (2019) dan Arikunto (2019). Dengan menggunakan teknik sensus, seluruh populasi yang berjumlah {n} orang pegawai dijadikan sebagai responden penelitian. Penggunaan teknik sensus mengeliminasi kesalahan penarikan sampel (sampling error) serta memberikan daya representasi yang sempurna bagi pengujian model struktural pada instansi.", indent=0.5)
+    format_p(p, f"3.2.2 Sampel\nSampel adalah bagian dari jumlah dan karakteristik yang dimiliki oleh populasi tersebut. Apabila jumlah populasi terjangkau relatif kecil (tidak lebih dari 100 orang), maka seluruh anggota populasi dapat dijadikan sebagai responden penelitian melalui teknik sampling jenuh (sensus), sebagaimana dijelaskan oleh Sugiyono (2022) dan Creswell & Creswell (2023). Dengan menggunakan teknik sensus, seluruh populasi yang berjumlah {n} orang pegawai dijadikan sebagai responden penelitian. Penggunaan teknik sensus mengeliminasi kesalahan penarikan sampel (sampling error) serta memberikan daya representasi yang sempurna bagi pengujian model struktural pada instansi.", indent=0.5)
 
     # 3.3 Sumber dan Teknik Pengumpulan Data
     format_h2(doc, "3.3 Sumber dan Teknik Pengumpulan Data")

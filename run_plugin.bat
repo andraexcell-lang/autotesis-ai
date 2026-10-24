@@ -1,10 +1,10 @@
 @echo off
-title AutoTesis AI - Microsoft Word Add-in & Engine Launcher
+title Independent Researcher - Microsoft Word Add-in & Engine Launcher
 color 0b
 
 echo =====================================================================
-echo           AUTOTESIS AI - WORD ADD-IN & THESIS GENERATOR
-echo         Standar Tesis Magister Manajemen Yurahadi & SmartPLS 4
+echo       INDEPENDENT RESEARCHER - WORD ADD-IN & THESIS GENERATOR
+echo         Standar Tesis Magister Manajemen By SkripsiPlg & SmartPLS 4
 echo =====================================================================
 echo.
 
@@ -14,13 +14,13 @@ echo [1/3] Menyiapkan Sertifikat SSL Localhost...
 python backend\generate_cert.py
 
 echo.
-echo [2/3] Menyalakan AutoTesis Dual Server (HTTP: 5050 ^| HTTPS: 5051)...
-start "AutoTesis Server" /b python backend\server.py
+echo [2/3] Menyalakan Independent Researcher Dual Server (HTTP: 5050 ^| HTTPS: 5051)...
+start "Independent Researcher Server" /b python backend\server.py
 
 timeout /t 3 >nul
 
 echo.
-echo [3/3] Membuka Antarmuka Dashboard AutoTesis AI...
+echo [3/3] Membuka Antarmuka Dashboard Independent Researcher...
 start http://localhost:5050/taskpane.html
 
 echo.
@@ -32,7 +32,7 @@ echo - File Manifest Word     : C:\Addins\autotesis_manifest.xml
 echo.
 echo FITUR UNGGULAN:
 echo 1. Tulis Bab ke Word: Pilih 'Native COM' untuk mengetik langsung ke lembar Word aktif!
-echo 2. 1-Klik Tesis Utuh: Merangkai Cover, Bab 1-5, Tabel SmartPLS, & Dapus ke file .docx.
+echo 2. 1 Unduh Lengkap  : Merangkai Cover, Bab 1-5, Tabel SmartPLS, & Dapus ke file .docx.
 echo 3. Simulator SmartPLS : Menghasilkan dataset Excel 100% lolos Hair et al.
 echo 4. Generator GForm    : Menghasilkan kode Apps Script kuesioner otomatis.
 echo =====================================================================

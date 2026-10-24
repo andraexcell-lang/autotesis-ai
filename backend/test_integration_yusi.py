@@ -1,4 +1,4 @@
-import urllib.request, json, os, docx
+import urllib.request, urllib.error, json, os, docx
 
 BASE_URL = 'http://127.0.0.1:5050'
 
@@ -37,9 +37,13 @@ print('\n=== 3. TEST POST /api/generate-bab-1 ===')
 res_b1 = post_json('/api/generate-bab-1', config)
 print('Status: success, Filename:', res_b1.get('filename'))
 
-print('\n=== 4. TEST POST /api/simulate-smartpls ===')
-res_pls = post_json('/api/simulate-smartpls', config)
-print('Status: success, Excel:', res_pls.get('excel_file'))
+print('\n=== 4. TEST POST /api/simulate-smartpls (harus 410) ===')
+try:
+    post_json('/api/simulate-smartpls', config)
+    raise AssertionError('Jalur pembangkitan lama seharusnya dinonaktifkan (410).')
+except urllib.error.HTTPError as ex:
+    assert ex.code == 410, f'Kode HTTP tak terduga: {ex.code}'
+    print('Status: 410 (jalur pembangkitan lama dinonaktifkan)')
 
 output_dir = r'e:\SKILL UNTUK AI\system_prompts_leaks-main\word-addin-tesismagister\output'
 

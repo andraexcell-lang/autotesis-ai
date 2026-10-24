@@ -291,3 +291,102 @@ function createThesisForm() {{
   Logger.log("Form berhasil dibuat! URL Form: " + form.getEditUrl());
 }'''
     return code
+
+
+_ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
+
+
+def _roman(n):
+    return _ROMAN[n - 1] if 1 <= n <= len(_ROMAN) else str(n)
+
+
+def _js_str(s):
+    """Escape teks agar aman dipakai di dalam literal string JavaScript."""
+    return (str(s or "").replace("\\", "\\\\").replace('"', '\\"')
+            .replace("\r", " ").replace("\n", " "))
+
+
+def generate_google_apps_script_from_items(items, judul="", instansi="", tahun="2026"):
+    """Bangun Google Apps Script yang membuat Google Form dari butir kuesioner NYATA.
+
+    `items`: daftar butir hasil kisi-kisi/kuesioner per judul (kunci: role, variabel,
+    kode, dimensi, pernyataan). Kode butir yang dipakai SAMA dengan kisi-kisi Bab III
+    dan Lampiran, sehingga Form tidak lagi memakai 36 butir generik.
+
+    Script juga membuat Spreadsheet tujuan respons dan mencatat URL-nya (termasuk
+    ``#gid=``) agar respons dapat diimpor langsung dari link Google Sheets.
+    """
+    groups = []
+    for it in (items or []):
+        key = (it.get("role"), it.get("variabel"))
+        if not groups or groups[-1][0] != key:
+            groups.append((key, []))
+        groups[-1][1].append(it)
+
+    title = (f"KUESIONER PENELITIAN: {judul}" if judul else "KUESIONER PENELITIAN")
+    sheet_title = ("RESPONS KUESIONER - " + (judul or "TESIS"))[:180]
+    instansi_clause = f" pada {instansi}" if instansi else ""
+
+    L = []
+    L.append("// SCRIPT OTOMATIS GENERATOR GOOGLE FORM + SPREADSHEET RESPONS")
+    L.append("// Dibuat dari butir kuesioner NYATA judul ini (kode butir = kisi-kisi Bab III).")
+    L.append("function createThesisForm() {")
+    L.append(f'  var form = FormApp.create("{_js_str(title)}");')
+    L.append('  form.setDescription("Penelitian Tesis Pascasarjana Magister Manajemen'
+             + _js_str(instansi_clause) + '.\\n" +')
+    L.append('    "Mohon kesediaan Bapak/Ibu responden mengisi instrumen penelitian ini secara objektif.\\n" +')
+    L.append('    "Skala: 1=Sangat Tidak Setuju, 2=Tidak Setuju, 3=Kurang Setuju, 4=Setuju, 5=Sangat Setuju.\\n" +')
+    L.append('    "Data hanya digunakan untuk kepentingan akademik.");')
+    L.append('  form.setCollectEmail(false);')
+    L.append('  form.setProgressBar(true);')
+    L.append('  form.setConfirmationMessage("Terima kasih. Jawaban Bapak/Ibu sudah tersimpan.");')
+
+    # Spreadsheet tujuan respons dibuat eksplisit agar peneliti dapat membagikan
+    # tautan sheet (bukan tautan form) untuk impor langsung.
+    L.append(f'  var ss = SpreadsheetApp.create("{_js_str(sheet_title)}");')
+    L.append('  form.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());')
+    L.append('  SpreadsheetApp.flush();')
+    L.append('  form.addSectionHeaderItem().setTitle("BAGIAN I: IDENTITAS RESPONDEN");')
+    L.append('  form.addTextItem().setTitle("Inisial Nama Responden (Opsional)").setRequired(false);')
+    L.append('  form.addMultipleChoiceItem().setTitle("Jenis Kelamin").setChoiceValues(["Laki-laki","Perempuan"]).setRequired(true);')
+    L.append('  form.addMultipleChoiceItem().setTitle("Tingkat Pendidikan Terakhir").setChoiceValues(["SMA / Sederajat","Diploma (D3)","Sarjana (S1)","Magister (S2)"]).setRequired(true);')
+    L.append('  form.addMultipleChoiceItem().setTitle("Kelompok Usia").setChoiceValues(["< 30 Tahun","31 - 40 Tahun","41 - 50 Tahun","> 50 Tahun"]).setRequired(true);')
+
+    for gi, ((role, variabel), gitems) in enumerate(groups):
+        bagian = _roman(gi + 2)
+        L.append(f'  form.addPageBreakItem().setTitle("BAGIAN {bagian}: PERNYATAAN VARIABEL '
+                 + _js_str(variabel).upper() + f' ({role})");')
+        last_dim = None
+        for it in gitems:
+            dim = it.get("dimensi") or ""
+            if dim and dim != last_dim:
+                L.append('  form.addSectionHeaderItem().setTitle("Dimensi: '
+                         + _js_str(dim) + '");')
+                last_dim = dim
+            q = _js_str(f'{it.get("kode", "")}. {it.get("pernyataan", "")}')
+            # Skala linier 1-5 => respons tersimpan sebagai ANGKA (siap impor SmartPLS).
+            L.append(f'  form.addScaleItem().setTitle("{q}").setBounds(1, 5)'
+                     '.setLabels("Sangat Tidak Setuju", "Sangat Setuju").setRequired(true);')
+
+    # Sheet bawaan SpreadsheetApp.create() bernama "Sheet1" dan biasanya kosong.
+    # Hapus sheet kosong itu agar link tanpa #gid tidak membuka tab yang salah.
+    L.append('  var ssResp = SpreadsheetApp.openById(ss.getId());')
+    L.append('  var sheets = ssResp.getSheets();')
+    L.append('  var respSheet = sheets[sheets.length - 1];')
+    L.append('  for (var i = 0; i < sheets.length; i++) {')
+    L.append('    if (sheets[i].getName().indexOf("Form Responses") === 0) { respSheet = sheets[i]; break; }')
+    L.append('  }')
+    L.append('  var respSheetId = respSheet.getSheetId();')
+    L.append('  for (var j = 0; j < sheets.length; j++) {')
+    L.append('    try {')
+    L.append('      if (sheets[j].getSheetId() !== respSheetId && sheets[j].getLastRow() === 0) {')
+    L.append('        ssResp.deleteSheet(sheets[j]);')
+    L.append('      }')
+    L.append('    } catch (e) {}')
+    L.append('  }')
+    L.append('  Logger.log("Form berhasil dibuat: " + form.getPublishedUrl());')
+    L.append('  Logger.log("Spreadsheet respons: " + ssResp.getUrl() + "#gid=" + respSheetId);')
+    L.append('  Logger.log("Bagikan Spreadsheet sebagai Pelihat (siapa saja yang memiliki link), lalu tempel link-nya di AutoTesis.");')
+    L.append('  Logger.log("Isi pertanyaan: " + form.getItems().length);')
+    L.append("}")
+    return "\n".join(L)

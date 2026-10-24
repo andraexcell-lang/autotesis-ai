@@ -12,8 +12,26 @@ import base64
 # Ensure backend directory is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from engine_smartpls import simulate_smartpls_data, generate_google_apps_script
+# Output konsol dipaksa UTF-8 (dengan errors='replace' sebagai jaring pengaman).
+# Tanpa ini, pencetakan karakter non-ASCII (mis. "Grbić", "Karadayı") memicu
+# UnicodeEncodeError di Windows (cp1252) -> kode lama harus men bastion respons
+# LLM ke ASCII sehingga NAMA PENULIS jadi "Grbi?" / "Karaday?" dan tidak lagi
+# cocok dengan DAFTAR PUSTAKA.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+try:
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+    os.environ.setdefault("PYTHONUTF8", "1")
+except Exception:
+    pass
+
+from engine_smartpls import generate_google_apps_script_from_items
+from gform_sheet import fetch_google_sheet_csv
 from engine_docx import build_full_thesis_docx
+from build_full_thesis_docx import rapikan_tabel_dokumen
 import engine_word_native
 import agent_bagian_awal
 import agent_bab_1
@@ -26,6 +44,12 @@ import engine_hierarchical_pipeline
 import semantic_title_parser
 import llm_title_parser
 import academic_dimension_researcher
+from provenance import (
+    label_data_source,
+    label_origin,
+    normalize_analysis_engine,
+    normalize_data_source,
+)
 from generate_cert import generate_self_signed_cert
 
 # Port dapat di-override lewat env (Render/Fly.io menyediakan $PORT).
@@ -37,6 +61,37 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TASKPANE_DIR = os.path.join(BASE_DIR, "taskpane")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+
+def ontology_gate_status(judul=""):
+    """Baca cache ontologi JUDUL AKTIF dan kembalikan (ok, problems, summary, judul).
+
+    Blueprint disimpan per judul (hash judul). Membaca berkas global lama akan
+    memvalidasi judul yang salah; karena itu judul wajib diteruskan bila ada.
+    """
+    import variable_tracer
+    onto = {}
+    judul = (judul or "").strip()
+    if judul:
+        try:
+            import academic_dimension_researcher as ADR
+            onto = ADR.baca_ontology_cache(judul) or {}
+        except Exception as e:
+            print(f"[ontology] gagal baca cache judul: {e}")
+            onto = {}
+    if not onto:
+        onto_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 "cache_thesis_ontology.json")
+        if os.path.exists(onto_path):
+            try:
+                with open(onto_path, encoding="utf-8") as f:
+                    onto = json.load(f)
+            except Exception as e:
+                print(f"[ontology] gagal baca cache gate: {e}")
+    ok, problems, summary = variable_tracer.validate_ontology_complete(onto)
+    judul_onto = ((onto.get("metadata") or {}).get("judul") or judul)
+    return ok, problems, summary, judul_onto
+
 
 def get_file_base64(filepath):
     """Encodes a file to base64 string for direct Office.js Word insertion."""
@@ -100,6 +155,31 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 except Exception:
                     n = 0
                 encoded = json.dumps({"status": "ok", "library": n}).encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', str(len(encoded)))
+                self.end_headers()
+                if not head_only:
+                    self.wfile.write(encoded)
+                return
+
+            # Cache ontologi SESI (in-memory) — status & pembersihan manual.
+            if path.startswith("/api/ontology-session-cache"):
+                try:
+                    import engine_hierarchical_pipeline as _ehp
+                    if "clear" in path:
+                        dihapus = _ehp.bersihkan_cache_ontologi_sesi()
+                        payload = {"status": "success", "action": "clear",
+                                   "entries_removed": dihapus}
+                    else:
+                        payload = {
+                            "status": "success",
+                            "ttl_seconds": int(_ehp._ONTOLOGI_MEMORI_TTL),
+                            "entries": len(_ehp._ONTOLOGI_MEMORI),
+                        }
+                except Exception as e:
+                    payload = {"status": "error", "message": str(e)}
+                encoded = json.dumps(payload).encode('utf-8')
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.send_header('Content-Length', str(len(encoded)))
@@ -267,13 +347,46 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 instansi = body.get("instansi", "")
                 sektor = body.get("sektor", "")
                 judul = body.get("judul", body.get("title", ""))
-                
-                ontology = academic_dimension_researcher.build_full_thesis_ontology(
-                    x1, x2, m, y, instansi, sektor, judul
-                )
+                # Blueprint BEKU untuk judul yang sama dipakai ulang. Ini
+                # mencegah klik "Telusuri" yang tidak sengaja menimpa ontologi
+                # yang sudah disetujui. Regenerasi paksa memakai force=true.
+                ontology = None
+                if judul and not body.get("force"):
+                    try:
+                        ontology = academic_dimension_researcher.baca_ontology_cache(judul)
+                    except Exception:
+                        ontology = None
+                if ontology:
+                    # Cache lama/beku: lengkapi lapisan teoretis/operasional dan
+                    # metadata seleksi dimensi tanpa mengubah indikator operasional.
+                    try:
+                        if academic_dimension_researcher.ensure_indicator_layers(
+                                ontology, judul=judul, instansi=instansi):
+                            academic_dimension_researcher.simpan_ontology_cache(
+                                ontology, judul)
+                    except Exception as e:
+                        print(f"[ontology] pelengkapan lapisan endpoint dilewati: {e}")
+                if not ontology:
+                    ontology = academic_dimension_researcher.build_full_thesis_ontology(
+                        x1, x2, m, y, instansi, sektor, judul
+                    )
                 response_data = {
                     "status": "success",
                     "ontology": ontology
+                }
+
+            # 0.21 Status kelengkapan ontologi (gate Bab III-V & Lampiran).
+            # Tanpa gate ini, variabel dengan 0 indikator bisa lolos dan
+            # menghasilkan naskah/kuesioner kosong tanpa peringatan.
+            elif path == "/api/ontology/status":
+                _judul = (body.get("judul") or body.get("title") or "").strip()
+                ok, problems, summary, _judul_onto = ontology_gate_status(_judul)
+                response_data = {
+                    "status": "success",
+                    "complete": ok,
+                    "problems": problems,
+                    "summary": summary,
+                    "judul": _judul_onto,
                 }
 
             # 0.25 Pustaka Variabel Permanen (Telusuri via Live Academic API, Tahap B)
@@ -316,14 +429,25 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 import variable_library as VL
                 response_data = {"status": "success", "library": VL.list_library()}
 
-            # 0.3 Get Current Cached Ontology
+            # 0.3 Get Current Cached Ontology (per judul; fallback berkas lama)
             elif path == "/api/get-ontology":
-                onto_cache = os.path.join(os.path.dirname(__file__), "cache_thesis_ontology.json")
-                if os.path.exists(onto_cache):
-                    with open(onto_cache, "r", encoding="utf-8") as f:
-                        response_data = json.load(f)
-                else:
-                    response_data = {"status": "empty"}
+                _cfg_onto = body.get("config") or {}
+                _judul = (body.get("judul") or _cfg_onto.get("judul") or "").strip()
+                _onto = academic_dimension_researcher.baca_ontology_cache(_judul) if _judul else None
+                if _onto:
+                    try:
+                        academic_dimension_researcher.ensure_indicator_layers(
+                            _onto, judul=_judul,
+                            instansi=(_cfg_onto.get("instansi") or ""))
+                    except Exception as e:
+                        print(f"[ontology] pelengkapan lapisan get-ontology dilewati: {e}")
+                if not _onto:
+                    onto_cache = os.path.join(os.path.dirname(__file__),
+                                              "cache_thesis_ontology.json")
+                    if os.path.exists(onto_cache):
+                        with open(onto_cache, "r", encoding="utf-8") as f:
+                            _onto = json.load(f)
+                response_data = _onto if _onto else {"status": "empty"}
 
             # 0.5 Fetch Live Academic References (OpenAlex & Crossref Verified DOIs)
             elif path == "/api/academic-references":
@@ -335,71 +459,87 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                     "references": [{"text": r[0], "italic": r[1]} for r in refs]
                 }
 
-            # 1. Simulate SmartPLS Dataset
+            # 0.6 P0 #9 — Verifikasi Referensi (DOI, Judul, Penulis, Tahun, Retraksi)
+            elif path == "/api/verify-references":
+                import academic_connector
+                apa_list = body.get("references", [])
+                if not apa_list:
+                    response_data = {"status": "error", "message": "Field 'references' (list of APA strings) required"}
+                else:
+                    result = academic_connector.verify_references_from_apa_list(apa_list)
+                    response_data = {
+                        "status": "success" if result["all_verified"] else "partial",
+                        "summary": {
+                            "total": result["total"],
+                            "verified": result["verified"],
+                            "failed": result["failed"],
+                            "all_verified": result["all_verified"]
+                        },
+                        "details": result["details"],
+                        "issues": result["issues"]
+                    }
+
+            # 1. Jalur pembangkitan data lama DINONAKTIFKAN.
+            # Alasan: menghasilkan berkas data tanpa provenance dan melewati
+            # gerbang sumber data. Gunakan Tab 3 (impor Google Form/berkas atau
+            # data hasil pembangkitan mesin) lalu "Olah Data Sekarang".
             elif path == "/api/simulate-smartpls":
-                x1 = body.get("x1", "Self-Efficacy")
-                x2 = body.get("x2", "Work Environment")
-                m = body.get("m", "Kepuasan Kerja Pegawai")
-                y = body.get("y", "Kinerja Pegawai")
-                n = int(body.get("n", 45))
-                
-                df, metrics = simulate_smartpls_data(x1, x2, m, y, n)
-                excel_name = f"DATASET_SMARTPLS_{n}_RESPONDEN.xlsx"
-                excel_path = os.path.join(OUTPUT_DIR, excel_name)
-                df.to_excel(excel_path, index=False)
+                status_code = 410
                 response_data = {
-                    "status": "success",
-                    "metrics": metrics,
-                    "excel_file": excel_name,
-                    "excel_url": f"/api/download/{excel_name}"
+                    "status": "error",
+                    "message": (
+                        "Jalur pembangkitan data lama dinonaktifkan karena tidak "
+                        "mencatat sumber data dan melewati gerbang Bab IV/V. "
+                        "Gunakan Tab 3 untuk menyiapkan data dengan provenance."),
                 }
 
-            # 2. Google Form Script Generator
+            # 2. Google Form Script Generator (DINAMIS dari kuesioner judul terpilih)
+            # Tidak ada fallback ke 36 butir generik: bila kisi-kisi belum ada,
+            # peneliti harus menjalankan Bab III (3.3)/Lampiran terlebih dahulu.
             elif path == "/api/generate-gform-script":
-                script = generate_google_apps_script(
-                    x1=body.get("x1", "Self-Efficacy"),
-                    x2=body.get("x2", "Work Environment"),
-                    m=body.get("m", "Kepuasan Kerja Pegawai"),
-                    y=body.get("y", "Kinerja Pegawai"),
-                    instansi=body.get("instansi", "Badan Pengelola Pajak Daerah Kabupaten Ogan Komering Ilir")
-                )
-                response_data = {"status": "success", "script": script}
-
-            # 3. 1-Click Full Thesis Document (.docx) & Auto-Open in Word
-            elif path == "/api/generate-full-thesis":
-                x1 = body.get("x1", "Self-Efficacy")
-                x2 = body.get("x2", "Work Environment")
-                m = body.get("m", "Kepuasan Kerja Pegawai")
-                y = body.get("y", "Kinerja Pegawai")
-                n = int(body.get("n", 45))
-                penulis = body.get("penulis", "NURMAYANTI").replace(" ", "_")
-                
-                df, metrics = simulate_smartpls_data(x1, x2, m, y, n)
-                out_name = f"TESIS_LENGKAP_{penulis}.docx"
-                out_file = os.path.join(OUTPUT_DIR, out_name)
-                
-                # Build complete 5-chapter document
-                build_full_thesis_docx(body, metrics, out_file)
-                
-                # Open directly in Microsoft Word via Native COM
-                opened = False
                 try:
-                    engine_word_native.open_docx_file_in_word(out_file)
-                    opened = True
-                except Exception:
-                    try:
-                        os.startfile(out_file)
-                        opened = True
-                    except Exception:
-                        opened = False
-                
+                    cfg = engine_hierarchical_pipeline.resolve_thesis_config(body)
+                    onto = (engine_hierarchical_pipeline._load_cached_ontology(cfg)
+                            or engine_hierarchical_pipeline.get_or_create_thesis_ontology(cfg))
+                    items = engine_hierarchical_pipeline._lampiran_items(onto, cfg)
+                    if not items:
+                        raise RuntimeError(
+                            "Kuesioner belum tersedia. Jalankan Bab III (3.3) "
+                            "atau Lampiran sehingga butir nyata judul ini terbentuk.")
+                    script = generate_google_apps_script_from_items(
+                        items,
+                        judul=cfg.get("judul", ""),
+                        instansi=cfg.get("instansi", ""),
+                        tahun=cfg.get("tahun", "2026"))
+                    response_data = {
+                        "status": "success",
+                        "script": script,
+                        "total_butir": len(items),
+                        "judul": cfg.get("judul", ""),
+                        "pesan": (
+                            "Setelah Run, buka Spreadsheet respons yang tercatat "
+                            "di Execution log, bagikan sebagai Pelihat untuk siapa "
+                            "saja yang memiliki link, lalu tempel link-nya di Langkah 2."),
+                    }
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {
+                        "status": "error",
+                        "message": f"Skrip Google Form tidak dapat dibuat: {ex}",
+                    }
+
+            # 3. Jalur dokumen utuh 1-klik DINONAKTIFKAN.
+            # Alasan: jalur ini membangkitkan data tanpa provenance dan melewati
+            # gerbang Bab IV/V. Gunakan generator hierarkis per sub-bab.
+            elif path == "/api/generate-full-thesis":
+                status_code = 410
                 response_data = {
-                    "status": "success", 
-                    "filename": out_name, 
-                    "opened": opened, 
-                    "path": out_file,
-                    "docx_base64": get_file_base64(out_file),
-                    "download_url": f"/api/download/{out_name}"
+                    "status": "error",
+                    "message": (
+                        "Jalur dokumen utuh 1-klik dinonaktifkan karena membangkitkan "
+                        "data tanpa mencatat sumber dan melewati gerbang Bab IV/V. "
+                        "Gunakan Tab 3 untuk menyiapkan data, 'Olah Data Sekarang', "
+                        "lalu generate sub-bab Bab IV/V."),
                 }
 
             # 3.5 Generate Dedicated Standalone Front Matter (.docx)
@@ -453,6 +593,7 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                     engine_hierarchical_pipeline._build_sub_1_5(doc)
                     engine_hierarchical_pipeline._build_sub_1_6(doc)
                 engine_hierarchical_pipeline.append_cited_bibliography_page(doc, body, "bab_1")
+                rapikan_tabel_dokumen(doc)
                 saved_path = safe_save_doc(doc, out_file)
                 actual_name = os.path.basename(saved_path)
                 opened = False
@@ -484,6 +625,7 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 doc = Document()
                 setup_page(doc)
                 build_bab_2(doc)
+                rapikan_tabel_dokumen(doc)
                 saved_path = safe_save_doc(doc, out_file)
                 actual_name = os.path.basename(saved_path)
                 opened = False
@@ -515,6 +657,7 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 doc = Document()
                 setup_page(doc)
                 build_bab_3(doc)
+                rapikan_tabel_dokumen(doc)
                 saved_path = safe_save_doc(doc, out_file)
                 actual_name = os.path.basename(saved_path)
                 opened = False
@@ -546,6 +689,7 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 doc = Document()
                 setup_page(doc)
                 build_bab_4(doc)
+                rapikan_tabel_dokumen(doc)
                 saved_path = safe_save_doc(doc, out_file)
                 actual_name = os.path.basename(saved_path)
                 opened = False
@@ -578,6 +722,7 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 setup_page(doc)
                 build_bab_5(doc)
                 build_daftar_pustaka(doc)
+                rapikan_tabel_dokumen(doc)
                 saved_path = safe_save_doc(doc, out_file)
                 actual_name = os.path.basename(saved_path)
                 opened = False
@@ -634,39 +779,253 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 sub_id = body.get("sub_id", "sub_1_1")
                 mode = body.get("mode", "download") # "native", "download"
                 config = body.get("config", {})
-                
-                # Naskah murni sub-bab (tanpa halaman daftar pustaka di tengah bab)
-                fn, fp = engine_hierarchical_pipeline.build_subchapter_doc(sub_id, config, include_dapus=False)
-                
-                # Dokumen khusus Daftar Pustaka kumulatif (selalu di halaman paling akhir)
-                dapus_fn, dapus_fp = engine_hierarchical_pipeline.build_standalone_dapus_doc(config)
-                
-                native_written = False
-                if mode == "native":
-                    try:
-                        engine_hierarchical_pipeline.write_subchapter_native(sub_id, config)
-                        native_written = True
-                    except Exception as ex:
-                        print(f"Error native write {sub_id}: {ex}")
 
-                response_data = {
-                    "status": "success",
-                    "sub_id": sub_id,
-                    "filename": fn,
-                    "download_url": f"/api/download/{fn}",
-                    "docx_base64": get_file_base64(fp),
-                    "dapus_filename": dapus_fn,
-                    "dapus_base64": get_file_base64(dapus_fp),
-                    "native_written": native_written,
-                    "meta": engine_hierarchical_pipeline.SUBCHAPTER_CATALOG.get(sub_id, {})
-                }
+                # GERBANG ONTOLOGI: Bab III/IV & Lampiran wajib punya indikator
+                # untuk SEMUA variabel. Tanpa ini, X2 kosong tetap ditulis.
+                gate_error = None
+                if sub_id.startswith(("sub_3_", "sub_4_")) or sub_id == "sub_lampiran":
+                    _ok, _problems, _summary, _judul = ontology_gate_status(
+                        config.get("judul") or config.get("title") or "")
+                    if not _ok:
+                        gate_error = {
+                            "status": "error",
+                            "sub_id": sub_id,
+                            "message": ("STOP: ontologi belum lengkap -> " +
+                                        "; ".join(_problems) +
+                                        ". Jalankan 'Telusuri Dimensi & Indikator' "
+                                        "atau unggah sumber untuk variabel tersebut."),
+                            "problems": _problems,
+                            "summary": _summary,
+                        }
+
+                if gate_error:
+                    response_data = gate_error
+                else:
+                    # Naskah sub-bab MURNI (tanpa daftar pustaka) -> dipakai untuk sisipan
+                    # ke Word; daftar pustaka dikirim terpisah agar tidak terjadi dapus ganda.
+                    fn, fp = engine_hierarchical_pipeline.build_subchapter_doc(sub_id, config, include_dapus=False)
+
+                    # Dokumen khusus Daftar Pustaka kumulatif (selalu di halaman paling akhir)
+                    dapus_fn, dapus_fp = engine_hierarchical_pipeline.build_standalone_dapus_doc(config)
+
+                    # Permintaan khusus sub_dapus: dokumen utamanya adalah daftar
+                    # pustaka kumulatif (tanpa ini berkas utamanya kosong).
+                    if sub_id == "sub_dapus" and dapus_fp and os.path.exists(dapus_fp):
+                        fn, fp = dapus_fn, dapus_fp
+
+                    native_written = False
+                    if mode == "native":
+                        try:
+                            # Pakai file yang SAMA (jangan bangun ulang) supaya isi yang
+                            # disisipkan identik dengan yang diunduh dan hemat waktu.
+                            engine_hierarchical_pipeline.write_subchapter_native(sub_id, config, path=fp)
+                            native_written = True
+                        except Exception as ex:
+                            print(f"Error native write {sub_id}: {ex}")
+
+                    response_data = {
+                        "status": "success",
+                        "sub_id": sub_id,
+                        "filename": fn,
+                        "download_url": f"/api/download/{fn}",
+                        "docx_base64": get_file_base64(fp),
+                        "dapus_filename": dapus_fn,
+                        "dapus_base64": get_file_base64(dapus_fp),
+                        "native_written": native_written,
+                        "meta": engine_hierarchical_pipeline.SUBCHAPTER_CATALOG.get(sub_id, {})
+                    }
 
             # 3.13 Chained Pipeline Execution (Run Entire Chapter Sequentially)
             elif path == "/api/pipeline/run-chain":
                 chapter_num = int(body.get("chapter", 1))
                 config = body.get("config", {})
                 mode = body.get("mode", "native")
-                response_data = engine_hierarchical_pipeline.run_chained_pipeline(chapter_num, config, mode)
+                _ok, _problems, _summary, _judul = (True, [], {}, "")
+                if chapter_num in (3, 4, 5):
+                    _ok, _problems, _summary, _judul = ontology_gate_status(
+                        config.get("judul") or config.get("title") or "")
+                if not _ok:
+                    response_data = {
+                        "status": "error",
+                        "message": ("STOP: ontologi belum lengkap -> " +
+                                    "; ".join(_problems) +
+                                    ". Lengkapi dimensi/indikator sebelum menjalankan "
+                                    f"rantai Bab {chapter_num}."),
+                        "problems": _problems,
+                    }
+                else:
+                    response_data = engine_hierarchical_pipeline.run_chained_pipeline(chapter_num, config, mode)
+
+            # 3.14 Wizard SmartPLS - langkah 1: hasilkan / unggah data jawaban responden
+            elif path == "/api/pipeline/generate-respondents":
+                try:
+                    config = body.get("config", {}) or {}
+                    aug = body.get("upload") or {}
+                    sheet_url = str(aug.get("sheet_url") or body.get("sheet_url") or "").strip()
+                    mode = (body.get("mode") or "generated").strip().lower()
+                    form_mode = mode in ("google_form", "gform", "form", "sheet", "sheets")
+                    if mode in ("gemini", "generate", "synthetic"):
+                        mode = "generated"
+                    if form_mode:
+                        mode = "upload"
+                    if mode not in ("generated", "upload"):
+                        raise RuntimeError(f"Mode data '{mode}' tidak dikenal.")
+
+                    default_src = ("google_form" if (sheet_url or form_mode)
+                                   else ("upload" if mode == "upload" else "generated"))
+                    src = normalize_data_source(body.get("data_source") or default_src)
+                    eng = normalize_analysis_engine(
+                        body.get("analysis_engine") or config.get("analysis_engine"))
+                    if mode == "generated" and src != "generated":
+                        raise RuntimeError(
+                            "Mode pembangkitan hanya untuk data_source='generated'.")
+                    if mode == "generated" and sheet_url:
+                        raise RuntimeError(
+                            "Link Google Sheets hanya untuk mode impor, bukan pembangkitan.")
+                    if sheet_url and src == "google_form" and not body.get("konfirmasi_google_form"):
+                        raise RuntimeError(
+                            "Konfirmasi diperlukan: nyatakan bahwa Spreadsheet berisi "
+                            "respons Google Form responden nyata, bukan data hasil "
+                            "pembangkitan mesin.")
+                    if mode == "upload" and src not in ("upload", "google_form"):
+                        raise RuntimeError(
+                            "Mode unggah hanya untuk data_source='upload' atau 'google_form'.")
+                    if mode == "upload":
+                        if not sheet_url and not (aug.get("csv_text") or aug.get("xlsx_b64")
+                                                  or aug.get("rows")):
+                            raise RuntimeError(
+                                "Pilih berkas .xlsx/.csv atau tempel link Google Sheets respons.")
+                        if sheet_url and (aug.get("csv_text") or aug.get("xlsx_b64")
+                                          or aug.get("rows")):
+                            raise RuntimeError(
+                                "Pilih salah satu sumber: link Google Sheets atau berkas, "
+                                "bukan keduanya.")
+
+                    cfg = engine_hierarchical_pipeline.resolve_thesis_config(config)
+                    cfg["data_source"] = src
+                    cfg["analysis_engine"] = eng
+                    onto = (engine_hierarchical_pipeline._load_cached_ontology(cfg)
+                            or engine_hierarchical_pipeline.get_or_create_thesis_ontology(cfg))
+                    items = engine_hierarchical_pipeline._lampiran_items(onto, cfg)
+                    if not items:
+                        raise RuntimeError("Kuesioner belum tersedia. Jalankan Bab III (3.3) atau Lampiran dulu.")
+                    import pls_engine
+                    if mode == "upload":
+                        csv_text = aug.get("csv_text")
+                        origin = str(aug.get("filename") or "").strip()
+                        awal = []
+                        if sheet_url:
+                            csv_text, _csv_url = fetch_google_sheet_csv(sheet_url)
+                            origin = sheet_url
+                            awal.append("Respons dibaca langsung dari link Google Sheets.")
+                        # Berkas Excel (.xlsx) -> teks CSV, lalu alur unggahan yang sama.
+                        if aug.get("xlsx_b64"):
+                            csv_text = pls_engine.xlsx_b64_to_csv_text(aug.get("xlsx_b64"))
+                        X, warn, demog, demog_rows = pls_engine.ingest_upload_detail(
+                            cfg, items, csv_text=csv_text, rows=aug.get("rows"))
+                        if awal:
+                            warn = awal + list(warn)
+                        cols, _blk = pls_engine.build_blocks_from_items(items)
+                        data_file = pls_engine.export_dataset(
+                            cfg, cols, X, demog=demog, seed=1,
+                            demog_rows=demog_rows, source=src)
+                        pls_engine.save_pending(
+                            cfg, X, source=src, data_file=data_file,
+                            demog=demog, analysis_engine=eng,
+                            demog_rows=demog_rows, origin=origin)
+                        fn = os.path.basename(data_file)
+                        response_data = {
+                            "status": "success", "source": src, "data_source": src,
+                            "analysis_engine": eng, "label_sumber": label_data_source(src),
+                            "n": int(X.shape[0]),
+                            "total_butir": len(cols), "data_file": fn,
+                            "download_url": f"/api/download/{fn}", "warnings": warn,
+                            "demographics": demog,
+                            "origin": origin, "origin_label": label_origin(origin),
+                        }
+                    else:
+                        res = pls_engine.generate_respondents(
+                            cfg, items, source=src, analysis_engine=eng)
+                        res.update({"status": "success", "source": src,
+                                    "data_source": src, "analysis_engine": eng,
+                                    "label_sumber": label_data_source(src),
+                                    "origin": "", "origin_label": "",
+                                    "download_url": f"/api/download/{res.get('data_file')}"})
+                        response_data = res
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": str(ex)}
+
+            # 3.14b Gerbang data Bab IV: apakah data jawaban responden sudah siap?
+            elif path == "/api/pipeline/data-status":
+                try:
+                    config = body.get("config", {}) or {}
+                    cfg = engine_hierarchical_pipeline.resolve_thesis_config(config)
+                    import pls_engine
+                    st = pls_engine.data_status(cfg)
+                    st["status"] = "success"
+                    response_data = st
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": str(ex)}
+
+            # 3.14c Penomoran halaman otomatis pada dokumen Word AKTIF:
+            #       bagian depan (Bagian Awal) = angka romawi kecil (i, ii, ...),
+            #       naskah (BAB I dst.) = angka Arab mulai 1, plus pembatas bab otomatis.
+            #       Dipakai jalur Office.js (task pane) yang tidak punya API format halaman.
+            elif path == "/api/format-halaman":
+                try:
+                    res = engine_word_native.ensure_page_numbering()
+                    res["status"] = "success"
+                    response_data = res
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": str(ex)}
+
+            # 3.15 Wizard - langkah 2: "Olah Data Sekarang"
+            elif path == "/api/pipeline/olah-data":
+                try:
+                    config = body.get("config", {}) or {}
+                    bootstrap = int(body.get("bootstrap", 5000) or 5000)
+                    cfg = engine_hierarchical_pipeline.resolve_thesis_config(config)
+                    onto = (engine_hierarchical_pipeline._load_cached_ontology(cfg)
+                            or engine_hierarchical_pipeline.get_or_create_thesis_ontology(cfg))
+                    items = engine_hierarchical_pipeline._lampiran_items(onto, cfg)
+                    if not items:
+                        raise RuntimeError("Kuesioner belum tersedia. Jalankan Bab III (3.3) atau Lampiran dulu.")
+                    import pls_engine
+                    entry = pls_engine.analyze_pending(
+                        cfg, items, bootstrap=bootstrap,
+                        source=cfg.get("data_source"),
+                        analysis_engine=cfg.get("analysis_engine"))
+                    df = entry.get("data_file")
+                    eng = normalize_analysis_engine(
+                        entry.get("analysis_engine") or cfg.get("analysis_engine"))
+                    gname = ""
+                    if eng == "smartpls":
+                        guide = pls_engine.smartpls_guide(cfg, items, df)
+                        gname = f"PANDUAN_SMARTPLS_{pls_engine._safe_tag(cfg)}.txt"
+                        with open(os.path.join(OUTPUT_DIR, gname), "w", encoding="utf-8") as gf:
+                            gf.write(guide)
+                    response_data = {
+                        "status": "success",
+                        "source": entry.get("source"),
+                        "data_source": entry.get("source"),
+                        "analysis_engine": eng,
+                        "label_sumber": label_data_source(entry.get("source")),
+                        "origin": entry.get("origin") or "",
+                        "origin_label": label_origin(entry.get("origin")),
+                        "n": entry.get("n"),
+                        "total_butir": len(entry.get("columns") or []),
+                        "data_file": df,
+                        "download_url": f"/api/download/{df}",
+                        "guide_file": gname,
+                        "guide_download_url": f"/api/download/{gname}" if gname else "",
+                        "summary": pls_engine.metrics_summary(entry.get("metrics") or {}),
+                    }
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": str(ex)}
 
             elif path == "/api/write-native-word":
                 action = body.get("action", "bab_1")
@@ -866,12 +1225,26 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 {"type": "bullet", "text": f"H7: {m} memediasi secara positif dan signifikan pengaruh {x2} terhadap {y} pada {instansi}."}
             ]
         elif action == "bab_3":
+            import math as _math
+            try:
+                _pop = int(float(config.get("populasi") or config.get("n") or 45))
+            except Exception:
+                _pop = 45
+            if _pop <= 0:
+                _pop = 45
+            if _pop > 100:
+                _n_exact = _pop / (1 + _pop * 0.0025)
+                _n = int(_math.ceil(_n_exact))
+                _sampel_txt = (f"Karena jumlah populasi lebih dari 100 orang, ukuran sampel ditentukan dengan Rumus Slovin pada taraf kelonggaran ketidaktelitian 5%, yaitu n = N / (1 + N(e)²) = {_pop} / (1 + {_pop}(0,05)²) = {_n_exact:.2f} ≈ {_n} orang responden.")
+            else:
+                _n = _pop
+                _sampel_txt = (f"Mengingat jumlah populasi terjangkau (N ≤ 100), teknik sampling yang digunakan adalah teknik sensus (sampling jenuh), di mana seluruh populasi {_pop} orang dijadikan sebagai responden penelitian.")
             paragraphs = [
                 {"type": "heading1", "text": "BAB III\nMETODE PENELITIAN"},
                 {"type": "heading2", "text": "3.1 Desain Penelitian"},
                 {"type": "body", "text": "Penelitian ini menggunakan pendekatan kuantitatif asosiatif kausal untuk menguji hubungan kausalitas antar-variabel dan menguji hipotesis yang diajukan."},
                 {"type": "heading2", "text": "3.2 Populasi dan Sampel"},
-                {"type": "body", "text": f"Populasi adalah seluruh pegawai ASN pada {instansi} yang berjumlah 45 orang. Mengingat jumlah populasi terjangkau (N <= 100), teknik sampling yang digunakan adalah teknik sensus (sampling jenuh), di mana seluruh populasi 45 orang dijadikan responden penelitian."},
+                {"type": "body", "text": f"Populasi adalah seluruh pegawai ASN pada {instansi} yang berjumlah {_pop} orang. {_sampel_txt} Dengan demikian, ukuran sampel yang dianalisis dalam penelitian ini berjumlah {_n} responden."},
                 {"type": "heading2", "text": "3.3 Instrumen dan Skala Pengukuran"},
                 {"type": "body", "text": "Data primer dikumpulkan menggunakan kuesioner berskala Likert 1-5 (1 = Sangat Tidak Setuju hingga 5 = Sangat Setuju) yang mengoperasionalkan 16 indikator dari 4 konstruk penelitian."},
                 {"type": "heading2", "text": "3.4 Teknik Analisis Data"},
@@ -941,7 +1314,7 @@ def run_dual_server():
     if CLOUD:
         # Mode cloud (Render/Fly): hanya HTTP; TLS ditangani proxy platform.
         print("=================================================================")
-        print(f"AutoTesis AI Cloud Server Aktif! PORT={HTTP_PORT}")
+        print(f"Independent Researcher Cloud Server Aktif! PORT={HTTP_PORT}")
         print(f"   Web UI : http://0.0.0.0:{HTTP_PORT}/taskpane.html")
         print("=================================================================")
         run_http_server()
@@ -951,7 +1324,7 @@ def run_dual_server():
     t_http.start()
     t_https.start()
     print("=================================================================")
-    print("AutoTesis AI Dual Server Aktif!")
+    print("Independent Researcher Dual Server Aktif!")
     print(f"1. HTTP Web UI  : http://localhost:{HTTP_PORT}/taskpane.html")
     print(f"2. HTTPS Add-in : https://localhost:{HTTPS_PORT}/taskpane.html")
     print("=================================================================")

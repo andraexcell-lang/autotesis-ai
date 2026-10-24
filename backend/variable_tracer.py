@@ -20,13 +20,17 @@ import datetime
 import json
 import os
 import re
+import threading
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from llm_ontology_researcher import _call_gemini_json, _call_gemini_matrix, _validate_llm_ontology, last_matrix_model
+from llm_ontology_researcher import (
+    _call_gemini_json, _call_gemini_matrix, _validate_llm_ontology, last_matrix_model,
+    _match_variable_topic, _dimensions_fit_topic,
+)
 from llm_title_parser import load_config, MODEL_CHAIN, EXTRACT_CHAIN, extract_chain, gemini_keys
 import variable_library as VL
 import doc_text_extract as DTE
@@ -37,9 +41,29 @@ TMP_DIR = os.path.join(BACKEND_DIR, "_trace_tmp")
 TRACE_TIMEOUT_PDF = 30
 TRACE_MAX_CANDIDATES = 8
 TRACE_MAX_CHARS = 4000       # potongan teks yang dikirim ke Gemini per kandidat (dari 15000 -> hemat 73%)
-TRACE_MIN_INDICATORS = 6     # 3 dimensi x 2 indikator minimum (keputusan user)
-TRACE_MIN_DIMENSIONS = 3     # TARGET: 3-6 dimensi per variabel
-TRACE_MAX_DIMENSIONS = 6     # batas atas agar instrumen tidak melebar
+TRACE_MIN_INDICATORS = 6     # TARGET: 2-3 dimensi x 2 indikator (diupayakan lewat top-up)
+TRACE_MIN_DIMENSIONS = 2     # Kebijakan generated_v1: 2-7 dimensi per variabel
+# LANTAI KERAS (bukan target): sumber primer yang SECARA EKSPLISIT hanya
+# mencantumkan 4 indikator (mis. Dessler 2020 untuk Training: Reaction,
+# Learning, Behavior, Results) tetap SAH untuk PLS-SEM (minimum 3 indikator).
+# Tanpa lantai ini sistem membuang sumber nyata hanya karena <6, lalu variabel
+# berakhir kosong. Indikator TIDAK pernah ditambah tanpa kutipan literal.
+TRACE_MIN_INDICATORS_ACCEPT = 4
+TRACE_MIN_DIMENSIONS_ACCEPT = 2
+TRACE_MAX_DIMENSIONS = 7     # batas FINAL setelah seleksi 2-7 dimensi
+TRACE_SOURCE_MAX_DIMENSIONS = 20  # sumber boleh 2-20 dimensi; dipilih 2-7
+# LAPIS 2 (fallback): bila semua kandidat gagal ambang Lapis 1, kandidat terbaik
+# diterima lalu DICUKUPKAN dari SUMBER YANG SAMA dengan jendela teks diperbesar.
+# Semua item tetap wajib kutipan LITERAL (anti-halusinasi; sesuai keputusan user).
+TRACE_TOPUP_CHARS = 16000    # jendela teks Lapis 2 (Lapis 1 hanya 4000)
+TRACE_TOPUP_TRIES = 3        # maksimum kandidat near-miss yang dicoba di Lapis 2
+# Ambang LAPIS 2: setelah dicukupkan dari sumber yang sama, minimal 2 dimensi
+# (beberapa konstruk nyata hanya punya 2 dimensi sah, mis. Lingkungan Kerja:
+# fisik & non-fisik) dan tetap >=6 indikator. Hasil akhir tetap dirapikan
+# (dedup dimensi kembar + batas indikator per dimensi) agar tidak menggelembung.
+TRACE_MIN_DIMENSIONS_L2 = 2
+TRACE_MAX_IND_PER_DIM = 4    # batas indikator per dimensi (desain: 2-4)
+TRACE_DEDUP_JACCARD = 0.6    # ambang tumpang-tindih indikator untuk gabung dimensi kembar
 # CATATAN (keputusan user, 15 Okt 2026):
 #   Satu variabel = 3-6 dimensi; tiap dimensi = 2-4 indikator.
 #   Ambang lama (>=3 dimensi & >=8 indikator) terlalu ketat: sumber NYATA
@@ -52,11 +76,21 @@ UA = "AutoTesisVariableTracer/1.0 (mailto:tesismagister@research.ac.id)"
 # DOI dinormalisasi lowercase; var_name lowercase.
 EXTRACTION_CACHE_FILE = os.path.join(BACKEND_DIR, "_extraction_cache.json")
 
+# Cache SUMBER DIMENSI per-judul (thesis_key) -> entri dimensi terverifikasi.
+# Menjamin regenerasi judul yang sama memakai sumber dimensi yang SAMA
+# (deterministik, tanpa unduh/LLM ulang) sehingga tetap berbeda antar-judul.
+DIM_SOURCE_CACHE_FILE = os.path.join(BACKEND_DIR, "_dimension_source_cache.json")
+
 # Rate limiting untuk OpenAlex (menghindari HTTP 429 Too Many Requests)
 SEARCH_MIN_INTERVAL = 1.5    # detik minimal antar request OpenAlex
 SEARCH_MAX_RETRY = 4         # jumlah percobaan ulang saat kena 429
 SEARCH_BACKOFF_BASE = 5.0    # detik; backoff eksponensial: 5, 10, 20, 40
 _last_search_ts = 0.0        # timestamp request pencarian terakhir (modul-level)
+
+# Lock modul: melindungi file cache saat beberapa variabel riset BERJALAN SERENTAK
+# (paralelisasi 4 variabel pada build_full_thesis_ontology).
+_CACHE_LOCK = threading.RLock()
+_SEARCH_LOCK = threading.Lock()
 
 # Batas waktu fase pencarian (semua sumber paralel). Profil cepat memastikan tiap
 # sumber selesai jauh di bawah ini; angka ini hanya jaring pengaman bila ada yang
@@ -76,22 +110,50 @@ SEARCH_MIN_WAIT = 8.0
 # ============================================================================
 def _load_extraction_cache():
     """Load cache ekstraksi dari file JSON."""
-    if os.path.exists(EXTRACTION_CACHE_FILE):
-        try:
-            with open(EXTRACTION_CACHE_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except (json.JSONDecodeError, OSError):
-            return {}
+    with _CACHE_LOCK:
+        if os.path.exists(EXTRACTION_CACHE_FILE):
+            try:
+                with open(EXTRACTION_CACHE_FILE, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, OSError):
+                return {}
     return {}
 
 
 def _save_extraction_cache(cache):
     """Simpan cache ekstraksi ke file JSON."""
-    try:
-        with open(EXTRACTION_CACHE_FILE, "w", encoding="utf-8") as f:
-            json.dump(cache, f, indent=2, ensure_ascii=False)
-    except OSError as e:
-        print(f"[cache] Warning: gagal simpan extraction cache: {e}")
+    with _CACHE_LOCK:
+        try:
+            tmp = EXTRACTION_CACHE_FILE + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(cache, f, indent=2, ensure_ascii=False)
+            os.replace(tmp, EXTRACTION_CACHE_FILE)
+        except OSError as e:
+            print(f"[cache] Warning: gagal simpan extraction cache: {e}")
+
+
+def _load_dim_source_cache():
+    """Muat cache sumber dimensi per-judul."""
+    with _CACHE_LOCK:
+        if os.path.exists(DIM_SOURCE_CACHE_FILE):
+            try:
+                with open(DIM_SOURCE_CACHE_FILE, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, OSError):
+                return {}
+    return {}
+
+
+def _save_dim_source_cache(cache):
+    """Simpan cache sumber dimensi per-judul."""
+    with _CACHE_LOCK:
+        try:
+            tmp = DIM_SOURCE_CACHE_FILE + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(cache, f, indent=2, ensure_ascii=False)
+            os.replace(tmp, DIM_SOURCE_CACHE_FILE)
+        except OSError as e:
+            print(f"[cache] Warning: gagal simpan dimension source cache: {e}")
 
 
 def _cache_key(doi, var_name):
@@ -135,10 +197,13 @@ def _search_openalex(query, kind="article", limit=6, fast=False):
     data = None
     global _last_search_ts
     for attempt in range(max_retry):
-        # Jaga jeda minimal antar-request (rate limiting client-side)
-        wait = SEARCH_MIN_INTERVAL - (time.time() - _last_search_ts)
-        if wait > 0:
-            time.sleep(wait)
+        # Jaga jeda minimal antar-request (rate limiting client-side).
+        # Lock dipakai supaya panggilan paralel tidak menembak OpenAlex bersamaan.
+        with _SEARCH_LOCK:
+            wait = SEARCH_MIN_INTERVAL - (time.time() - _last_search_ts)
+            if wait > 0:
+                time.sleep(wait)
+            _last_search_ts = time.time()
         try:
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
@@ -786,7 +851,7 @@ Petunjuk KERAS:
 1. Hanya gunakan informasi yang BENAR-BENAR ADA di teks sumber. DILARANG menambah dimensi/indikator dari pengetahuan umum.
 2. Setiap indikator adalah KUTIPAN LITERAL (persis kata-kata) yang ada di teks sumber, bukan parafrase.
 3. Bila teks memuat tabel/pembahasan indikator variabel tersebut, gunakan itu sebagai dasar.
-4. Hasilkan {dmin}-{dmax} dimensi; tiap dimensi 2-4 indikator (minimal 2 per dimensi).
+4. Hasilkan SELURUH dimensi yang benar-benar tertulis di sumber, maksimal {dmax}; tiap dimensi 2-4 indikator (minimal 2 per dimensi). Sistem akan memilih 2-7 dimensi paling relevan, jadi jangan memotong dimensi sumber.
 5. Bila teks TIDAK memuat dimensi/indikator variabel itu, balas JSON: {{"dimensi": [], "alasan": "..."}}
 6. HANYA balas JSON valid tanpa teks lain.
 
@@ -803,12 +868,45 @@ Petunjuk KERAS:
 """
 
 
-def _extract_dims_from_text(var_name, role, source_text, config, doi=None):
+PROMPT_TOPUP = """Anda adalah ahli metodologi penelitian kuantitatif Manajemen. Dari SATU TEKS SUMBER di bawah ini, LENGKAPI dimensi dan indikator untuk variabel "{var_name}" (peran: {role} dalam model X1, X2 -> M -> Y).
+
+Dimensi/indikator yang SUDAH ditemukan (jangan sekadar diulang; carilah TAMBAHANNYA bila teks memang memuatnya):
+{existing}
+
+Petunjuk KERAS:
+1. Gunakan HANYA informasi yang BENAR-BENAR ADA di teks sumber. DILARANG menambah dari pengetahuan umum.
+2. Setiap indikator adalah KUTIPAN LITERAL (persis kata-kata) dari teks sumber, bukan parafrase.
+3. Kembalikan set LENGKAP: gabungkan yang sudah ada dengan tambahan, hingga seluruh dimensi sumber (maksimal {dmax}) dan SETIAP dimensi 2-4 indikator (minimal 2).
+4. Bila teks memang TIDAK memuat cukup dimensi/indikator, kembalikan sebanyak yang benar-benar ada (jangan memaksa mengarang).
+5. HANYA balas JSON valid tanpa teks lain.
+
+=== TEKS SUMBER (jendela diperluas) ===
+{sumber}
+
+=== KELUARAN JSON ===
+{{
+  "dimensi": [
+    {{"nama": "Nama dimensi (bila ada di teks)", "indikator": ["kutipan literal 1", "kutipan literal 2"]}}
+  ],
+  "grand_theory": "bila tertulis di teks, jika tidak kosongkan",
+  "tokoh_ahli": "bila tertulis di teks, jika tidak kosongkan",
+  "definisi": "bila tertulis di teks, jika tidak kosongkan"
+}}
+"""
+
+
+def _extract_dims_from_text(var_name, role, source_text, config, doi=None, diag=None):
     """
     Ekstrak dimensi & indikator dari teks sumber dengan cache per (DOI, var_name).
     
     Jika DOI disediakan dan hasil sudah di-cache -> kembalikan cache (tanpa panggil LLM).
+    diag (opsional): dict yang diisi alasan keberhasilan/kegagalan secara jujur.
     """
+    if diag is not None:
+        diag.clear()
+        diag.update({"stage": "start", "doi": doi or "",
+                     "text_len": len(source_text or "")})
+
     # 1. Cek cache jika DOI tersedia
     if doi:
         cache = _load_extraction_cache()
@@ -816,20 +914,41 @@ def _extract_dims_from_text(var_name, role, source_text, config, doi=None):
         if key and key in cache:
             cached = cache[key]
             print(f"[cache] HIT: {key} -> pakai cache (hemat LLM)")
+            if diag is not None:
+                dims = cached.get("dimensi", []) or []
+                diag.update({"stage": "cache_hit",
+                             "valid_dims": len(dims),
+                             "valid_inds": sum(len(d.get("indikator", [])) for d in dims),
+                             "model": cached.get("_model", "")})
             return cached
     
     # 2. Ekstrak via LLM (matriks)
     full_text = _focus_window(source_text, var_name=var_name)
     prompt = PROMPT_EXTRACT.format(var_name=var_name, role=role, sumber=full_text,
-                                   dmin=TRACE_MIN_DIMENSIONS, dmax=TRACE_MAX_DIMENSIONS)
+                                   dmin=TRACE_MIN_DIMENSIONS,
+                                   dmax=TRACE_SOURCE_MAX_DIMENSIONS)
     chain = extract_chain()   # #4 Nemotron didahulukan (hemat kuota Gemini)
     timeout = max(int(config.get("timeout_seconds", 12)) * 3, 60)
     keys = gemini_keys(config)
     try:
         raw = _call_gemini_matrix(keys, chain, prompt, timeout)
+        if diag is not None:
+            try:
+                preview = json.dumps(raw, ensure_ascii=False)[:400]
+            except Exception:
+                preview = str(raw)[:400]
+            diag.update({"stage": "model_response",
+                         "model": last_matrix_model(),
+                         "raw_type": type(raw).__name__,
+                         "raw_preview": preview})
         cand = _validate_llm_ontology(raw, var_name=var_name)
         if cand and cand.get("dimensi"):
             cand["_model"] = last_matrix_model()   # provenance: nemotron/gemini
+            if diag is not None:
+                dims = cand.get("dimensi", []) or []
+                diag.update({"stage": "validated",
+                             "valid_dims": len(dims),
+                             "valid_inds": sum(len(d.get("indikator", [])) for d in dims)})
             # 3. Simpan ke cache jika DOI tersedia
             if doi:
                 cache = _load_extraction_cache()
@@ -839,9 +958,18 @@ def _extract_dims_from_text(var_name, role, source_text, config, doi=None):
                     _save_extraction_cache(cache)
                     print(f"[cache] SAVE: {key}")
             return cand
+        if diag is not None:
+            dims = (cand or {}).get("dimensi", []) or []
+            diag.update({"stage": "schema_rejected",
+                         "valid_dims": len(dims),
+                         "valid_inds": sum(len(d.get("indikator", [])) for d in dims)})
     except Exception as e:
         print(f"[tracer] ekstraksi matriks gagal: {type(e).__name__} {str(e)[:60]}")
+        if diag is not None:
+            diag.update({"stage": "model_error",
+                         "error": f"{type(e).__name__}: {str(e)[:300]}"})
     return None
+
 
 
 # ---------------------------------------------------------------------------
@@ -862,7 +990,7 @@ Petunjuk KERAS:
 1. Tiap sumber punya nomor (SUMBER 0, SUMBER 1, ...). Untuk SUMBER bernomor i, hasilkan HANYA dari teks SUMBER i. DILARANG mencampur atau meminjam kutipan antar sumber.
 2. Setiap indikator adalah KUTIPAN LITERAL (persis kata-kata) yang ada di teks sumber bersangkutan, bukan parafrase.
 3. Bila satu sumber TIDAK memuat dimensi/indikator variabel itu, balas "dimensi": [] untuk nomor tersebut. Jangan mengarang.
-4. Per sumber hasilkan {dmin}-{dmax} dimensi; tiap dimensi 2-4 indikator (minimal 2 per dimensi).
+4. Per sumber hasilkan SELURUH dimensi yang benar-benar tertulis (maksimal {dmax}); tiap dimensi 2-4 indikator (minimal 2 per dimensi). Sistem memilih 2-7 dimensi final, jadi jangan memotong dimensi sumber.
 5. Sertakan juga definisi, grand_theory, dan tokoh_ahli yang benar-benar tertulis di sumber bersangkutan (kosongkan bila tidak ada).
 6. HANYA balas JSON valid tanpa teks lain.
 
@@ -924,7 +1052,7 @@ def _extract_dims_batch(var_name, role, papers, config):
     prompt = PROMPT_EXTRACT_BATCH.format(
         var_name=var_name, role=role, n=len(papers),
         sumber_list="\n\n".join(blocks),
-        dmin=TRACE_MIN_DIMENSIONS, dmax=TRACE_MAX_DIMENSIONS)
+        dmin=TRACE_MIN_DIMENSIONS, dmax=TRACE_SOURCE_MAX_DIMENSIONS)
     chain = extract_chain()   # #4 Nemotron didahulukan
     timeout = max(int(config.get("timeout_seconds", 12)) * 4, 90)
     keys = gemini_keys(config)
@@ -971,9 +1099,369 @@ def _extract_dims_batch(var_name, role, papers, config):
 
 def _check_pass(clean_dims, report):
     n_ind = sum(len(d.get("indikator", [])) for d in clean_dims)
+    if not clean_dims:
+        return False
+    # Konstruk datar: satu dimensi sah bila memuat >=6 indikator literal.
+    if len(clean_dims) == 1:
+        return (n_ind >= TRACE_MIN_INDICATORS
+                and report.get("passed", 0) >= TRACE_MIN_INDICATORS)
     return (len(clean_dims) >= TRACE_MIN_DIMENSIONS
             and n_ind >= TRACE_MIN_INDICATORS
             and report.get("passed", 0) >= TRACE_MIN_INDICATORS)
+
+
+def _check_accept(clean_dims, report):
+    """Lantai keras: terima sumber eksplisit >=2 dimensi & >=4 indikator.
+
+    Konstruk datar (1 dimensi) diterima bila memuat >=4 indikator literal.
+    Dipakai HANYA setelah setiap indikator lolos verifikasi kutipan literal.
+    Target 6 indikator tetap diupayakan lebih dulu lewat LAPIS 2; fungsi ini
+    mencegah sumber nyata (mis. 4 indikator Dessler) dibuang percuma.
+    """
+    n_ind = sum(len(d.get("indikator", [])) for d in clean_dims)
+    if not clean_dims:
+        return False
+    if len(clean_dims) == 1:
+        return (n_ind >= TRACE_MIN_INDICATORS_ACCEPT
+                and report.get("passed", 0) >= TRACE_MIN_INDICATORS_ACCEPT)
+    return (len(clean_dims) >= TRACE_MIN_DIMENSIONS_ACCEPT
+            and n_ind >= TRACE_MIN_INDICATORS_ACCEPT
+            and report.get("passed", 0) >= TRACE_MIN_INDICATORS_ACCEPT)
+
+
+def validate_ontology_complete(onto, min_indicators=4):
+    """Validasi kelengkapan ontologi SEBELUM menulis Bab III-V.
+
+    Kebijakan generated_v1:
+      - setiap variabel 2-7 dimensi;
+      - setiap dimensi 2-4 indikator operasional;
+      - total minimal 4 indikator per variabel (2 dimensi x 2 indikator).
+    """
+    variables = (onto or {}).get("variables") or {}
+    problems, summary = [], {}
+    for role in ("x1", "x2", "m", "y"):
+        var = variables.get(role) or {}
+        name = var.get("nama_resmi") or var.get("input_name") or role.upper()
+        dims = var.get("dimensi") or []
+        n_ind = sum(len(d.get("indikator") or []) for d in dims)
+        summary[role] = {"name": name, "dimensions": len(dims),
+                         "indicators": n_ind}
+        if not (2 <= len(dims) <= 7):
+            problems.append(
+                f"{role.upper()} {name}: {len(dims)} dimensi (wajib 2-7)")
+        for d in dims:
+            n = len(d.get("indikator") or [])
+            if not (2 <= n <= 4):
+                problems.append(
+                    f"{role.upper()} {name} / {d.get('nama', '?')}: "
+                    f"{n} indikator (wajib 2-4)")
+        if n_ind < int(min_indicators):
+            problems.append(
+                f"{role.upper()} {name}: total {n_ind} indikator "
+                f"(minimal {int(min_indicators)})")
+    return (not problems), problems, summary
+
+
+def _extract_doi(text):
+    """Ambil DOI pertama dari teks berkas (untuk memakai cache ekstraksi).
+
+    PDF sering memotong DOI di tengah kata karena pembungkusan baris,
+    mis. '10.22441/indikat' + newline + 'or.v8i3.26506'. Gabungkan hanya
+    baris yang diikuti huruf kecil agar tidak menelan kata berikutnya.
+    """
+    probe = re.sub(r"(?<=[A-Za-z0-9])\r?\n(?=[a-z])", "", (text or "")[:40000])
+    m = re.search(r"10\.\d{4,9}/[-._;()/:A-Za-z0-9]+", probe)
+    if not m:
+        return ""
+    return m.group(0).rstrip(".,;)]}\"'")
+
+
+def _diagnose_extract_failure(diag):
+    """Ubah diagnostik internal menjadi kalimat jujur untuk pengguna/log."""
+    diag = diag or {}
+    stage = diag.get("stage")
+    if stage == "model_error":
+        return ("Model gagal dipanggil: %s" % diag.get("error", "tanpa keterangan"))
+    if stage == "schema_rejected":
+        return ("Output model ditolak skema: %s dimensi valid, %s indikator "
+                "(minimal 2 dimensi berindikator)." %
+                (diag.get("valid_dims", 0), diag.get("valid_inds", 0)))
+    if stage == "empty":
+        return "Model mengembalikan JSON tanpa dimensi/indikator."
+    if stage == "text_too_short":
+        return "Teks berkas terlalu pendek untuk diekstrak (%s karakter)." % diag.get("text_len", 0)
+    return "Model tidak mengembalikan hasil yang bisa dipakai."
+
+
+
+def _check_pass_l2(clean_dims, report):
+    """Ambang LAPIS 2 (sumber sama, jendela diperbesar): >=2 dimensi & >=6 indikator."""
+    n_ind = sum(len(d.get("indikator", [])) for d in clean_dims)
+    return (len(clean_dims) >= TRACE_MIN_DIMENSIONS_L2
+            and n_ind >= TRACE_MIN_INDICATORS
+            and report.get("passed", 0) >= TRACE_MIN_INDICATORS)
+
+
+def _finalize_dims(dims, max_dims=TRACE_SOURCE_MAX_DIMENSIONS):
+    """
+    Rapikan dimensi hasil ekstraksi agar layak jadi instrumen:
+      1. Gabungkan dimensi KEMBAR (nama sama / indikator tumpang-tindih tinggi,
+         mis. 'Physical Work Environment' vs 'Lingkungan kerja fisik').
+      2. Batasi jumlah dimensi SUMBER (<= 20) dan indikator per dimensi
+         (<= TRACE_MAX_IND_PER_DIM). Seleksi final 2-7 dilakukan saat ontologi
+         dibangun agar dimensi yang tidak dipakai dapat dicatat.
+    Tidak ada item baru yang dibuat; hanya gabung/trim item yang sudah ada.
+    """
+    def _n(s):
+        return re.sub(r"\s+", " ", str(s).strip().lower())
+
+    merged, sets = [], []
+    for d in dims or []:
+        nama = str(d.get("nama", "")).strip()
+        inds = [str(i).strip() for i in (d.get("indikator") or []) if str(i).strip()]
+        key = {_n(i) for i in inds}
+        target = None
+        for j, prev in enumerate(merged):
+            if _n(prev["nama"]) == _n(nama):
+                target = j
+                break
+            pk = sets[j]
+            if key and pk:
+                union = len(key | pk)
+                if union and (len(key & pk) / union) >= TRACE_DEDUP_JACCARD:
+                    target = j
+                    break
+        if target is None:
+            merged.append({"nama": nama, "indikator": inds})
+            sets.append(set(key))
+        else:
+            prev, pk = merged[target], sets[target]
+            for i in inds:
+                ni = _n(i)
+                if ni not in pk:
+                    prev["indikator"].append(i)
+                    pk.add(ni)
+    out = []
+    for d in merged[:max_dims]:
+        inds = d["indikator"][:TRACE_MAX_IND_PER_DIM]
+        if inds:
+            out.append({"nama": d["nama"], "indikator": inds})
+    return out
+
+
+def _dims_fit_rumpun(var_name, dims):
+    """
+    True bila minimal satu nama dimensi menyentuh rumpun variabel (anti salah
+    konstruk, mis. variabel Disiplin tetapi berdimensi Motivasi).
+    Variabel yang tak dikenal peta rumpun -> dianggap lolos (None).
+    """
+    topic = _match_variable_topic(var_name)
+    if not topic:
+        return True
+    return _dimensions_fit_topic(dims or [], topic)
+
+
+def _make_library_entry(cand, clean, var_name, dims):
+    """Bangun dict entri pustaka dari kandidat + dimensi terverifikasi."""
+    entri_apa, _italic = _build_apa(cand)
+    return {
+        "variable": var_name,
+        "synonyms": [var_name.lower()],
+        "source": {
+            "type": cand.get("_source") or "openalex",
+            "label": _short_cite(cand),
+            "apa": entri_apa,
+            "doi": cand["doi"],
+            "url": cand["pdf_url"] or cand["doi"],
+            "year": cand["year"],
+            "doc_kind": "artikel" if cand["kind"] == "article" else "buku",
+            "journal_title": cand["title"],
+        },
+        "grand_theory": dims.get("grand_theory", ""),
+        "tokoh_ahli": dims.get("tokoh_ahli", ""),
+        "definisi": dims.get("definisi", ""),
+        "dimensi": clean,
+        "verified_at": datetime.datetime.now().isoformat(timespec="seconds"),
+        "engine": "llm:" + (dims.get("_model") or "unknown"),
+    }
+
+
+def _merge_dims(base_clean, add_dims):
+    """
+    Gabungkan dimensi Lapis 1 dengan hasil Lapis 2 (SUMBER YANG SAMA).
+    Dimensi dipadankan by nama (case-insensitive); indikator didedup.
+    Hasil akhir tetap diverifikasi ulang secara literal oleh pemanggil.
+    """
+    def _n(s):
+        return re.sub(r"\s+", " ", str(s).strip().lower())
+
+    out, index = [], {}
+    for d in base_clean or []:
+        nama = str(d.get("nama", "")).strip()
+        key = _n(nama)
+        node = {"nama": nama,
+                "indikator": [str(i).strip() for i in (d.get("indikator") or []) if str(i).strip()]}
+        index[key] = node
+        out.append(node)
+    for d in add_dims or []:
+        nama = str(d.get("nama", "")).strip()
+        if not nama:
+            continue
+        key = _n(nama)
+        inds = [str(i).strip() for i in (d.get("indikator") or []) if str(i).strip()]
+        if key in index:
+            have = {_n(x) for x in index[key]["indikator"]}
+            for x in inds:
+                if _n(x) not in have:
+                    index[key]["indikator"].append(x)
+                    have.add(_n(x))
+        else:
+            node = {"nama": nama, "indikator": inds}
+            index[key] = node
+            out.append(node)
+    return out
+
+
+def _extract_topup(var_name, role, source_text, config, existing_clean):
+    """
+    LAPIS 2: minta model MELENGKAPI dimensi/indikator dari SUMBER YANG SAMA
+    dengan jendela teks diperbesar. Semua item tetap wajib kutipan LITERAL
+    (diverifikasi ulang oleh pemanggil) sehingga tidak ada karangan yang lolos.
+    """
+    existing = "\n".join(
+        f"- {d.get('nama')}: {len(d.get('indikator') or [])} indikator"
+        for d in (existing_clean or [])) or "- (belum ada)"
+    big = _focus_window(source_text, max_chars=TRACE_TOPUP_CHARS, var_name=var_name)
+    prompt = PROMPT_TOPUP.format(
+        var_name=var_name, role=role, existing=existing, sumber=big,
+        dmin=TRACE_MIN_DIMENSIONS, dmax=TRACE_SOURCE_MAX_DIMENSIONS)
+    chain = extract_chain()
+    timeout = max(int(config.get("timeout_seconds", 12)) * 4, 90)
+    keys = gemini_keys(config)
+    try:
+        raw = _call_gemini_matrix(keys, chain, prompt, timeout, max_tokens=3072)
+    except Exception as e:
+        print(f"[tracer] topup matriks gagal: {type(e).__name__} {str(e)[:60]}")
+        return None
+    cand = _validate_llm_ontology(raw, var_name=var_name)
+    if cand and cand.get("dimensi"):
+        cand["_model"] = last_matrix_model()
+        return cand
+    return None
+
+
+# ---------------------------------------------------------------------------
+# 5b. DIMENSI DARI SUMBER MILIK JUDUL (bukan telusur OpenAlex sendiri)
+# ---------------------------------------------------------------------------
+def _ref_to_cand(ref):
+    """Ubah referensi sumber milik judul (dari academic_connector) menjadi
+    kandidat bergaya tracer agar bisa diunduh & diekstrak."""
+    kind = "book" if (ref.get("type") == "buku") else "article"
+    return {
+        "doi": (ref.get("doi") or "").strip(),
+        "title": ref.get("title", ""),
+        "authors": ref.get("authors", []) or [],
+        "year": ref.get("year"),
+        "journal": ref.get("journal") or ref.get("publisher") or "",
+        "volume": ref.get("volume", ""),
+        "issue": ref.get("issue", ""),
+        "first_page": "", "last_page": "",
+        "kind": kind,
+        "pdf_url": ref.get("pdf_url", "") or "",
+        "_source": "title_pool",
+    }
+
+
+def extract_dims_from_refs(var_name, role, refs, judul="", instansi="",
+                           max_try=6, cache_key=None):
+    """Ekstrak dimensi & indikator untuk ``var_name`` dari SUMBER MILIK JUDUL.
+
+    Berbeda dari trace_variable() yang menelusur OpenAlex sendiri, fungsi ini
+    HANYA memakai daftar referensi yang sudah di-fetch untuk judul bersangkutan
+    (mis. sources_y). Dengan begitu tiap judul memakai sumber dimensi yang
+    BERBEDA (unik antar-judul), sedangkan dimensi/indikator tetap wajib
+    terverifikasi sebagai kutipan LITERAL dari teks sumber.
+
+    Mengembalikan dict:
+        {"dimensi": [...], "jurnal_rujukan": {"sitasi", "entri"},
+         "source_ref": {...}, "verified": {...}}
+    atau None bila tak ada sumber yang lolos verifikasi.
+    """
+    if not refs:
+        return None
+
+    # 0. Cache per-judul (regenerasi judul yang sama -> sumber dimensi yang sama).
+    if cache_key:
+        cache = _load_dim_source_cache()
+        hit = cache.get(cache_key)
+        if hit:
+            hit_doi = ((hit.get("source_ref") or {}).get("doi") or "").lower().strip()
+            ref_dois = {(r.get("doi") or "").lower().strip() for r in refs}
+            if hit_doi and hit_doi in ref_dois:
+                print(f"[tracer] dimensi '{var_name}' dari cache judul (tanpa unduh/LLM)")
+                return hit
+            print(f"[tracer] cache dimensi judul '{var_name}' menunjuk sumber yang "
+                  f"tak lagi ada di daftar -> riset ulang")
+
+    config = load_config()
+    api_key = (gemini_keys(config) or [""])[0]
+    if not api_key or not config.get("enabled", True):
+        return None
+
+    tried = 0
+    attempts = []
+    for ref in refs:
+        if tried >= max_try:
+            break
+        doi = (ref.get("doi") or "").strip()
+        if not doi:
+            continue
+        tried += 1
+        short = (ref.get("title") or "")[:48]
+        try:
+            cand = _ref_to_cand(ref)
+            if not cand.get("pdf_url"):
+                _resolve_pdf_unpaywall(cand)
+            if not cand.get("pdf_url"):
+                attempts.append(f"{short} (PDF OA tidak ada)")
+                continue
+            text = _prepare_candidate(cand, tried)
+            if not text:
+                attempts.append(f"{short} (teks gagal diunduh)")
+                continue
+            dims = _extract_dims_from_text(var_name, role, text, config, doi=doi)
+            if not dims or not dims.get("dimensi"):
+                attempts.append(f"{short} (tak memuat dimensi)")
+                continue
+            clean, vrep = VL.verify_indicators(dims.get("dimensi", []), text)
+            if not _check_pass(clean, vrep):
+                attempts.append(f"{short} (kutipan indikator tak cocok)")
+                continue
+            result = {
+                "dimensi": clean,
+                "definisi": dims.get("definisi", ""),
+                "grand_theory": dims.get("grand_theory", ""),
+                "tokoh_ahli": dims.get("tokoh_ahli", ""),
+                "jurnal_rujukan": {
+                    "sitasi": ref.get("apa_in_text", "") or "",
+                    "entri": ref.get("apa_full", "") or "",
+                },
+                "source_ref": ref,
+                "verified": vrep,
+                "engine": "llm:" + (dims.get("_model") or "unknown"),
+            }
+            if cache_key:
+                cache = _load_dim_source_cache()
+                cache[cache_key] = result
+                _save_dim_source_cache(cache)
+            print(f"[tracer] dimensi '{var_name}' dari sumber judul: {short}")
+            return result
+        except Exception as e:
+            attempts.append(f"{short} (error: {type(e).__name__})")
+
+    print("[tracer] dimensi dari sumber judul GAGAL untuk "
+          f"'{var_name}': " + " | ".join(attempts))
+    return None
 
 
 def trace_variable(var_name, role="X", judul="", instansi="", force=False):
@@ -1026,6 +1514,7 @@ def trace_variable(var_name, role="X", judul="", instansi="", force=False):
         ready.append((idx, cand, text))
 
     cache = _load_extraction_cache()   # snapshot; disimpan ulang tiap ada hasil baru
+    partials = []   # calon LAPIS 2: punya dimensi terverifikasi tapi belum capai ambang
 
     # #5 Proses per BLOK (TRACE_BATCH_SIZE sumber per panggilan LLM) dan
     # berhenti segera setelah satu sumber lolos verifikasi.
@@ -1067,39 +1556,99 @@ def trace_variable(var_name, role="X", judul="", instansi="", force=False):
                 report["dropped"].append(f"{cand['title'][:50]} (tidak memuat dimensi/indikator)")
                 continue
             clean, vrep = VL.verify_indicators(dims.get("dimensi", []), text)
-            if not _check_pass(clean, vrep):
-                report["dropped"].append(f"{cand['title'][:50]} (kutipan indikator tidak cocok)")
+            clean = _finalize_dims(clean)
+            clean, vrep = VL.verify_indicators(clean, text)
+            if not _dims_fit_rumpun(var_name, clean):
+                report["dropped"].append(
+                    f"{cand['title'][:50]} (salah rumpun '{_match_variable_topic(var_name)}')")
                 continue
-            # Bangun entri pustaka
-            entri_apa, italic = _build_apa(cand)
-            entry = {
-                "variable": var_name,
-                "synonyms": [var_name.lower()],
-                "source": {
-                    "type": cand.get("_source") or "openalex",
-                    "label": _short_cite(cand),
-                    "apa": entri_apa,
-                    "doi": cand["doi"],
-                    "url": cand["pdf_url"] or cand["doi"],
-                    "year": cand["year"],
-                    "doc_kind": "artikel" if cand["kind"] == "article" else "buku",
-                    "journal_title": cand["title"],
-                },
-                "grand_theory": dims.get("grand_theory", ""),
-                "tokoh_ahli": dims.get("tokoh_ahli", ""),
-                "definisi": dims.get("definisi", ""),
-                "dimensi": clean,
-                "verified_at": datetime.datetime.now().isoformat(timespec="seconds"),
-                "engine": "llm:" + (dims.get("_model") or "unknown"),
-            }
+            if not _check_pass(clean, vrep):
+                n_ind = sum(len(d.get("indikator", [])) for d in clean)
+                # Sumber eksplisit dengan 4 indikator literal tetap sah untuk
+                # PLS-SEM. Terima dengan catatan jujur, jangan buang.
+                if _check_accept(clean, vrep):
+                    entry = _make_library_entry(cand, clean, var_name, dims)
+                    try:
+                        path = VL.save_entry(entry)
+                        entry["_file"] = path
+                    except Exception as e:
+                        report["dropped"].append(f"gagal simpan (eksplisit): {e}")
+                        continue
+                    report["tier"] = "1-explicit"
+                    report["note"] = (
+                        f"Sumber eksplisit memuat {len(clean)} dimensi/{n_ind} "
+                        f"indikator (target {TRACE_MIN_INDICATORS}); diterima karena "
+                        "semua indikator lolos verifikasi kutipan literal.")
+                    return {"status": "ok", "entry": entry,
+                            "report": {**report, "verified": vrep}}
+                report["dropped"].append(
+                    f"{cand['title'][:50]} (di bawah ambang: {len(clean)}dim/{n_ind}ind)")
+                if clean:
+                    partials.append({"cand": cand, "text": text,
+                                     "clean": clean, "vrep": vrep, "dims": dims})
+                continue
+            entry = _make_library_entry(cand, clean, var_name, dims)
             try:
                 path = VL.save_entry(entry)
                 entry["_file"] = path
             except Exception as e:
                 report["dropped"].append(f"gagal simpan: {e}")
                 continue
+            report["tier"] = "1"
             return {"status": "ok", "entry": entry,
                     "report": {**report, "verified": vrep}}
+
+    # ------------------------------------------------------------------
+    # LAPIS 2 (fallback): tak ada kandidat yang capai ambang Lapis 1.
+    # Terima kandidat TERBAIK lalu CUKUPKAN kekurangannya DARI SUMBER YANG
+    # SAMA dengan jendela teks diperbesar. Semua item wajib kutipan LITERAL
+    # (diverifikasi ulang) -> tetap anti-halusinasi.
+    # ------------------------------------------------------------------
+    if partials:
+        def _score(p):
+            n_i = sum(len(d.get("indikator", [])) for d in p["clean"])
+            return (len(p["clean"]) / float(TRACE_MIN_DIMENSIONS)
+                    + n_i / float(TRACE_MIN_INDICATORS))
+        partials.sort(key=_score, reverse=True)
+        for p in partials[:TRACE_TOPUP_TRIES]:
+            cand, text, base = p["cand"], p["text"], p["clean"]
+            n_dim = len(base)
+            n_ind = sum(len(d.get("indikator", [])) for d in base)
+            print(f"[tracer] LAPIS 2 '{var_name}': cukupkan dari "
+                  f"'{cand.get('title', '')[:48]}' (mulai {n_dim}dim/{n_ind}ind)")
+            up = _extract_topup(var_name, role, text, config, base)
+            if not up or not up.get("dimensi"):
+                continue
+            merged = _merge_dims(base, up.get("dimensi", []))
+            merged, _ = VL.verify_indicators(merged, text)
+            merged = _finalize_dims(merged)
+            clean2, vrep2 = VL.verify_indicators(merged, text)
+            n2 = sum(len(d.get("indikator", [])) for d in clean2)
+            print(f"[tracer] LAPIS 2 '{var_name}' hasil: "
+                  f"{len(clean2)}dim/{n2}ind (passed={vrep2.get('passed')})")
+            if not _dims_fit_rumpun(var_name, clean2):
+                print(f"[tracer] LAPIS 2 '{var_name}': salah rumpun "
+                      f"'{_match_variable_topic(var_name)}' -> dilewati")
+                continue
+            if not _check_pass_l2(clean2, vrep2):
+                continue
+            meta = {
+                "grand_theory": up.get("grand_theory") or p["dims"].get("grand_theory", ""),
+                "tokoh_ahli": up.get("tokoh_ahli") or p["dims"].get("tokoh_ahli", ""),
+                "definisi": up.get("definisi") or p["dims"].get("definisi", ""),
+                "_model": up.get("_model") or p["dims"].get("_model"),
+            }
+            entry = _make_library_entry(cand, clean2, var_name, meta)
+            try:
+                path = VL.save_entry(entry)
+                entry["_file"] = path
+            except Exception as e:
+                report["dropped"].append(f"gagal simpan (lapis 2): {e}")
+                continue
+            report["tier"] = "2"
+            report["topped_up_from"] = (cand.get("title") or "")[:70]
+            return {"status": "ok", "entry": entry,
+                    "report": {**report, "verified": vrep2}}
 
     return {"status": "needs_review", "entry": None,
             "report": {**report,
@@ -1109,9 +1658,15 @@ def trace_variable(var_name, role="X", judul="", instansi="", force=False):
 
 def trace_from_upload(file_path, var_name, role="X", judul="", instansi="", display_name=None):
     """
-    Jalur unggahan pengguna: ekstrak teks dari berkas -> Gemini -> verifikasi -> simpan.
+    Jalur unggahan pengguna: ekstrak teks dari berkas -> LLM -> verifikasi -> simpan.
     Sumber tahun bebas (keputusan disepakati: unggahan bebas tahun).
-    display_name: nama berkas asli pengguna (label sumber tanpa slug).
+
+    Perbaikan otonomi:
+      - DOI di berkas dipakai untuk cache (tidak lagi memaksa doi=None).
+      - Bila indikator < target 6, dicoba top-up dari BERKAS YANG SAMA (LAPIS 2).
+      - Sumber eksplisit >=4 indikator tetap diterima (lantai keras PLS-SEM).
+      - Kegagalan dilaporkan dengan alasan sebenarnya (stage/counts), bukan
+        pesan generik "model tidak menemukan".
     """
     config = load_config()
     # Pakai daftar key; "api_key" tunggal tetap didukung untuk config lama.
@@ -1121,19 +1676,57 @@ def trace_from_upload(file_path, var_name, role="X", judul="", instansi="", disp
 
     text, kind = DTE.extract_any_text(file_path)
     if not text or len(text.strip()) < 300:
+        diag = {"stage": "text_too_short", "text_len": len((text or "").strip())}
         return {"status": "needs_review", "entry": None,
-                "report": {"note": "Berkas gagal dibaca atau terlalu pendek."}}
+                "report": {"note": _diagnose_extract_failure(diag), "diag": diag}}
 
-    # Unggahan pengguna tidak punya DOI -> tanpa cache, langsung ekstrak.
-    dims = _extract_dims_from_text(var_name, role, text, config, doi=None)
+    # DOI (bila ada di berkas) -> pakai cache; unggahan tanpa DOI tetap jalan.
+    doi = _extract_doi(text)
+    diag = {}
+    dims = _extract_dims_from_text(var_name, role, text, config, doi=doi or None, diag=diag)
     if not dims:
+        note = _diagnose_extract_failure(diag)
         return {"status": "needs_review", "entry": None,
-                "report": {"note": "Model tidak menemukan dimensi/indikator di berkas."}}
+                "report": {"note": note, "diag": diag}}
 
     clean, vrep = VL.verify_indicators(dims.get("dimensi", []), text)
-    if not _check_pass(clean, vrep):
+    clean = _finalize_dims(clean)
+
+    # LAPIS 2: cukupkan dari sumber yang sama bila masih di bawah target.
+    if not _check_pass(clean, vrep) and clean:
+        print(f"[upload] '{var_name}': {len(clean)}dim/"
+              f"{sum(len(d.get('indikator', [])) for d in clean)}ind "
+              "-> coba top-up dari berkas yang sama")
+        try:
+            up = _extract_topup(var_name, role, text, config, clean)
+        except Exception as e:
+            up = None
+            diag["topup_error"] = f"{type(e).__name__}: {str(e)[:200]}"
+        if up and up.get("dimensi"):
+            merged = _merge_dims(clean, up.get("dimensi", []))
+            merged, _ = VL.verify_indicators(merged, text)
+            merged = _finalize_dims(merged)
+            clean, vrep = VL.verify_indicators(merged, text)
+            for k in ("grand_theory", "tokoh_ahli", "definisi"):
+                if up.get(k) and not dims.get(k):
+                    dims[k] = up[k]
+
+    n_dim = len(clean)
+    n_ind = sum(len(d.get("indikator", [])) for d in clean)
+    passed = int(vrep.get("passed", 0) or 0)
+
+    if not _check_accept(clean, vrep):
+        note = (
+            f"Terkumpul {n_dim} dimensi/{n_ind} indikator setelah verifikasi; "
+            f"minimal {TRACE_MIN_DIMENSIONS_ACCEPT} dimensi/"
+            f"{TRACE_MIN_INDICATORS_ACCEPT} indikator. "
+            f"Kutipan lolos verifikasi: {passed}. "
+            "Tidak ada indikator yang ditambahkan tanpa kutipan literal."
+        )
+        if diag.get("topup_error"):
+            note += f" Top-up gagal: {diag['topup_error']}"
         return {"status": "needs_review", "entry": None,
-                "report": {"note": "Kutipan indikator tidak cocok dengan isi berkas.", "verified": vrep}}
+                "report": {"note": note, "verified": vrep, "diag": diag}}
 
     label = display_name or os.path.basename(file_path)
     entry = {
@@ -1143,8 +1736,8 @@ def trace_from_upload(file_path, var_name, role="X", judul="", instansi="", disp
             "type": "upload",
             "label": label,
             "apa": label,
-            "doi": "",
-            "url": "",
+            "doi": doi,
+            "url": ("https://doi.org/" + doi) if doi else "",
             "year": datetime.datetime.now().year,
             "doc_kind": "unggahan pengguna",
             "journal_title": label,
@@ -1160,9 +1753,18 @@ def trace_from_upload(file_path, var_name, role="X", judul="", instansi="", disp
         path = VL.save_entry(entry)
         entry["_file"] = path
     except Exception as e:
-        return {"status": "needs_review", "entry": None, "report": {"note": f"gagal simpan: {e}"}}
+        return {"status": "needs_review", "entry": None,
+                "report": {"note": f"gagal simpan: {e}", "diag": diag}}
+    note = None
+    if n_ind < TRACE_MIN_INDICATORS:
+        note = (f"Sumber eksplisit memuat {n_dim} dimensi/{n_ind} indikator "
+                f"(target {TRACE_MIN_INDICATORS}). Diterima karena semua indikator "
+                "lolos verifikasi kutipan literal.")
     return {"status": "ok", "entry": entry,
-            "report": {"verified": vrep, "source": label}}
+            "report": {"verified": vrep, "source": label,
+                       "indicator_count": n_ind, "target": TRACE_MIN_INDICATORS,
+                       "note": note, "diag": diag}}
+
 
 
 # ---------------------------------------------------------------------------

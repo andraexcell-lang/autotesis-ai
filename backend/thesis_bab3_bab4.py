@@ -2,7 +2,7 @@
 """Modul Pembangun BAB III dan BAB IV Tesis Andre Juliansya"""
 
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from build_full_thesis_docx import p, h1, h2, h3, add_table_data
+from build_full_thesis_docx import p, h1, h2, h3, add_table_data, rapikan_tabel_dokumen
 
 def build_bab_3(doc):
     h1(doc, "BAB III\nMETODE PENELITIAN")
@@ -116,6 +116,7 @@ def build_bab_3(doc):
         ["7.", "H7: Disiplin Kerja berpengaruh signifikan thd Kinerja melalui Employee Engagement", "p <= 0,05 atau t >= 1,96", "p >= 0,05 atau t <= 1,96"]
     ]
     add_table_data(doc, "Tabel 3.7\nKriteria Keputusan Hasil Uji t-statistic", t37_headers, t37_data, "Sumber : Diolah Penulis, (2026)")
+    rapikan_tabel_dokumen(doc)
     doc.add_page_break()
 
 def build_bab_4(doc):
@@ -431,6 +432,7 @@ def build_bab_4(doc):
     p(doc, "Pengujian hipotesis ketujuh (H7) membuktikan bahwa Disiplin Kerja berpengaruh positif dan signifikan terhadap Kinerja Pegawai melalui Employee Engagement sebagai mediator (koefisien tidak langsung 0,258, T-statistic 4,379, p-value 0,000, Mediasi Parsial).", indent=0.5, space_after=4)
     p(doc, "Temuan ini membuktikan bahwa penegakan aturan jam kerja tidak boleh melahirkan \"kepatuhan semu\" (Nuraini, 2023), melainkan harus ditransformasikan menjadi dedikasi dan keterlibatan emosional agar bermuara pada kinerja pelayanan publik yang prima.", indent=0.5, space_after=4)
     p(doc, "Hasil ini menolak anomali temuan Alamsyah et al. (2025) dan Ridwan et al. (2025), serta mengukuhkan temuan Purwaningtyas et al. (2026) dan Iskandar et al. (2026).", indent=0.5, space_after=8)
+    rapikan_tabel_dokumen(doc)
     doc.add_page_break()
 
 print("Bab 3 & Bab 4 siap.")

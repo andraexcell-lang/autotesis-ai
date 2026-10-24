@@ -23,6 +23,7 @@ import json
 import os
 import re
 import ssl
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -40,6 +41,11 @@ GEMINI_MAX_RETRY = 1        # satu percobaan ulang INTERNAL saat 429/503
 GEMINI_BACKOFF = 6.0        # detik; jeda tunggal sebelum percobaan ulang
 GEMINI_KEY_ROTATE = 3       # batas berpindah API key akibat key DITOLAK (401/403)
 _last_gemini_ts = 0.0       # timestamp panggilan Gemini terakhir (modul-level)
+
+# (#5) Aman untuk panggilan PARALEL: slot waktu dipesan lewat lock, lalu thread
+# menunggu di luar lock. Cursor key berputar agar thread tidak berebut key #1.
+_gemini_slot_lock = threading.Lock()
+_gemini_key_cursor = 0
 
 # --- Fallback: NVIDIA NIM (endpoint kompatibel OpenAI) -------------------
 # Dipakai BILA Gemini gagal (mis. kuota free-tier habis). Model NVIDIA dikenali
@@ -133,11 +139,21 @@ TOPIC_KEYWORDS = {
                     "frustrasi", "waktu"],
     "pelatihan": ["materi", "metode", "instruktur", "pelatih", "fasilitas", "sarana",
                   "pelatihan", "diklat", "simulasi", "praktik"],
+    "self_efficacy": ["self-efficacy", "self efficacy", "efikasi", "keyakinan diri",
+                      "kepercayaan diri", "kemampuan diri", "kompetensi diri",
+                      "kompeten", "keyakinan", "kemampuan", "magnitude", "strength",
+                      "generality", "level"],
+    "work_environment": ["lingkungan kerja", "work environment", "kondisi fisik",
+                         "kondisi non-fisik", "non-fisik", "non fisik", "fisik",
+                         "sosial", "physical work", "non-physical work", "fasilitas",
+                         "facilities", "pencahayaan", "lighting", "hubungan kerja"],
 }
 
 # Urut dari paling spesifik ke paling umum (dicek berurutan, yang pertama menang)
 _VAR_TOPIC_MAP = [
     ("kepuasan_kerja", ["kepuasan"]),
+    ("self_efficacy", ["self-efficacy", "self efficacy", "efikasi diri", "efikasi"]),
+    ("work_environment", ["work environment", "lingkungan kerja"]),
     ("ocb", ["citizenship", "ocb", "kewargaan"]),
     ("promosi_jabatan", ["promosi", "kenaikan pangkat"]),
     ("mutasi_kerja", ["mutasi", "rotasi", "tour of duty"]),
@@ -232,10 +248,15 @@ def _call_gemini_raw(api_key, model, prompt, timeout, max_tokens=2048):
     last_err = None
     sisa_rotasi = GEMINI_KEY_ROTATE   # sisa jatah berpindah key akibat 401/403
     for attempt in range(GEMINI_MAX_RETRY + 1):
-        # Jaga jeda minimal antar-panggilan Gemini (rate limiting client-side)
-        wait = GEMINI_MIN_INTERVAL - (time.time() - _last_gemini_ts)
-        if wait > 0:
-            time.sleep(wait)
+        # Jaga jeda minimal antar-panggilan Gemini (rate limiting client-side).
+        # Slot diambil di bawah LOCK supaya panggilan PARALEL tidak menembak
+        # API bersamaan (menbush ripe 429).
+        with _gemini_slot_lock:
+            _slot = max(time.time(), _last_gemini_ts + GEMINI_MIN_INTERVAL)
+            _last_gemini_ts = _slot
+        _wait = _slot - time.time()
+        if _wait > 0:
+            time.sleep(_wait)
         # URL dibentuk di sini (bukan sebelum loop) agar rotasi key dapat
         # mengganti kunci tanpa harus menyusun ulang panggilan dari awal.
         url = f"{GEMINI_BASE}/{model}:generateContent?key={api_key}"
@@ -423,7 +444,83 @@ GEMINI_QUOTA_DEAD_SEC = 600.0    # 10 menit; reset asli bisa lebih lama
 
 # Lacak key yang kena 503 (sibuk) PER MODEL: {model: {key_idx: epoch}}
 _gemini_busy_matrix = {}         # {model: {key_idx: epoch_until}}
-GEMINI_BUSY_DEAD_SEC = 120.0     # 2 menit
+# Dulu 120 s. Terlalu lama: 429 "per minute" dan 503 umumnya pulih < 1 menit,
+# sehingga menandai sibuk 2 menit membuat ke-15 key bisa tertandai sibuk
+# sekaligus -> mesin merasa tanpa kapasitas lalu jatuh ke template.
+GEMINI_BUSY_DEAD_SEC = 30.0      # 30 detik
+
+# --- Kesehatan key tingkat PROJECT (lintas model) ---------------------------
+# Sebagian key berasal dari project yang JATAH KUOTANYA NOL: bukan "sedang
+# dipakai orang lain", melainkan memang tidak punya kuota. Key seperti itu
+# gagal bahkan pada endpoint paling ringan (models.list / countTokens), jadi
+# setiap model akan membuang satu permintaan untuk key tersebut.
+# Status disimpan lintas-model dan lintas-restart agar tidak dipelajari ulang.
+GEMINI_DEAD_PROJECT_SEC = 6 * 3600.0   # 6 jam; project berjatah 0 jarang pulih
+KEY_HEALTH_FILE = os.path.join(BACKEND_DIR, "_gemini_key_health.json")
+_gemini_dead_project = {}        # {fingerprint_key: epoch_until}
+_gemini_dead_lock = threading.Lock()
+
+
+def _fingerprint_key(api_key):
+    """Penanda key tanpa menyimpan key utuh (aman ditulis ke berkas)."""
+    k = str(api_key or "")
+    return (k[:10] + "..." + k[-4:]) if len(k) > 16 else k
+
+
+def _muat_key_mati():
+    """Muat daftar key berjatah-0 dari berkas (bertahan setelah restart)."""
+    global _gemini_dead_project
+    try:
+        with open(KEY_HEALTH_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        _gemini_dead_project = {str(k): float(v) for k, v in data.items()} \
+            if isinstance(data, dict) else {}
+    except (OSError, ValueError, TypeError):
+        _gemini_dead_project = {}
+
+
+def _simpan_key_mati():
+    try:
+        with open(KEY_HEALTH_FILE, "w", encoding="utf-8") as f:
+            json.dump(_gemini_dead_project, f, indent=2)
+    except OSError as e:
+        print(f"[matrix] peringatan: gagal simpan status key ({e})")
+
+
+def _key_mati(api_key):
+    """True bila key diketahui tanpa kuota (jatah 0) dan belum kedaluwarsa."""
+    fp = _fingerprint_key(api_key)
+    with _gemini_dead_lock:
+        until = _gemini_dead_project.get(fp, 0)
+        if until > time.time():
+            return True
+        if until:
+            _gemini_dead_project.pop(fp, None)
+    return False
+
+
+def _tandai_key_mati(api_key, detik=None):
+    """Tandai key berjatah-0 selama `detik` (bawaan 6 jam) dan simpan."""
+    fp = _fingerprint_key(api_key)
+    with _gemini_dead_lock:
+        _gemini_dead_project[fp] = time.time() + (detik or GEMINI_DEAD_PROJECT_SEC)
+    _simpan_key_mati()
+
+
+def _jumlah_key_mati(keys):
+    return sum(1 for k in keys if _key_mati(k))
+
+
+def _bersihkan_key_mati():
+    """Buang entri kedaluwarsa; kembalikan jumlah yang masih mati."""
+    now = time.time()
+    with _gemini_dead_lock:
+        for fp in [k for k, v in _gemini_dead_project.items() if v <= now]:
+            _gemini_dead_project.pop(fp, None)
+        return len(_gemini_dead_project)
+
+
+_muat_key_mati()
 
 # #4 Pemutus sirkuit Nemotron (NIM). Satu-satunya "key", jadi dilacak per model.
 # Kalau NIM 503 -> tandai sibuk sebentar, lanjut ke model Gemini berikutnya
@@ -441,7 +538,7 @@ def last_matrix_model():
     return _last_matrix_model
 
 
-def _call_gemini_matrix(keys, models, prompt, timeout, max_tokens=2048):
+def _call_gemini_matrix(keys, models, prompt, timeout, max_tokens=2048, temperature=0.2):
     """
     STRATEGI MATRIKS: untuk setiap model (urut prioritas), coba SEMUA key.
     
@@ -456,12 +553,18 @@ def _call_gemini_matrix(keys, models, prompt, timeout, max_tokens=2048):
       raise last_error
     """
     global _last_gemini_ts, _gemini_quota_dead_matrix, _gemini_busy_matrix, _nvidia_busy_until, _last_matrix_model
+    global _gemini_key_cursor
     from llm_title_parser import load_config, GEMINI_BASE
     import ssl
     
     ctx = ssl.create_default_context()
     last_err = None
-    
+
+    # Jangan buang waktu: bila SEMUA key sudah diketahui tanpa kuota (jatah 0),
+    # menyapu 6 model x 15 key hanya membuang ratusan permintaan percuma.
+    if keys and all(_key_mati(k) for k in keys):
+        raise RuntimeError(f"Semua {len(keys)} API key diketahui tanpa kuota (jatah 0)")
+
     for model in models:
         if str(model).startswith("nvidia/"):
             # #4 NIM (Nemotron): GRATIS & didahulukan pada rantai ekstraksi.
@@ -483,16 +586,30 @@ def _call_gemini_matrix(keys, models, prompt, timeout, max_tokens=2048):
                       f" -> tandai sibuk {NVIDIA_BUSY_SEC:.0f}s, lanjut model berikutnya", flush=True)
                 continue
         
-        # Lewati model jika SEMUA key sudah diketahui mati kuota (per model)
+        # Lewati model bila tidak ada lagi key yang mungkin dipakai (semua
+        # sudah ditandai habis kuota ATAU berasal dari project berjatah 0).
         dead_keys = _gemini_quota_dead_matrix.get(model, {})
-        if len(dead_keys) >= len(keys):
-            # semua key diketahui habis kuota pada model ini -> lewati model
-            print(f"[matrix] model '{model}': SEMUA {len(keys)} key kena kuota -> lewati model")
+        hidup = [i for i in range(len(keys))
+                 if dead_keys.get(i, 0) <= time.time() and not _key_mati(keys[i])]
+        if not hidup:
+            print(f"[matrix] model '{model}': SEMUA {len(keys)} key habis/tanpa kuota -> lewati model")
             continue
         
         print(f"[matrix] === MODEL: {model} (mencoba {len(keys)} key) ===", flush=True)
-        
-        for key_idx, api_key in enumerate(keys):
+
+        # (#5) Mulai dari key yang berbeda tiap panggilan -> panggilan paralel
+        # tidak menumpuk pada satu key (mengurangi 429) dan kuota lebih merata.
+        with _gemini_slot_lock:
+            _mulai_key = _gemini_key_cursor % max(1, len(keys))
+            _gemini_key_cursor += 1
+
+        for _off in range(len(keys)):
+            key_idx = (_mulai_key + _off) % max(1, len(keys))
+            api_key = keys[key_idx]
+            # Key dari project berjatah 0 tidak akan pernah berhasil: lewati.
+            if _key_mati(api_key):
+                print(f"[matrix]   key #{key_idx+1} dilewati (project tanpa kuota/jatah 0)")
+                continue
             # Cek apakah key ini sudah diketahui habis kuota pada model ini
             if _gemini_quota_dead_matrix.get(model, {}).get(key_idx, 0) > time.time():
                 print(f"[matrix]   key #{key_idx+1} dilewati (kuota masi habis untuk {model})")
@@ -507,15 +624,19 @@ def _call_gemini_matrix(keys, models, prompt, timeout, max_tokens=2048):
                 "contents": [{"parts": [{"text": prompt}]}],
                 "generationConfig": {
                     "responseMimeType": "application/json",
-                    "temperature": 0.2,
+                    "temperature": temperature,
                     "maxOutputTokens": max_tokens,
                 },
             }
             
             last_err = None
             for attempt in range(GEMINI_MAX_RETRY + 1):
-                # Rate limit global (antara panggilan apa pun)
-                wait = GEMINI_MIN_INTERVAL - (time.time() - _last_gemini_ts)
+                # Rate limit global yang aman untuk panggilan paralel (#5):
+                # pesan slot waktu lebih dulu, lalu tidur TANPA memegang lock.
+                with _gemini_slot_lock:
+                    _slot = max(time.time(), _last_gemini_ts + GEMINI_MIN_INTERVAL)
+                    _last_gemini_ts = _slot
+                wait = _slot - time.time()
                 if wait > 0:
                     time.sleep(wait)
                 
@@ -542,11 +663,35 @@ def _call_gemini_matrix(keys, models, prompt, timeout, max_tokens=2048):
                     except Exception:
                         detail = ""
                     
-                    # 429 QUOTA: tandai key+model ini mati
-                    if e.code == 429 and "exceeded your current quota" in detail.lower():
-                        _gemini_quota_dead_matrix.setdefault(model, {})[key_idx] = time.time() + GEMINI_QUOTA_DEAD_SEC
-                        print(f"[matrix]   [X] key #{key_idx+1} KUOTA HABIS ({model}) -> tandai mati {GEMINI_QUOTA_DEAD_SEC:.0f}s, coba key berikutnya")
-                        break  # keluar dari retry loop, lanjut ke key berikutnya
+                    # 429: pisahkan KUOTA (jatah) dari RATE LIMIT biasa, dan
+                    # kenali kalimat asli Google yang dulu TIDAK terdeteksi:
+                    #   "exceeded your current quota"  (lama, tetap didukung)
+                    #   "Quota exceeded for quota metric '...' and limit
+                    #    '... per minute for a region' of service ..."  (baru)
+                    # Penentu terakhir: nilai jatah. quota_limit_value 0 berarti
+                    # project memang berjatah nol -> jangan dicoba lagi berulang.
+                    if e.code == 429:
+                        _d = detail.lower().replace(" ", "").replace("\n", "")
+                        _kuota = "quota" in detail.lower()
+                        _jatah_nol = ('"quota_limit_value":"0"' in _d
+                                      or '"quota_limit_value":0' in _d)
+                        if _kuota and _jatah_nol:
+                            _tandai_key_mati(api_key)
+                            print(f"[matrix]   [X] key #{key_idx+1} PROJECT TANPA KUOTA "
+                                  f"(jatah 0) -> dibuang {GEMINI_DEAD_PROJECT_SEC/3600:.0f} jam")
+                            break
+                        if _kuota and "perminute" in _d:
+                            _gemini_busy_matrix.setdefault(model, {})[key_idx] = \
+                                time.time() + GEMINI_BUSY_DEAD_SEC
+                            print(f"[matrix]   [X] key #{key_idx+1} KUOTA PER-MENIT ({model})"
+                                  f" -> jeda {GEMINI_BUSY_DEAD_SEC:.0f}s, coba key berikutnya")
+                            break
+                        if _kuota:
+                            _gemini_quota_dead_matrix.setdefault(model, {})[key_idx] = \
+                                time.time() + GEMINI_QUOTA_DEAD_SEC
+                            print(f"[matrix]   [X] key #{key_idx+1} KUOTA HABIS ({model}) "
+                                  f"-> tandai mati {GEMINI_QUOTA_DEAD_SEC:.0f}s")
+                            break
                     
                     # 401/403: key dicabut/salah -> rotasi ke key berikutnya (tanpa backoff)
                     if e.code in (401, 403):
@@ -564,6 +709,13 @@ def _call_gemini_matrix(keys, models, prompt, timeout, max_tokens=2048):
                     if e.code == 503 and attempt >= GEMINI_MAX_RETRY:
                         _gemini_busy_matrix.setdefault(model, {})[key_idx] = time.time() + GEMINI_BUSY_DEAD_SEC
                         print(f"[matrix]   [X] key #{key_idx+1} SIBUK 503 ({model}) -> tandai sibuk {GEMINI_BUSY_DEAD_SEC:.0f}s, coba key berikutnya")
+                        break
+
+                    # 429 RATE LIMIT (bukan kuota habis) yang tetap gagal setelah retry
+                    # -> jeda singkat key ini lalu coba key berikutnya (jangan langsung raise)
+                    if e.code == 429 and attempt >= GEMINI_MAX_RETRY:
+                        _gemini_busy_matrix.setdefault(model, {})[key_idx] = time.time() + GEMINI_BUSY_DEAD_SEC
+                        print(f"[matrix]   [X] key #{key_idx+1} RATE LIMIT 429 ({model}) -> tandai sibuk {GEMINI_BUSY_DEAD_SEC:.0f}s, coba key berikutnya")
                         break
                     
                     # Error lain -> lempar
@@ -648,8 +800,17 @@ def _validate_llm_ontology(raw, var_name=""):
                     clean_stmts.append("")
         if clean_inds:
             clean_dims.append({"nama": nama, "indikator": clean_inds, "pernyataan": clean_stmts})
-    if len(clean_dims) < 2:
+    if not clean_dims:
         return None
+    if len(clean_dims) == 1:
+        # Konstruk DATAR: sumber nyata hanya mencantumkan satu kelompok
+        # indikator/level (mis. Training Dessler: Reaction/Learning/Behavior/
+        # Results). Terima bila >=2 butir; tahap sanitasi akan mempromosikan
+        # butir pendek menjadi dimensi dan mengembangkan indikator operasional.
+        if len(clean_dims[0]["indikator"]) < 2:
+            return None
+        if "indikator" in clean_dims[0]["nama"].lower():
+            clean_dims[0]["nama"] = var_name or "Konstruk"
     return {
         "grand_theory": str(raw.get("grand_theory", "")).strip(),
         "tokoh_ahli": str(raw.get("tokoh_ahli", "")).strip(),

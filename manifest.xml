@@ -8,10 +8,10 @@
 
   <Id>b78291f0-4a81-4b72-91d5-89f4b01e7a91</Id>
   <Version>1.0.0.0</Version>
-  <ProviderName>AutoTesis AI Engine</ProviderName>
+  <ProviderName>Independent Researcher Engine</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="AutoTesis Magister AI" />
-  <Description DefaultValue="Asisten Penulisan Tesis Magister Manajemen &amp; Olah Data SmartPLS Standar Yurahadi" />
+  <DisplayName DefaultValue="Independent Researcher" />
+  <Description DefaultValue="Asisten Penulisan Tesis Magister Manajemen &amp; Olah Data SmartPLS Standar By SkripsiPlg" />
   <IconUrl DefaultValue="https://localhost:5051/assets/icon-32.png" />
   <HighResolutionIconUrl DefaultValue="https://localhost:5051/assets/icon-64.png" />
   <SupportUrl DefaultValue="https://localhost:5051" />
@@ -89,11 +89,11 @@
         <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://localhost:5051" />
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="GetStarted.Title" DefaultValue="Selamat Datang di AutoTesis AI" />
-        <bt:String id="TabLabel" DefaultValue="AutoTesis AI" />
+        <bt:String id="GetStarted.Title" DefaultValue="Selamat Datang di Independent Researcher" />
+        <bt:String id="TabLabel" DefaultValue="Independent Researcher" />
         <bt:String id="GroupLabel" DefaultValue="Tesis Magister" />
         <bt:String id="ButtonLabel" DefaultValue="Buka Asisten Tesis" />
-        <bt:String id="ButtonTitle" DefaultValue="AutoTesis Magister" />
+        <bt:String id="ButtonTitle" DefaultValue="Independent Researcher" />
       </bt:ShortStrings>
       <bt:LongStrings>
         <bt:String id="GetStarted.Description" DefaultValue="Asisten penulisan tesis Magister Manajemen lengkap dengan SmartPLS." />

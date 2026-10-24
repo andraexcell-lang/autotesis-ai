@@ -54,6 +54,21 @@ UPLOAD_DIR = os.path.join(BACKEND_DIR, "uploaded_sources")
 SEARCH_YEAR_MIN = 2022
 SEARCH_YEAR_MAX = 2026
 
+# Padanan istilah yang lazim dalam judul tesis Indonesia/Inggris. Ini HANYA
+# menyamakan NAMA variabel saat mencari entri pustaka; tidak menambah
+# indikator dan tidak mengubah isi sumber.
+_CANON = {
+    "karyawan": "pegawai", "karyawannya": "pegawai", "karyawan2": "pegawai",
+    "employee": "pegawai", "employees": "pegawai", "staff": "pegawai",
+    "karier": "karir", "career": "karir",
+    "pelatihan": "training", "diklat": "training",
+    "performance": "kinerja",
+    "competency": "kompetensi", "competence": "kompetensi",
+    "development": "pengembangan",
+}
+_STOP = {"dan", "di", "pada", "the", "of", "and", "a", "an", "pt", "persero",
+         "cabang", "tbk"}
+
 
 def _slug(name):
     """Nama variabel -> nama berkas aman (huruf kecil, spasi jadi _)."""
@@ -62,26 +77,70 @@ def _slug(name):
     return s or "unknown_variable"
 
 
+def _tokens(name):
+    """Token kanonik untuk pencocokan nama variabel (bukan untuk indikator)."""
+    s = unicodedata.normalize("NFKD", str(name or "")).encode("ascii", "ignore").decode()
+    s = re.sub(r"[^a-zA-Z0-9]+", " ", s).lower()
+    out = set()
+    for t in s.split():
+        t = _CANON.get(t, t)
+        if t not in _STOP and len(t) > 1:
+            out.add(t)
+    return out
+
+
+def _name_score(target, candidate):
+    a, b = _tokens(target), _tokens(candidate)
+    if not a or not b:
+        return 0.0
+    return len(a & b) / len(a | b)
+
+
 def library_path(variable):
     return os.path.join(LIBRARY_DIR, f"{_slug(variable)}.json")
 
 
-def load_entry(variable):
-    """Muat entri variabel dari pustaka; None bila belum ada."""
-    path = library_path(variable)
-    if not os.path.exists(path):
-        return None
+def _read_entry(path):
     try:
         with open(path, "r", encoding="utf-8") as f:
             entry = json.load(f)
     except Exception:
         return None
-    # Validasi minimal agar entri rusak tidak dipakai diam-diam
     if not isinstance(entry, dict) or not entry.get("dimensi"):
         return None
     if not isinstance(entry.get("source"), dict) or not entry["source"].get("label"):
         return None
     return entry
+
+
+def load_entry(variable):
+    """Muat entri variabel; cocokkan sinonim bila nama berkas persis tidak ada.
+
+    Contoh nyata: judul memakai "Kinerja Karyawan", pustaka menyimpan
+    "Kinerja Pegawai". Tanpa pencocokan ini variabel dianggap belum diriset
+    lalu sistem mencari ulang ke API (lambat/rapuh) padahal entri sudah ada.
+    """
+    path = library_path(variable)
+    if os.path.exists(path):
+        return _read_entry(path)
+
+    target = str(variable or "").strip()
+    if not target or not os.path.isdir(LIBRARY_DIR):
+        return None
+    best, best_score = None, 0.0
+    for fn in os.listdir(LIBRARY_DIR):
+        if not fn.endswith(".json"):
+            continue
+        entry = _read_entry(os.path.join(LIBRARY_DIR, fn))
+        if not entry:
+            continue
+        names = [entry.get("variable", "")] + list(entry.get("synonyms") or [])
+        score = max((_name_score(target, n) for n in names), default=0.0)
+        if score > best_score:
+            best, best_score = entry, score
+    # Ambang 0.5: "kinerja karyawan" cocok dengan "Kinerja" (0.5) dan
+    # "Kinerja Pegawai" (1.0 setelah kanonik karyawan=pegawai).
+    return best if best_score >= 0.5 else None
 
 
 def save_entry(entry):
@@ -168,12 +227,46 @@ def verify_indicators(dimensi, source_text):
     return clean, {"checked": checked, "passed": passed, "dropped": dropped}
 
 
+def _flat_promotable(dims):
+    """True bila 1 dimensi berisi 2-7 butir pendek yang layak jadi dimensi.
+
+    Contoh: Training Dessler (Reaction/Learning/Behavior/Results). Butir
+    panjang/definitif tidak boleh dipromosikan menjadi dimensi.
+    """
+    if len(dims) != 1:
+        return False
+    inds = [str(x).strip() for x in (dims[0].get("indikator") or []) if str(x).strip()]
+    if not (2 <= len(inds) <= 7):
+        return False
+    import re as _re
+    for s in inds:
+        if len(s.split()) > 6 or len(s) > 70:
+            return False
+        if _re.search(r"\b(adalah|merupakan|mencakup|mengacu|didefinisikan|"
+                      r"diartikan|meliputi|terdiri\s+dari)\b", s, _re.I):
+            return False
+    return True
+
+
 def entry_needs_review(entry):
-    """True bila entri tidak layak dipakai otomatis (kosong / tanpa sumber)."""
+    """True bila entri tidak layak dipakai otomatis (kosong / tanpa sumber).
+
+    Kebijakan generated_v1: 2-7 dimensi, atau 1 dimensi datar yang butirnya
+    layak dipromosikan menjadi dimensi. Indikator boleh belum ada karena akan
+    dikembangkan dari dimensi pada tahap sanitasi.
+    """
     if not entry:
         return True
-    if not entry.get("dimensi") or indicator_count(entry) < 4:
+    dims = entry.get("dimensi") or []
+    if not dims:
         return True
+    if len(dims) == 1:
+        if not _flat_promotable(dims):
+            return True
+    elif len(dims) < 2:
+        return True
+    # Sumber dengan 8-20 dimensi TIDAK ditolak. Tahap sanitasi memilih 2-7
+    # dimensi yang paling relevan dan mencatat sisanya sebagai tidak dipakai.
     src = entry.get("source") or {}
     if not src.get("label"):
         return True
@@ -191,19 +284,29 @@ def to_ontology_stub(entry, role, input_name):
     langsung dipakai blueprint (kisi-kisi, kuesioner, fenomena Bab I).
     Pernyataan kuesioner dibuat terpisah oleh agen kuesioner bila belum ada.
     """
+    try:
+        import indicator_layers as IL
+    except Exception:
+        IL = None
     dims = []
     for d in entry.get("dimensi", []):
         inds = d.get("indikator", [])
+        op = list(d.get("indikator_operasional") or inds)
+        teo = list(d.get("indikator_teoretis") or [])
+        if IL and (not teo or len(teo) < 2):
+            teo = IL.bangun_indikator_teoretis(op, d.get("nama", ""))
         dims.append({
             "nama": d.get("nama", ""),
-            "indikator": list(inds),
-            "pernyataan": list(d.get("pernyataan", []) or [""] * len(inds)),
+            "indikator": op,
+            "indikator_operasional": op,
+            "indikator_teoretis": teo,
+            "pernyataan": list(d.get("pernyataan", []) or [""] * len(op)),
         })
     src = entry.get("source") or {}
     return {
         "role": role,
         "input_name": input_name or entry.get("variable", ""),
-        "nama_resmi": entry.get("variable") or input_name or "",
+        "nama_resmi": input_name or entry.get("variable", ""),
         "grand_theory": entry.get("grand_theory", ""),
         "tokoh_ahli": entry.get("tokoh_ahli", ""),
         "definisi": entry.get("definisi", ""),

@@ -1,10 +1,24 @@
-/* AutoTesis AI - Word Taskpane Controller (Dual Native COM & Office.js Engine) */
+/* Independent Researcher - Word Taskpane Controller (Dual Native COM & Office.js Engine) */
 
 const API_BASE = (window.location.origin && window.location.origin.startsWith("http")) 
   ? `${window.location.origin}/api` 
   : "http://localhost:5050/api";
 
-console.log("AutoTesis AI initialized. Target API:", API_BASE);
+// State wizard SmartPLS HARUS dideklarasikan sebelum initUI() memanggil getConfig().
+// Jika diletakkan di bawah, getConfig() kena TDZ ("Cannot access before initialization").
+const smartplsState = {
+  source: (() => {
+    try { return localStorage.getItem("autothesis_data_source") || null; }
+    catch (e) { return null; }
+  })(),
+  dataFile: null,
+  guideFile: null
+};
+let smartplsGformScript = "";
+// Status gerbang Bab IV juga dipakai initUI(), jadi deklarasikan lebih awal.
+const dataGateState = { last: null, diperiksa: 0, dipaksa: {} };
+
+console.log("Independent Researcher initialized. Target API:", API_BASE);
 
 if (window.Office && Office.onReady) {
   Office.onReady((info) => {
@@ -76,6 +90,12 @@ function initUI() {
     });
   });
 
+  // Live update jumlah sampel otomatis dari populasi (Slovin / Sampling Jenuh)
+  document.getElementById("input-populasi")?.addEventListener("input", () => {
+    refreshSampelPreview();
+  });
+  refreshSampelPreview();
+
   // Chapter buttons
   document.querySelectorAll("[data-action]").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -84,8 +104,37 @@ function initUI() {
     });
   });
 
-  document.getElementById("btn-generate-data")?.addEventListener("click", handleSmartPLSData);
+  document.getElementById("btn-generate-data")?.addEventListener("click", () => handleGenerateRespondents("generated"));
+  document.getElementById("btn-upload-data")?.addEventListener("click", () => handleGenerateRespondents("upload"));
+  document.getElementById("btn-import-sheet")?.addEventListener("click", () => handleGenerateRespondents("sheet"));
+  document.getElementById("btn-olah-data")?.addEventListener("click", handleOlahData);
   document.getElementById("btn-generate-gform")?.addEventListener("click", handleGoogleFormScript);
+
+  document.getElementById("btn-copy-gform")?.addEventListener("click", async () => {
+    const ta = document.getElementById("gform-script");
+    const text = (ta && ta.value) || smartplsGformScript || "";
+    if (!text) { setStatus("error", "Belum ada skrip. Klik “Buat Google Form” dulu."); return; }
+    const ok = await copyToClipboard(text);
+    setStatus(ok ? "ready" : "error",
+      ok ? "Skrip Google Form disalin ke clipboard."
+         : "Gagal menyalin otomatis — blok teks pada kotak skrip lalu tekan Ctrl+C.");
+  });
+
+  document.getElementById("btn-download-gform")?.addEventListener("click", () => {
+    const ta = document.getElementById("gform-script");
+    const text = (ta && ta.value) || smartplsGformScript || "";
+    if (!text) { setStatus("error", "Belum ada skrip. Klik “Buat Google Form” dulu."); return; }
+    const blob = new Blob([text], { type: "text/javascript;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "KUESIONER_GOOGLE_FORM.gs";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    setStatus("ready", "Skrip diunduh sebagai KUESIONER_GOOGLE_FORM.gs — tempel isinya di script.google.com.");
+  });
   document.getElementById("btn-generate-full")?.addEventListener("click", handleFullDocumentGeneration);
   
   // Dedicated Front Matter Export
@@ -331,6 +380,21 @@ function initUI() {
 
   // Handle Tulis Seluruh 7 Poin Pembahasan Berurutan
   document.getElementById("btn-write-all-pembahasan")?.addEventListener("click", handleWriteAllPembahasan);
+
+  // Gerbang data Bab IV (data jawaban responden)
+  document.getElementById("link-buka-tab-smartpls")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    bukaTabSmartpls();
+  });
+  document.querySelectorAll(".tab-btn").forEach((t) => {
+    t.addEventListener("click", () => {
+      if (t.dataset.tab === "chapters") refreshDataGate();
+    });
+  });
+  document.getElementById("btn-save-config")?.addEventListener("click", () => {
+    setTimeout(() => refreshDataGate(true), 300);
+  });
+  refreshDataGate(true);
 }
 
 // -------------------------------------------------------------
@@ -354,6 +418,70 @@ async function insertDocxBase64ToActiveWord(base64Data) {
   return false;
 }
 
+// Perbarui SEMUA field pada dokumen (mis. DAFTAR ISI otomatis) supaya Word langsung
+// menghitung ulang judul & nomor halaman. Best-effort: bila API tidak mendukung,
+// pengguna tetap bisa menekan Ctrl+A lalu F9 / klik kanan > Update Field.
+async function updateAllFieldsInWord() {
+  if (!window.Word || typeof Word.run !== "function") return false;
+  try {
+    return await Word.run(async (context) => {
+      const fields = context.document.body.fields;
+      fields.load("items");
+      await context.sync();
+      let n = 0;
+      for (const f of fields.items) {
+        try {
+          if (typeof f.updateResult === "function") {
+            f.updateResult();
+            n++;
+          }
+        } catch (e) { /* field yang tidak mendukung: lewati */ }
+      }
+      await context.sync();
+      return n > 0;
+    });
+  } catch (err) {
+    console.warn("updateAllFieldsInWord gagal:", err);
+    return false;
+  }
+}
+
+// Minta SERVER mengatur nomor halaman pada dokumen Word aktif (lewat COM):
+// bagian depan romawi kecil (i, ii, ...), naskah (BAB I dst.) angka Arab mulai 1,
+// plus pembatas bab otomatis. Dipakai karena Office.js tidak menyediakan API
+// untuk format/penomoran halaman.
+async function rapikanNomorHalamanWord() {
+  try {
+    const r = await fetch(`${API_BASE}/format-halaman`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({})
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return (j && j.status === "success") ? j : null;
+  } catch (err) {
+    console.warn("rapikanNomorHalamanWord gagal:", err);
+    return null;
+  }
+}
+
+// Khusus BAGIAN AWAL (front matter): sisipkan di AWAL dokumen (sebelum BAB I),
+// tanpa menyentuh Daftar Pustaka karena front matter tidak memuat sitasi.
+async function insertBagianAwalAtStart(base64Data) {
+  if (!base64Data) return false;
+  if (!window.Word || typeof Word.run !== "function") return false;
+
+  return Word.run(async (context) => {
+    context.document.body.insertFileFromBase64(base64Data, Word.InsertLocation.start);
+    await context.sync();
+    return true;
+  }).catch((err) => {
+    console.error("Office.js insertBagianAwalAtStart error:", err);
+    throw err;
+  });
+}
+
 // Pintar & Runtut: Menyambungkan sub-bab tepat di bawah sub-bab sebelumnya pada halaman yang sama,
 // dengan cara menghapus blok Daftar Pustaka lama & page-break-nya terlebih dahulu, lalu menambahkan naskah baru
 // tepat di akhir naskah, dan menaruh kembali Daftar Pustaka kumulatif di halaman paling akhir.
@@ -370,12 +498,36 @@ async function insertSubchapterWithUnifiedDapus(subchapterBase64, dapusBase64) {
 
     if (searchResults.items && searchResults.items.length > 0) {
       // DAFTAR PUSTAKA SUDAH ADA DI DOKUMEN!
-      const dapusRange = searchResults.items[0];
+      // PENTING: pakai kemunculan TERAKHIR. Entri "DAFTAR PUSTAKA" di DAFTAR ISI
+      // (bagian awal) juga ikut terdeteksi; kalau dipakai, seluruh naskah setelah
+      // daftar isi akan terhapus.
+      const dapusRange = searchResults.items[searchResults.items.length - 1];
       const dapusPara = dapusRange.paragraphs.getFirst();
       context.load(dapusPara);
       const prevPara = dapusPara.getPreviousOrNullObject();
       context.load(prevPara, "text");
       await context.sync();
+
+      // PENGAMAN LAMPIRAN: bila dokumen sudah punya heading LAMPIRAN, jangan
+      // hapus blok Daftar Pustaka sampai akhir dokumen (Lampiran akan ikut
+      // terhapus). Cukup sisipkan naskah SEBELUM heading DAFTAR PUSTAKA.
+      const cekLamp = body.search("LAMPIRAN", { matchCase: true });
+      context.load(cekLamp, "items");
+      await context.sync();
+      for (const it of (cekLamp.items || [])) {
+        context.load(it.paragraphs.getFirst(), "text");
+      }
+      await context.sync();
+      const adaLampiranHeading = (cekLamp.items || []).some((it) => {
+        const t = (it.paragraphs.getFirst().text || "").trim().toUpperCase();
+        return t === "LAMPIRAN";
+      });
+      if (adaLampiranHeading) {
+        const titikSisip = dapusPara.getRange(Word.RangeLocation.start);
+        titikSisip.insertFileFromBase64(subchapterBase64, Word.InsertLocation.start);
+        await context.sync();
+        return true;
+      }
 
       // Tentukan titik awal hapus: jika ada paragraf kosong/page-break sebelum DAFTAR PUSTAKA, ikut dihapus
       let startDeleteRange = dapusPara.getRange(Word.RangeLocation.start);
@@ -416,11 +568,171 @@ async function insertSubchapterWithUnifiedDapus(subchapterBase64, dapusBase64) {
   });
 }
 
+// Mode NATIVE: naskah SUDAH ditulis server via COM. Fungsi ini hanya
+// memperbarui blok DAFTAR PUSTAKA di halaman paling akhir (tanpa menyisipkan
+// ulang naskah), supaya tidak terjadi naskah ganda / daftar pustaka ganda.
+async function replaceDapusOnly(dapusBase64) {
+  if (!dapusBase64) return true;
+  if (!window.Word || typeof Word.run !== "function") return false;
+
+  return Word.run(async (context) => {
+    const body = context.document.body;
+    const hasil = body.search("DAFTAR PUSTAKA", { matchCase: true });
+    context.load(hasil, "items");
+    await context.sync();
+
+    const items = hasil.items || [];
+    if (items.length > 0) {
+      // PENGAMAN LAMPIRAN: bila dokumen sudah punya heading "LAMPIRAN" (selalu
+      // berada di belakang Daftar Pustaka), JANGAN menghapus apa pun. Blok hapus
+      // di bawah membentang sampai AKHIR dokumen -> akan menelan Lampiran.
+      const cekLamp = body.search("LAMPIRAN", { matchCase: true });
+      context.load(cekLamp, "items");
+      await context.sync();
+      for (const it of (cekLamp.items || [])) {
+        context.load(it.paragraphs.getFirst(), "text");
+      }
+      await context.sync();
+      const adaHeadingLampiran = (cekLamp.items || []).some((it) => {
+        const t = (it.paragraphs.getFirst().text || "").trim().toUpperCase();
+        return t === "LAMPIRAN";
+      });
+      if (adaHeadingLampiran) {
+        console.warn("replaceDapusOnly dilewati: dokumen berisi heading LAMPIRAN (tidak ada yang dihapus).");
+        return true;
+      }
+      // Kemunculan TERAKHIR = heading Daftar Pustaka sebenarnya (bukan daftar isi).
+      const head = items[items.length - 1];
+      const para = head.paragraphs.getFirst();
+      context.load(para);
+      await context.sync();
+      const prev = para.getPreviousOrNullObject();
+      context.load(prev, "text");
+      await context.sync();
+      // Ikut hapus paragraf kosong/page-break tepat sebelum heading agar tidak
+      // tersisa halaman kosong saat daftar pustaka baru disisipkan.
+      let mulai = para.getRange(Word.RangeLocation.start);
+      if (prev && !prev.isNullObject && (!prev.text || !prev.text.trim())) {
+        mulai = prev.getRange(Word.RangeLocation.start);
+      }
+      mulai.expandTo(body.getRange(Word.RangeLocation.end)).delete();
+      await context.sync();
+    }
+
+    body.insertFileFromBase64(dapusBase64, Word.InsertLocation.end);
+    await context.sync();
+    return true;
+  }).catch((err) => {
+    console.error("Office.js replaceDapusOnly error:", err);
+    return false;
+  });
+}
+
+// Khusus LAMPIRAN: sisipkan paling akhir (SETELAH Daftar Pustaka), tanpa memindahkan dapus.
+async function appendLampiranAfterDapus(subchapterBase64, dapusBase64) {
+  if (!subchapterBase64) return false;
+  if (!window.Word || typeof Word.run !== "function") return false;
+
+  return Word.run(async (context) => {
+    const body = context.document.body;
+    const searchResults = body.search("DAFTAR PUSTAKA", { matchCase: true });
+    context.load(searchResults, "items");
+    await context.sync();
+
+    if (!searchResults.items || searchResults.items.length === 0) {
+      // Belum ada Daftar Pustaka: sisipkan dapus lebih dulu, baru lampiran di bawahnya.
+      if (dapusBase64) {
+        body.insertFileFromBase64(dapusBase64, Word.InsertLocation.end);
+        await context.sync();
+      }
+    }
+    body.insertFileFromBase64(subchapterBase64, Word.InsertLocation.end);
+    await context.sync();
+    return true;
+  }).catch((err) => {
+    console.error("Office.js appendLampiranAfterDapus error:", err);
+    throw err;
+  });
+}
+
 // -------------------------------------------------------------
 // HIERARCHICAL SUB-CHAPTER PIPELINE HANDLERS
 // -------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// PENGAMAN CONFIG (kasus nyata: judul diganti, variabel tidak)
+// Panel ini dibuka dengan nilai CONTOH (judul & variabel tesis lain). Bila
+// pengguna hanya mengganti judul lalu langsung menekan Tulis/Run Chain tanpa
+// "Deteksi Otomatis Objek & Variabel", mesin akan menulis naskah dengan
+// variabel CONTOH -> dokumen berjudul A tetapi isinya variabel B.
+// Pengaman ini mendeteksi keadaan tsb lalu mendeteksi variabel dari judul;
+// bila tetap gagal, proses DIHENTIKAN dengan pesan jelas (tidak menulis salah).
+// ---------------------------------------------------------------------------
+const JUDUL_CONTOH = "PENGARUH KECERDASAN EMOSIONAL DAN MOTIVASI KERJA TERHADAP KINERJA MELALUI ETOS KERJA SEBAGAI VARIABEL INTERVENING DI BPKAD KABUPATEN PALI";
+const VAR_CONTOH = ["kecerdasan emosional", "motivasi kerja", "etos kerja"];
+
+function variabelMasihContoh(cfg) {
+  const judulBeda = (cfg.judul || "").trim().toUpperCase() !== JUDUL_CONTOH;
+  if (!judulBeda) return false;
+  const x1 = (cfg.x1 || "").trim().toLowerCase();
+  const x2 = (cfg.x2 || "").trim().toLowerCase();
+  const m = (cfg.m || "").trim().toLowerCase();
+  return x1 === VAR_CONTOH[0] && x2 === VAR_CONTOH[1] && m === VAR_CONTOH[2];
+}
+
+async function pastikanVariabelSesuaiJudul() {
+  if (!variabelMasihContoh(getConfig())) return true;
+  setStatus("working", "Variabel masih nilai contoh panel -> mendeteksi otomatis dari judul...");
+  try { await autoDetectFromTitle(false); } catch (e) { /* lanjut cek di bawah */ }
+  if (variabelMasihContoh(getConfig())) {
+    setStatus("error", "STOP: X1/X2/variabel mediasi belum diisi untuk judul ini (masih nilai contoh: Kecerdasan Emosional/Motivasi Kerja/Etos Kerja). Klik 'Deteksi Otomatis Objek & Variabel' atau isi manual dulu, supaya naskah tidak memakai variabel tesis contoh.");
+    return false;
+  }
+  setStatus("working", "Variabel terdeteksi dari judul. Melanjutkan...");
+  return true;
+}
+
+async function pastikanOntologiLengkap(subId) {
+  // Bab III (metode & kisi-kisi), Bab IV (analisis), dan Lampiran (angket)
+  // tidak boleh ditulis bila ada variabel tanpa indikator: hasilnya naskah
+  // kosong / kuesioner bolong. Bab I-II tetap boleh (belum butuh indikator).
+  const butuh = subId && (
+    subId.indexOf("sub_3_") === 0 ||
+    subId.indexOf("sub_4_") === 0 ||
+    subId.indexOf("sub_5_") === 0 ||
+    subId === "sub_lampiran"
+  );
+  if (!butuh) return true;
+  try {
+    const cfg = getConfig();
+    const r = await fetch(`${API_BASE}/ontology/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ judul: cfg.judul || "" })
+    });
+    const d = await r.json();
+    if (d.complete) return true;
+    setStatus("error", "STOP: ontologi belum lengkap — " +
+      (d.problems || []).join("; ") +
+      ". Jalankan 'Telusuri Dimensi & Indikator' dan pastikan semua variabel " +
+      "berindikator sebelum menulis Bab III–V/Lampiran.");
+    return false;
+  } catch (e) {
+    console.warn("Gerbang ontologi tidak dapat diperiksa:", e);
+    return true;
+  }
+}
+
 async function handleSubChapterWrite(subId, btn) {
+  // Gerbang data: sub-bab Bab IV/V butuh data yang sudah diolah lebih dulu.
+  if (subId && (subId.indexOf("sub_4_") === 0 || subId.indexOf("sub_5_") === 0)) {
+    const lanjut = await pastikanDataJawaban("tulis:" + subId, "✍️ Tulis");
+    if (!lanjut) return;
+  }
+  // Gerbang variabel: cegah naskah memakai variabel contoh panel.
+  if (!(await pastikanVariabelSesuaiJudul())) return;
+  // Gerbang ontologi: cegah Bab III/IV/Lampiran ditulis dengan variabel kosong.
+  if (!(await pastikanOntologiLengkap(subId))) return;
   const mode = getSelectedWriteMode();
   const row = document.getElementById(`row-${subId}`);
   btn.disabled = true;
@@ -435,17 +747,56 @@ async function handleSubChapterWrite(subId, btn) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sub_id: subId, mode: mode, config: config })
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const res = await response.json();
+    if (!response.ok || res.status === "error") {
+      throw new Error(res.message || `HTTP ${response.status}`);
+    }
 
     if (res.status === "success") {
       let inserted = false;
-      if (res.docx_base64) {
-        inserted = await insertSubchapterWithUnifiedDapus(res.docx_base64, res.dapus_base64);
+      if (res.native_written) {
+        // Server SUDAH menulis naskah lewat COM (mode native) DAN memperbarui
+        // Daftar Pustaka di dokumen yang sama. JANGAN panggil Office.js lagi:
+        // replaceDapusOnly menghapus mulai heading DAFTAR PUSTAKA sampai AKHIR
+        // dokumen, sehingga LAMPIRAN (yang berada di belakang Daftar Pustaka)
+        // ikut terhapus. Itulah penyebab "Lampiran hilang setelah klik 4.1.1".
+        inserted = true;
+      } else if (res.docx_base64) {
+        if (subId === "sub_bagian_awal") {
+          inserted = await insertBagianAwalAtStart(res.docx_base64);
+        } else if (subId === "sub_lampiran") {
+          inserted = await appendLampiranAfterDapus(res.docx_base64, res.dapus_base64);
+        } else {
+          inserted = await insertSubchapterWithUnifiedDapus(res.docx_base64, res.dapus_base64);
+        }
       }
       setProgress(100);
       if (inserted) {
-        setStatus("ready", `Sub-bab ${res.meta.code || subId} (${res.meta.title || ''}) berhasil menyambung di dokumen Word, dan Daftar Pustaka diperbarui di halaman paling bawah!`);
+        // Mode NATIVE: server sudah menomori halaman (romawi/Arab + pembatas bab)
+        // DAN memperbarui semua field (DAFTAR ISI/TABEL/GAMBAR) lewat COM pada
+        // dokumen yang sama. Memanggil ulang dari panel berarti mengerjakan
+        // pekerjaan berat yang sama untuk kedua kalinya (lambat, tanpa hasil baru).
+        // Mode Office.js (non-native): field dihitung, nomor halaman dirapikan
+        // lewat server, lalu field dihitung sekali lagi agar nomor di daftar pas.
+        let fieldOk = true;
+        let nomor = res.native_written ? { sudah: true } : null;
+        if (!res.native_written) {
+          fieldOk = await updateAllFieldsInWord();
+          nomor = await rapikanNomorHalamanWord();
+          if (nomor) fieldOk = await updateAllFieldsInWord();
+        }
+        if (subId === "sub_bagian_awal") {
+          const pesanNomor = nomor
+            ? "Nomor halaman otomatis: bagian depan angka romawi (i, ii, ...), naskah mulai 1."
+            : "Nomor halaman belum diatur otomatis (server Word tidak tersedia).";
+          setStatus("ready", fieldOk
+            ? `Bagian Awal (Front Matter) disisipkan di AWAL dokumen. DAFTAR ISI dihitung Word. ${pesanNomor}`
+            : `Bagian Awal (Front Matter) disisipkan di AWAL dokumen. ${pesanNomor}`);
+        } else if (subId === "sub_lampiran") {
+          setStatus("ready", "Lampiran Kuesioner berhasil disisipkan SETELAH Daftar Pustaka di dokumen Word!");
+        } else {
+          setStatus("ready", `Sub-bab ${res.meta.code || subId} (${res.meta.title || ''}) berhasil menyambung di dokumen Word, dan Daftar Pustaka diperbarui di halaman paling bawah!`);
+        }
       } else {
         setStatus("ready", `Sub-bab ${res.meta.code || subId} (${res.meta.title || ''}) berhasil dibuat: ${res.filename}`);
       }
@@ -490,6 +841,18 @@ async function handleSubChapterDocx(subId, btn) {
 }
 
 async function handleRunChainBab(chapterNum, btn) {
+  // Gerbang data: Run Chain Bab IV/V butuh data yang sudah diolah lebih dulu.
+  if (String(chapterNum) === "4" || String(chapterNum) === "5") {
+    const lanjut = await pastikanDataJawaban(
+      "chain:" + chapterNum, `⚡ Run Chain Bab ${chapterNum}`);
+    if (!lanjut) return;
+  }
+  // Gerbang variabel: cegah naskah memakai variabel contoh panel.
+  if (!(await pastikanVariabelSesuaiJudul())) return;
+  // Gerbang ontologi: rantai Bab III/IV/V wajib punya indikator lengkap.
+  if (["3", "4", "5"].includes(String(chapterNum))) {
+    if (!(await pastikanOntologiLengkap(`sub_${chapterNum}_`))) return;
+  }
   const mode = getSelectedWriteMode();
   btn.disabled = true;
   const originalHtml = btn.innerHTML;
@@ -504,11 +867,13 @@ async function handleRunChainBab(chapterNum, btn) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chapter: parseInt(chapterNum, 10), mode: mode, config: config })
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const res = await response.json();
+    if (!response.ok || res.status === "error") {
+      throw new Error(res.message || `HTTP ${response.status}`);
+    }
 
     if (res.status === "success") {
-      if (res.details && Array.isArray(res.details) && window.Word && typeof Word.run === "function") {
+      if (res.details && Array.isArray(res.details) && typeof Word !== "undefined" && typeof Word.run === "function") {
         await Word.run(async (context) => {
           const searchResults = context.document.body.search("DAFTAR PUSTAKA", { matchCase: true });
           context.load(searchResults, "items");
@@ -672,7 +1037,30 @@ async function writePembahasanToOfficeJs(content) {
   });
 }
 
+// Hitung ukuran sampel dari populasi:
+// Populasi > 100 -> Rumus Slovin (e = 5%); Populasi <= 100 -> Sampling Jenuh (sensus)
+function hitungSampel(populasi) {
+  const N = parseInt(populasi, 10);
+  if (!N || N <= 0) return 0;
+  if (N > 100) return Math.ceil(N / (1 + N * 0.05 * 0.05));
+  return N;
+}
+
+function refreshSampelPreview() {
+  const populasi = parseInt(document.getElementById("input-populasi")?.value || "0", 10);
+  const sampel = hitungSampel(populasi);
+  const sampelEl = document.getElementById("input-sampel");
+  if (sampelEl && sampel > 0) {
+    sampelEl.value = `${sampel} responden (${populasi > 100 ? "Rumus Slovin" : "Sampling Jenuh"})`;
+  }
+  const respEl = document.getElementById("input-responden");
+  if (respEl && sampel > 0) respEl.value = sampel;
+  return sampel;
+}
+
 function getConfig() {
+  const populasi = parseInt(document.getElementById("input-populasi")?.value || "0", 10) || 0;
+  const nFromPopulasi = hitungSampel(populasi);
   return {
     judul: document.getElementById("input-judul")?.value.trim() || "PENGARUH KECERDASAN EMOSIONAL DAN MOTIVASI KERJA TERHADAP KINERJA MELALUI ETOS KERJA SEBAGAI VARIABEL INTERVENING DI BPKAD KABUPATEN PALI",
     penulis: document.getElementById("input-penulis")?.value.trim() || "MUHAMAD YUSI",
@@ -683,7 +1071,10 @@ function getConfig() {
     x2: document.getElementById("input-x2")?.value.trim() || "Motivasi Kerja",
     m: document.getElementById("input-m")?.value.trim() || "Etos Kerja",
     y: document.getElementById("input-y")?.value.trim() || "Kinerja Pegawai",
-    n: parseInt(document.getElementById("input-responden")?.value || "55", 10)
+    populasi: populasi,
+    n: nFromPopulasi || parseInt(document.getElementById("input-responden")?.value || "55", 10),
+    data_source: (typeof smartplsState !== "undefined" && smartplsState.source) || "generated",
+    analysis_engine: "internal"
   };
 }
 
@@ -883,25 +1274,48 @@ async function autoDetectFromTitle(showStatus = true) {
   }
 }
 
+let _ontologyReqSeq = 0;
+const _TEKS_TOMBOL_ONTOLOGI = "🔍 Telusuri Dimensi & Indikator via Live Academic API";
+
 async function handleResearchOntology(showLoading = true) {
   const btn = document.getElementById("btn-research-ontology");
   const badge = document.getElementById("badge-ontology-status");
-  const previewBox = document.getElementById("ontology-preview-box");
   if (!btn) return;
 
   const config = getConfig();
-  if (!config.x1 || !config.y) return;
+  if (!config.x1 || !config.y) {
+    setStatus("error", "Isi Variabel Terikat (Y) dan minimal X1 sebelum menelusuri dimensi & indikator.");
+    return;
+  }
+
+  // Satu riset pada satu waktu. Auto-trigger (showLoading=false) tidak boleh
+  // menumpuk; klik manual SELALU dilayani dengan membatalkan riset lama.
+  if (window.__ontologyInFlight) {
+    if (!showLoading) return;
+    try { window.__ontologyCtrl && window.__ontologyCtrl.abort(); } catch (e) {}
+    window.__ontologyInFlight = false;
+  }
+  window.__ontologyInFlight = true;
+  const seq = ++_ontologyReqSeq;
 
   if (showLoading) {
     btn.disabled = true;
     btn.textContent = "⏳ Meriset Dimensi & Indikator via Live Academic API...";
-    if (badge) badge.textContent = "Sedang Meriset...";
   }
+  if (badge) badge.textContent = "Sedang Meriset...";
+  setStatus("working", "Menelusuri dimensi & indikator via Live Academic API...");
+
+  // Batas waktu 4 menit: bila server tidak menjawab, tombol TIDAK boleh
+  // terkunci selamanya (penyebab tombol terasa tidak bisa diklik).
+  const ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+  window.__ontologyCtrl = ctrl;
+  const timer = ctrl ? setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, 240000) : null;
 
   try {
     const response = await fetch(`${API_BASE}/research-ontology`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: ctrl ? ctrl.signal : undefined,
       body: JSON.stringify({
         x1: config.x1,
         x2: config.x2,
@@ -913,23 +1327,59 @@ async function handleResearchOntology(showLoading = true) {
       })
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      if (data.status === "success" && data.ontology) {
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    if (seq !== _ontologyReqSeq) return; // hasil dari permintaan lama -> abaikan
+
+    if (data.status === "success" && data.ontology) {
+      window._autotesisOntology = data.ontology;
+      try {
         renderOntologyPreview(data.ontology);
-        if (badge) {
-          badge.textContent = `✅ Terkunci (${data.ontology.metadata.total_indikator} Indikator Likert)`;
+      } catch (eRender) {
+        console.warn("Gagal merender pratinjau ontologi:", eRender);
+      }
+      const nr = (data.ontology.metadata && data.ontology.metadata.needs_review) || [];
+      if (badge) {
+        if (nr.length) {
+          badge.textContent = `⚠️ Belum lengkap: ${nr.join(', ')}`;
+          badge.style.background = "#fef3c7";
+          badge.style.color = "#b45309";
+          setStatus("error", "Ontologi belum lengkap untuk: " + nr.join(', ') +
+            ". Variabel ini belum punya indikator; Bab III–V diblokir sampai dilengkapi.");
+        } else {
+          const _teo = data.ontology.metadata.total_indikator_teoretis || '-';
+          badge.textContent = `✅ Siap (${data.ontology.metadata.total_indikator} indikator operasional; ${_teo} teoretis)`;
           badge.style.background = "#bbf7d0";
           badge.style.color = "#15803d";
+          setStatus("ready", "Dimensi & indikator berhasil ditelusuri dan siap dipakai.");
         }
       }
+    } else {
+      throw new Error(data.message || "respons tidak dikenali");
     }
   } catch (err) {
+    if (seq === _ontologyReqSeq) {
+      const pesan = (err && err.name === "AbortError")
+        ? "Riset dimensi melebihi batas waktu 4 menit. Silakan coba lagi."
+        : ("Riset dimensi gagal: " + (err && err.message ? err.message : String(err)));
+      if (badge) {
+        badge.textContent = "⚠️ Gagal";
+        badge.style.background = "#fee2e2";
+        badge.style.color = "#b91c1c";
+      }
+      setStatus("error", pesan);
+    }
     console.warn("Ontology research error:", err);
   } finally {
-    if (showLoading) {
+    if (timer) clearTimeout(timer);
+    if (seq === _ontologyReqSeq) {
+      window.__ontologyInFlight = false;
+      window.__ontologyCtrl = null;
+      // SELALU pulihkan tombol, termasuk saat showLoading=false atau request gagal.
       btn.disabled = false;
-      btn.textContent = "🔍 Telusuri Dimensi & Indikator via Live Academic API";
+      btn.textContent = _TEKS_TOMBOL_ONTOLOGI;
     }
   }
 }
@@ -1012,31 +1462,88 @@ function renderOntologyPreview(onto) {
   box.style.display = "block";
   const vars = onto.variables;
   const anchors = onto.phenomenon_anchors;
+  const nr = (onto.metadata && onto.metadata.needs_review) || [];
+  const complete = nr.length === 0;
+  const dimsText = (v) => {
+    const ds = (v && v.dimensi) || [];
+    if (!ds.length) {
+      return '<span style="color: #b45309;">⚠️ belum ada indikator</span>';
+    }
+    return '• ' + ds.map(d => {
+      const op = (d.indikator_operasional || d.indikator || []).length;
+      const teo = (d.indikator_teoretis || []).length;
+      return `${d.nama} (${op} operasional / ${teo} teoretis)`;
+    }).join(', ');
+  };
+  const indCount = (v) => ((v && v.dimensi) || [])
+    .reduce((a, d) => a + ((d.indikator || []).length), 0);
+  const teoCount = (v) => ((v && v.dimensi) || [])
+    .reduce((a, d) => a + ((d.indikator_teoretis || []).length), 0);
+  const selectionLine = (v) => {
+    const s = v && v.dimension_selection;
+    if (!s) return '';
+    const buang = (s.tidak_dipakai || []).length;
+    return `• Seleksi dimensi: ${s.dipilih_total}/${s.sumber_total} dipakai` +
+      (buang ? `, ${buang} tidak dipakai (tercatat).` : ', tidak ada yang dibuang.');
+  };
+  const selectionDetails = () => {
+    const rows = [];
+    ['x1', 'x2', 'm', 'y'].forEach(k => {
+      const v = vars[k] || {};
+      const s = v.dimension_selection;
+      if (!s || !(s.tidak_dipakai || []).length) {
+        if (v.nama_resmi) {
+          rows.push(`<div style="margin-top: 3px;"><strong>${k.toUpperCase()} ${v.nama_resmi}:</strong> ${selectionLine(v) || 'seluruh dimensi sumber dipakai.'}</div>`);
+        }
+        return;
+      }
+      const dibuang = s.tidak_dipakai.map(x => `“${x.nama}” (${x.alasan})`).join('; ');
+      rows.push(`<div style="margin-top: 3px;"><strong>${k.toUpperCase()} ${v.nama_resmi}:</strong> ${selectionLine(v)}<br><span style="color:#7c2d12;">Tidak dipakai: ${dibuang}</span></div>`);
+    });
+    return rows.join('');
+  };
 
   let html = `
-    <div style="font-weight: bold; color: #15803d; margin-bottom: 6px; font-size: 11px;">
-      📌 Blueprint Ontologi Terverifikasi (${onto.metadata.total_indikator} Indikator):
+    <div style="font-weight: bold; color: ${complete ? '#15803d' : '#b45309'}; margin-bottom: 6px; font-size: 11px;">
+      ${complete
+        ? `📌 Blueprint Ontologi Siap Pakai (${onto.metadata.total_indikator} Indikator Operasional):`
+        : `⚠️ Ontologi BELUM LENGKAP — ${nr.join(', ')} belum berindikator:`}
+    </div>
+    <div style="font-size: 9px; color: #64748b; margin-bottom: 6px;">
+      Dimensi: sumber/teori terverifikasi. Indikator: dikembangkan dari dimensi dan konteks objek (2–4 per dimensi).
     </div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
       <div style="padding: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
         <div style="font-weight: 700; color: #0284c7;">X1: ${vars.x1.nama_resmi}</div>
         <div style="color: #64748b; font-size: 10px;">Ahli: ${vars.x1.tokoh_ahli}</div>
-        <div style="color: #334155; font-size: 10px; margin-top: 2px;">• ${vars.x1.dimensi.map(d => d.nama).join(', ')}</div>
+        <div style="color: #334155; font-size: 10px; margin-top: 2px;">${dimsText(vars.x1)}</div>
+        <div style="color: #0f766e; font-size: 9px; margin-top: 2px;">Operasional: ${indCount(vars.x1)}; Teoretis: ${teoCount(vars.x1)} butir</div>
       </div>
       <div style="padding: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
         <div style="font-weight: 700; color: #0284c7;">X2: ${vars.x2.nama_resmi}</div>
         <div style="color: #64748b; font-size: 10px;">Ahli: ${vars.x2.tokoh_ahli}</div>
-        <div style="color: #334155; font-size: 10px; margin-top: 2px;">• ${vars.x2.dimensi.map(d => d.nama).join(', ')}</div>
+        <div style="color: #334155; font-size: 10px; margin-top: 2px;">${dimsText(vars.x2)}</div>
+        <div style="color: #0f766e; font-size: 9px; margin-top: 2px;">Operasional: ${indCount(vars.x2)}; Teoretis: ${teoCount(vars.x2)} butir</div>
       </div>
       <div style="padding: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
         <div style="font-weight: 700; color: #d97706;">M: ${vars.m.nama_resmi} (Mediasi)</div>
         <div style="color: #64748b; font-size: 10px;">Ahli: ${vars.m.tokoh_ahli}</div>
-        <div style="color: #334155; font-size: 10px; margin-top: 2px;">• ${vars.m.dimensi.map(d => d.nama).join(', ')}</div>
+        <div style="color: #334155; font-size: 10px; margin-top: 2px;">${dimsText(vars.m)}</div>
+        <div style="color: #0f766e; font-size: 9px; margin-top: 2px;">Operasional: ${indCount(vars.m)}; Teoretis: ${teoCount(vars.m)} butir</div>
       </div>
       <div style="padding: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
         <div style="font-weight: 700; color: #16a34a;">Y: ${vars.y.nama_resmi} (Terikat)</div>
         <div style="color: #64748b; font-size: 10px;">Ahli: ${vars.y.tokoh_ahli}</div>
-        <div style="color: #334155; font-size: 10px; margin-top: 2px;">• ${vars.y.dimensi.map(d => d.nama).join(', ')}</div>
+        <div style="color: #334155; font-size: 10px; margin-top: 2px;">${dimsText(vars.y)}</div>
+        <div style="color: #0f766e; font-size: 9px; margin-top: 2px;">Operasional: ${indCount(vars.y)}; Teoretis: ${teoCount(vars.y)} butir</div>
+      </div>
+    </div>
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px; border-radius: 4px; font-size: 10px; line-height: 1.5; color: #334155; margin-bottom: 8px;">
+      <strong>🔎 Seleksi Dimensi Otomatis (transparan):</strong>
+      ${selectionDetails()}
+      <div style="margin-top: 4px; color: #475569;">
+        Bab II memakai <strong>indikator teoretis</strong> (generik, tanpa nama/objek/sektor penelitian).
+        Bab III/IV/Lampiran memakai <strong>indikator operasional</strong> (spesifik konteks objek).
       </div>
     </div>
     <div style="background: #f1f5f9; padding: 6px; border-radius: 4px; font-size: 10px; line-height: 1.5; color: #334155;">
@@ -1071,7 +1578,9 @@ function loadSavedConfig() {
     if (config.x2) document.getElementById("input-x2").value = config.x2;
     if (config.m) document.getElementById("input-m").value = config.m;
     if (config.y) document.getElementById("input-y").value = config.y;
+    if (config.populasi) document.getElementById("input-populasi").value = config.populasi;
     if (config.n) document.getElementById("input-responden").value = config.n;
+    refreshSampelPreview();
     
     updateHypothesesPreview(config.x1, config.x2, config.m, config.y, config.instansi);
   } catch (e) {
@@ -1192,50 +1701,384 @@ async function handleChapterGeneration(action, btn) {
   }
 }
 
-// Generate SmartPLS dataset and calculations
-async function handleSmartPLSData() {
-  const config = getConfig();
-  const btn = document.getElementById("btn-generate-data");
-  btn.disabled = true;
-  setStatus("working", "Mensimulasikan dataset & evaluasi kriteria Hair et al...");
-  setProgress(50);
+// =========================================================================
+// Wizard Olah Data SmartPLS: (1) Kuesioner -> (2) Generate/Unggah Jawaban
+// -> (3) "Olah Data Sekarang"
+// =========================================================================
+// =========================================================================
+// Gerbang data Bab IV: pastikan peneliti memilih sumber data jawaban
+// (unggah Excel/CSV sendiri atau dibuatkan sistem) di Tab 3. SmartPLS.
+// =========================================================================
+async function refreshDataGate(force) {
+  const gate = document.getElementById("bab4-data-gate");
+  const ok = document.getElementById("bab4-data-ok");
+  if (!gate || !ok) return dataGateState.last;
+
+  const now = Date.now();
+  if (!force && dataGateState.diperiksa && (now - dataGateState.diperiksa) < 15000) {
+    return dataGateState.last;
+  }
+  dataGateState.diperiksa = now;
 
   try {
-    const response = await fetch(`${API_BASE}/simulate-smartpls`, {
+    const response = await fetch(`${API_BASE}/pipeline/data-status`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(config)
+      body: JSON.stringify({ config: getConfig() })
     });
+    const st = await response.json();
+    dataGateState.last = st;
+    if (!st || st.status !== "success") return st;
 
-    if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+    const warn = document.getElementById("bab4-data-warn");
+    if (st.siap_bab4) {
+      gate.classList.add("hidden");
+      gate.classList.remove("data-gate-alert");
+      if (warn) warn.classList.add("hidden");
+      const sumber = st.label_sumber || (
+        st.sumber === "google_form" ? "Data primer (respons Google Form)" :
+        st.sumber === "upload" ? "Data unggahan" :
+        "Data hasil pembangkitan mesin");
+      const asal = st.origin_label ? ` (${st.origin_label})` : "";
+      ok.innerHTML = `✅ ${sumber}${asal} siap: N=${st.n}, sudah diolah — angka Bab IV/V memakai data ini. `
+        + `<a href="#" class="data-gate-link" data-buka-smartpls="1">Tab 3. Analisis PLS-SEM →</a>`;
+      ok.classList.remove("hidden");
+      ok.querySelector("[data-buka-smartpls]")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        bukaTabSmartpls();
+      });
+    } else {
+      ok.classList.add("hidden");
+      gate.classList.remove("hidden");
+      if (warn && st.ada_data && !st.sudah_diolah) {
+        warn.classList.remove("hidden");
+        warn.innerHTML = `⚠️ Data sudah disiapkan (N=${st.n}), tetapi belum diolah. `
+          + `Klik <strong>Olah Data Sekarang</strong> di `
+          + `<a href="#" class="data-gate-link" data-buka-smartpls="2">Tab 3. Analisis PLS-SEM →</a> `
+          + `sebelum menyusun Bab IV/V.`;
+        warn.querySelector("[data-buka-smartpls]")?.addEventListener("click", (e) => {
+          e.preventDefault();
+          bukaTabSmartpls();
+        });
+      }
+    }
+    return st;
+  } catch (err) {
+    console.error(err);
+    return dataGateState.last;
+  }
+}
+
+function bufToBase64(buf) {
+  const bytes = new Uint8Array(buf);
+  let bin = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(bin);
+}
+
+function bukaTabSmartpls() {
+  document.querySelector('.tab-btn[data-tab="smartpls"]')?.click();
+  const step = document.getElementById("wizard-step-2");
+  if (!step) return;
+  setTimeout(() => {
+    try { step.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) { step.scrollIntoView(); }
+    step.classList.add("flash");
+    setTimeout(() => step.classList.remove("flash"), 2300);
+  }, 130);
+}
+
+/**
+ * Periksa data sebelum menulis Bab IV/V.
+ * Kembalikan true HANYA bila data sudah diolah. Tidak ada klik kedua untuk
+ * memaksa; server juga menolak sub-bab Bab IV/V tanpa analisis.
+ */
+async function pastikanDataJawaban(kunci, aksi) {
+  const st = await refreshDataGate(true);
+  if (st && st.siap_bab4) return true;
+
+  const gate = document.getElementById("bab4-data-gate");
+  const warn = document.getElementById("bab4-data-warn");
+  if (gate) {
+    gate.classList.remove("hidden");
+    gate.classList.add("data-gate-alert");
+    try { gate.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) { gate.scrollIntoView(); }
+  }
+  if (warn) {
+    warn.classList.remove("hidden");
+    const belumOlah = st && st.ada_data && !st.sudah_diolah;
+    warn.innerHTML = belumOlah
+      ? `⚠️ Data sudah ada (N=${st.n}), tetapi belum diolah. Jalankan `
+        + `<strong>Olah Data Sekarang</strong> di `
+        + `<a href="#" class="data-gate-link" data-buka-smartpls="2">Tab 3. Analisis PLS-SEM →</a> `
+        + `sebelum menyusun Bab IV/V.`
+      : `⚠️ Data belum siap. Siapkan data di `
+        + `<a href="#" class="data-gate-link" data-buka-smartpls="2">Tab 3. Analisis PLS-SEM →</a> `
+        + `(impor respons Google Form/berkas, atau data hasil pembangkitan mesin), `
+        + `lalu klik <strong>Olah Data Sekarang</strong>.`;
+    warn.querySelector("[data-buka-smartpls]")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      bukaTabSmartpls();
+    });
+  }
+  setStatus("error", `Bab IV/V belum bisa disusun: ${aksi} memerlukan data yang sudah diolah.`);
+  return false;
+}
+
+function setSmartplsSource(source, originLabel) {
+  smartplsState.source = source;
+  try { localStorage.setItem("autothesis_data_source", source); } catch (e) {}
+  const note = document.getElementById("smartpls-src-note");
+  if (!note) return;
+  const label = source === "google_form"
+    ? "Data primer (respons Google Form)"
+    : source === "upload"
+      ? "Data unggahan"
+      : "Data hasil pembangkitan mesin";
+  const asal = originLabel ? ` — ${originLabel}` : "";
+  note.textContent = `Sumber data terpilih: ${label}${asal}. Lanjutkan ke langkah 3 “Olah Data Sekarang”.`;
+  note.classList.remove("hidden");
+}
+
+function isGoogleSheetLink(url) {
+  try {
+    const u = new URL(url);
+    const host = (u.hostname || "").toLowerCase();
+    const google = host === "docs.google.com" || host === "spreadsheets.google.com"
+      || host.endsWith(".docs.google.com");
+    return google && u.pathname.includes("/spreadsheets/");
+  } catch (e) {
+    return false;
+  }
+}
+
+// Langkah 2: link Google Sheets, unggah berkas, atau data hasil pembangkitan mesin
+async function handleGenerateRespondents(mode) {
+  const config = getConfig();
+  const buttonIds = ["btn-generate-data", "btn-upload-data", "btn-import-sheet"];
+  const btnId = mode === "sheet" ? "btn-import-sheet"
+    : mode === "upload" ? "btn-upload-data" : "btn-generate-data";
+  const btn = document.getElementById(btnId);
+  const box = document.getElementById("smartpls-download-box");
+  const dlLink = document.getElementById("link-download-excel");
+
+  const payload = { config, analysis_engine: "internal" };
+  let workingMsg = "";
+
+  if (mode === "sheet") {
+    const url = (document.getElementById("input-sheet-url")?.value || "").trim();
+    if (!url) {
+      setStatus("error", "Tempel link Spreadsheet respons Google Form terlebih dahulu.");
+      return;
+    }
+    if (!isGoogleSheetLink(url)) {
+      setStatus("error", "Itu bukan link Google Sheets. Salin link Spreadsheet respons (bukan link Form).");
+      return;
+    }
+    const konfirmasi = document.getElementById("input-konfirmasi-gform");
+    if (!konfirmasi || !konfirmasi.checked) {
+      setStatus("error", "Centang pernyataan bahwa Spreadsheet berisi respons Google Form responden nyata.");
+      return;
+    }
+    payload.mode = "upload";
+    payload.data_source = "google_form";
+    payload.konfirmasi_google_form = true;
+    payload.upload = { sheet_url: url };
+    workingMsg = "Membaca respons terbaru langsung dari Google Sheets...";
+  } else if (mode === "upload") {
+    const fileInput = document.getElementById("input-upload-jawaban");
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file) { setStatus("error", "Pilih berkas .xlsx atau .csv data jawaban terlebih dahulu."); return; }
+    payload.mode = "upload";
+    payload.data_source = document.getElementById("input-sumber-upload")?.value || "google_form";
+    const nama = (file.name || "").toLowerCase();
+    try {
+      if (nama.endsWith(".xlsx") || nama.endsWith(".xls")) {
+        const buf = await file.arrayBuffer();
+        payload.upload = { xlsx_b64: bufToBase64(buf), filename: file.name };
+      } else {
+        payload.upload = { csv_text: await file.text(), filename: file.name };
+      }
+    } catch (e) { setStatus("error", `Gagal membaca berkas: ${e.message}`); return; }
+    workingMsg = "Membaca & memvalidasi berkas respons...";
+  } else {
+    payload.mode = "generated";
+    payload.data_source = "generated";
+    workingMsg = "Membangkitkan data hasil pembangkitan mesin dari butir kuesioner nyata...";
+  }
+
+  buttonIds.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = true;
+  });
+  setStatus("working", workingMsg);
+  setProgress(mode === "generated" ? 25 : 40);
+
+  try {
+    const response = await fetch(`${API_BASE}/pipeline/generate-respondents`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
     const data = await response.json();
-    setProgress(100);
-
-    const preview = document.getElementById("smartpls-preview");
-    if (preview) preview.classList.remove("hidden");
-
-    const dlBox = document.getElementById("smartpls-download-box");
-    const dlLink = document.getElementById("link-download-excel");
-    if (dlBox && dlLink && data.excel_file) {
-      dlBox.classList.remove("hidden");
-      dlLink.href = `${API_BASE}/download/${data.excel_file}`;
-      dlLink.textContent = `📥 Unduh Excel: ${data.excel_file}`;
+    if (!response.ok || data.status !== "success") {
+      throw new Error(data.message || `HTTP Error ${response.status}`);
+    }
+    setProgress(70);
+    setSmartplsSource(data.source, data.origin_label);
+    smartplsState.dataFile = data.data_file;
+    if (box && dlLink && data.data_file) {
+      box.classList.remove("hidden");
+      dlLink.href = `${API_BASE}/download/${data.data_file}`;
+      dlLink.textContent = `📥 Unduh Data: ${data.data_file}`;
     }
 
-    setStatus("ready", "Data SmartPLS 100% Lolos Uji & File Excel siap diunduh!");
+    let detail = "";
+    if (data.source === "generated") {
+      detail = `Berhasil membangkitkan ${data.n} × ${data.total_butir} butir data hasil pembangkitan mesin.`;
+    } else {
+      const asal = data.origin_label ? ` dari ${data.origin_label}` : "";
+      detail = `Respons terbaca${asal}: N=${data.n}, ${data.total_butir} butir. `
+        + (data.warnings || []).join(" ");
+    }
+    setStatus("ready", `${detail} Klik “Olah Data Sekarang”.`);
+    refreshDataGate(true);
+  } catch (error) {
+    console.error(error);
+    setStatus("error", `Gagal menyiapkan data jawaban: ${error.message}`);
+  } finally {
+    setTimeout(() => setProgress(0), 800);
+    buttonIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = false;
+    });
+  }
+}
+
+// Langkah 3: hitung PLS-SEM penuh atas data jawaban terpilih
+async function handleOlahData() {
+  const config = getConfig();
+  const btn = document.getElementById("btn-olah-data");
+  if (btn) btn.disabled = true;
+  setStatus("working", "Menghitung PLS-SEM (algorithm + bootstrap 5.000) dan menguji H1–H7...");
+  setProgress(30);
+
+  try {
+    const response = await fetch(`${API_BASE}/pipeline/olah-data`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ config, bootstrap: 5000 })
+    });
+    const data = await response.json();
+    if (!response.ok || data.status !== "success") {
+      throw new Error(data.message || `HTTP Error ${response.status}`);
+    }
+    setProgress(100);
+
+    const box = document.getElementById("smartpls-download-box");
+    const dlLink = document.getElementById("link-download-excel");
+    const guideLink = document.getElementById("link-download-panduan");
+    if (box && data.data_file) {
+      box.classList.remove("hidden");
+      if (dlLink) {
+        dlLink.href = `${API_BASE}/download/${data.data_file}`;
+        dlLink.textContent = `📥 Unduh Data: ${data.data_file}`;
+      }
+      if (guideLink) {
+        if (data.guide_file) {
+          guideLink.classList.remove("hidden");
+          guideLink.href = `${API_BASE}/download/${data.guide_file}`;
+          guideLink.textContent = "📄 Unduh Panduan Olah Data SmartPLS 4";
+        } else {
+          guideLink.classList.add("hidden");
+        }
+      }
+    }
+
+    renderSmartplsSummary(data.summary);
+    const mesin = data.analysis_engine === "smartpls" ? "SmartPLS 4" : "mesin internal";
+    const asal = data.origin_label ? ` — ${data.origin_label}` : "";
+    setStatus("ready", `Olah data selesai (${data.label_sumber || data.source}${asal}; ${mesin}). Angka Bab IV/V kini memakai hasil ini.`);
+    refreshDataGate(true);
   } catch (error) {
     console.error(error);
     setStatus("error", `Gagal olah data: ${error.message}`);
   } finally {
     setTimeout(() => setProgress(0), 1000);
-    btn.disabled = false;
+    if (btn) btn.disabled = false;
   }
+}
+
+function fmtNum(n, d) {
+  d = (d === undefined) ? 3 : d;
+  return (n === null || n === undefined || isNaN(n)) ? "-" : Number(n).toFixed(d).replace(".", ",");
+}
+
+function renderSmartplsSummary(s) {
+  const preview = document.getElementById("smartpls-preview");
+  const grid = document.getElementById("smartpls-metrics");
+  const statusEl = document.getElementById("smartpls-status");
+  if (!preview || !grid || !s) return;
+  const minOf = (o) => { const v = Object.values(o || {}); return v.length ? Math.min.apply(null, v) : 0; };
+  const aveMin = minOf(s.ave), crMin = minOf(s.cr);
+  const r2 = s.r2 || {}, q2 = s.q2 || {};
+  const cards = [
+    ["Outer Loading", `${fmtNum(s.loading_min)} – ${fmtNum(s.loading_max)}`, s.loading_min >= 0.70],
+    ["AVE (min)", fmtNum(aveMin), aveMin > 0.50],
+    ["CR (min)", fmtNum(crMin), crMin > 0.70],
+    ["HTMT (maks)", fmtNum(s.htmt_max), s.htmt_max < 0.90],
+    ["VIF (maks)", fmtNum(s.vif_max, 2), s.vif_max < 5],
+    ["R² (M / Y)", `${fmtNum(r2.M)} / ${fmtNum(r2.Y)}`, true],
+    ["Q² (M / Y)", `${fmtNum(q2.M)} / ${fmtNum(q2.Y)}`, (q2.M > 0 && q2.Y > 0)],
+    ["SRMR", fmtNum(s.srmr), (s.srmr || 1) < 0.10]
+  ];
+  grid.innerHTML = cards.map(function (c) {
+    return `<div class="metric-card"><span class="label">${c[0]}</span>` +
+           `<span class="value ${c[2] ? "valid" : ""}">${c[1]} ${c[2] ? "✓" : "!"}</span></div>`;
+  }).join("");
+  const nPath = (s.paths || []).length, nInd = (s.indirect || []).length;
+  statusEl.innerHTML = s.all_significant
+    ? `Status Uji: <strong>Semua jalur signifikan (${nPath} langsung + ${nInd} mediasi; |t| &gt; 1,96; p &lt; 0,05)</strong>`
+    : "Status Uji: <strong>Ada jalur yang belum signifikan — periksa kembali data.</strong>";
+  preview.classList.remove("hidden");
+}
+
+// Copy helper: clipboard API dengan fallback execCommand (Office webview / browser sandbox)
+function _copyFallback(text) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-1000px";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return !!ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text)
+      .then(function () { return true; }, function () { return _copyFallback(text); });
+  }
+  return Promise.resolve(_copyFallback(text));
 }
 
 // Generate Google Apps Script for Google Form
 async function handleGoogleFormScript() {
   const config = getConfig();
-  setStatus("working", "Membuat kode Google Apps Script...");
+  const btn = document.getElementById("btn-generate-gform");
+  if (btn) btn.disabled = true;
+  setStatus("working", "Membuat kode Google Apps Script dari butir kuesioner nyata...");
   try {
     const response = await fetch(`${API_BASE}/generate-gform-script`, {
       method: "POST",
@@ -1243,11 +2086,32 @@ async function handleGoogleFormScript() {
       body: JSON.stringify(config)
     });
     const data = await response.json();
-    await navigator.clipboard.writeText(data.script);
-    setStatus("ready", "Script Google Form disalin ke Clipboard! Tempel di script.google.com");
-    alert("Script Google Form otomatis berhasil disalin ke Clipboard!\n\nCara pakai:\n1. Buka script.google.com\n2. Buat proyek baru lalu Paste (Ctrl+V) kode ini.\n3. Klik Run/Jalankan, kuesioner akan otomatis terbentuk di Google Drive Anda!");
+    if (!response.ok || !data.script) {
+      throw new Error(data.message || `HTTP Error ${response.status}`);
+    }
+
+    smartplsGformScript = data.script;
+    const copied = await copyToClipboard(data.script);
+
+    const box = document.getElementById("gform-result");
+    const okEl = document.getElementById("gform-ok");
+    const ta = document.getElementById("gform-script");
+    if (ta) ta.value = data.script;
+    if (box) box.classList.remove("hidden");
+    const n = data.total_butir || 0;
+    if (okEl) {
+      okEl.textContent = (copied
+        ? "✅ Skrip berhasil disalin ke clipboard. "
+        : "⚠️ Salin otomatis diblokir — klik “Salin Ulang Skrip” di bawah. ")
+        + `Skrip memuat ${n} butir kuesioner NYATA judul terpilih (kode butir sama dengan kisi-kisi Bab III & Lampiran). `
+        + "Setelah Run, Spreadsheet respons tercatat di Execution log; bagikan sebagai Pelihat lalu impor link-nya di Langkah 2.";
+    }
+    setStatus("ready", "Skrip Google Form + Spreadsheet siap. Run di script.google.com, lalu salin link Spreadsheet respons ke Langkah 2.");
   } catch (error) {
+    console.error(error);
     setStatus("error", `Gagal buat script: ${error.message}`);
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -1266,8 +2130,10 @@ async function handleFullDocumentGeneration() {
       body: JSON.stringify(config)
     });
 
-    if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
     const result = await response.json();
+    if (!response.ok || result.status === "error") {
+      throw new Error(result.message || `HTTP Error ${response.status}`);
+    }
     setProgress(100);
 
     let inserted = false;

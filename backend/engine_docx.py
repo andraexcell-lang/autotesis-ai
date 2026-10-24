@@ -807,5 +807,13 @@ def build_full_thesis_docx(config, metrics, output_path):
         p_ref = doc.add_paragraph()
         format_academic_paragraph(p_ref, ref, hanging=0.5, space_after=6)
 
+    # Seragamkan tampilan tabel (header biru + Paskan Konten/Jendela + isi rata kiri)
+    try:
+        from build_full_thesis_docx import rapikan_tabel_dokumen
+        n_tabel = rapikan_tabel_dokumen(doc)
+        print(f"[engine_docx] tabel dirapikan: {n_tabel}")
+    except Exception as ex:
+        print(f"[engine_docx] perapi tabel dilewati: {ex}")
+
     doc.save(output_path)
     return output_path

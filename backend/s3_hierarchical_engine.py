@@ -44,6 +44,8 @@ from docx import Document
 from docx.shared import Inches, Pt, RGBColor, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
 from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.oxml import parse_xml
+from docx.oxml.ns import nsdecls
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 if CURRENT_DIR not in sys.path:
@@ -91,7 +93,7 @@ S3_SUBCHAPTER_CATALOG = {
     "sub_1_4": {
         "chapter": 1, "code": "D",
         "title": "D. Manfaat Penelitian",
-        "desc": "Kontribusi teoretis pengembangan grand theory dan novelty keilmuan serta manfaat praktis rekomendasi strategis bagi instansi objek penelitian."
+        "desc": "Kontribusi teoretis pengembangan keilmuan dan novelty model doktoral hibrida terpadu (Agency Theory, RBV, Contingency, Stewardship) serta manfaat praktis rekomendasi strategis bagi pimpinan daerah, APIP/auditor, dan masyarakat luas."
     },
 
     # Bab II: Tinjauan Pustaka & Hipotesis (Struktur Acuan TAPD 2026)
@@ -143,7 +145,7 @@ S3_SUBCHAPTER_CATALOG = {
     "sub_2_4": {
         "chapter": 2, "code": "D",
         "title": "D. Hipotesis Penelitian",
-        "desc": "Formulasi deduktif seluruh hipotesis formal doktoral berarah (H1 s.d Hn) yang selaras 1-ke-1 dengan Rumusan Masalah dan Tujuan Penelitian."
+        "desc": "Paragraf pengantar deduktif ilmiah, formulasi hipotesis formal berarah (H1 s.d Hn) dalam format tabel borderless 3 kolom baku TAPD 2026 yang selaras 1-ke-1 dengan Rumusan Masalah dan Tujuan Penelitian, serta narasi penutup metodologis pengujian PLS-SEM SmartPLS 4 (bootstrapping 5.000 subsampel)."
     },
 
     # Bab III: Metode Penelitian
@@ -558,6 +560,30 @@ ATURAN STRUKTUR & LARANGAN FORMAT:
 - Setiap butir tujuan penelitian WAJIB bernomor sekuensial kontinu (1 s.d {len(hypos)}) dan selaras 1-ke-1 dengan Rumusan Masalah serta Hipotesis Penelitian.
 - Gunakan formula baku doktoral: "Untuk menganalisis dan membuktikan pengaruh/peran..."
 """
+    elif sub_id == "sub_1_4":
+        model_acronym = _generate_doctoral_model_acronym(ctx)
+        instruksi_khusus = f"""
+=== PETUNJUK SPESIFIK WAJIB SUB-BAB D: MANFAAT PENELITIAN (BAB I) ===
+Judul Sub-bab WAJIB ditulis persis: D. Manfaat Penelitian
+SUB-BAB INDUK: D. MANFAAT PENELITIAN (Format Baku TAPD 2026 Disertasi Doktor S3).
+
+ATURAN STRUKTURAL & METODOLOGIS MUTLAK:
+1. ATURAN PANJANG PARAGRAF: SETIAP PARAGRAF NARATIF TIDAK BOLEH KURANG DARI 4 BARIS TEKS UTUH (minimal 4–6 kalimat analitis substantif mendalam atau 70–100 kata per paragraf). DILARANG KERAS membuat paragraf pendek (1, 2, atau 3 baris teks)!
+2. KEHARUSAN SITASI DI SETIAP PARAGRAF: Seluruh paragraf naratif dan uraian poin manfaat WAJIB memuat kutipan ilmiah (nama pakar dan tahun terbit mutakhir 2022-2026 atau teori klasik yang disitasi dalam literatur mutakhir, misal: Sekaran & Bougie, 2020; Creswell & Creswell, 2023; Cooper & Schindler, 2022; Snyder, 2019; Hitt et al., 2023; Yukl, 2022; Robbins & Judge, 2022; Daft, 2022; Santoso et al., 2026).
+3. STRUKTUR SISTEMATIKA PENULISAN SUB-BAB D:
+   Naskah WAJIB dibagi menjadi 2 dimensi kemanfaatan utama sesuai standar TAPD 2026:
+   a. Paragraf Pengantar Sub-Bab D (>= 4 baris teks utuh, bersitasi):
+      Menjelaskan bahwa penelitian doktoral ini memberikan kontribusi ganda yang seimbang antara kemajuan keilmuan akademis dan perbaikan tata kelola birokrasi pada {instansi}.
+   b. 1. Manfaat Teoretis (Pengembangan Keilmuan & Novelty):
+      - Paragraf pengantar manfaat teoretis (>= 4 baris teks utuh, bersitasi).
+      - Poin a. Melahirkan Model Empiris Baru (Model Doktoral {model_acronym}): Menjelaskan penciptaan model struktural moderated-mediation baru yang mengintegrasikan pilar kapasitas ({x_vars_str}), jembatan mediasi {m_vars_str}, dan moderasi {z_vars_str} terhadap {y_var} (>= 4 baris teks utuh, bersitasi).
+      - Poin b. Pengembangan Teori Multidisiplin: Menyatukan Agency Theory, Resource-Based View (RBV), Contingency Theory, dan Stewardship Theory guna menjawab empirical research gap (>= 4 baris teks utuh, bersitasi).
+   c. 2. Manfaat Praktis (Kebijakan Strategis Organisasi):
+      - Paragraf pengantar manfaat praktis (>= 4 baris teks utuh, bersitasi).
+      - Poin a. Bagi Pemerintah Daerah dan Jajaran Pimpinan {instansi}: Menjadi cetak biru (blueprint) reformasi kebijakan dan intervensi manajerial yang berfokus pada penguatan etika profesi dan ketegasan sanksi (>= 4 baris teks utuh, bersitasi).
+      - Poin b. Bagi Aparat Pengawasan Internal Pemerintah (APIP) dan Unit Evaluasi: Menjadi pedoman audit berbasis risiko perilaku dan budaya organisasi guna memitigasi risiko management override (>= 4 baris teks utuh, bersitasi).
+      - Poin c. Bagi Masyarakat Luas dan Pemangku Kepentingan: Menjamin efisiensi alokasi anggaran, meningkatkan transparansi layanan publik, dan memulihkan public trust (>= 4 baris teks utuh, bersitasi).
+"""
     elif sub_id == "sub_2_1_0":
         model_acronym = _generate_doctoral_model_acronym(ctx)
         instruksi_khusus = f"""
@@ -912,6 +938,37 @@ ATURAN STRUKTURAL & METODOLOGIS MUTLAK:
    c. Legitimasi dan Keteladanan Budaya Organisasi (Tone at the Top): Budaya kerja etis hanya menjadi slogan administratif tanpa keteladanan pimpinan tertinggi.
    Tutup dengan paragraf kesimpulan kontingensi kelembagaan bahwa tata kelola bersifat kondisional pada komitmen pimpinan instansi ({instansi}).
 """
+    elif sub_id == "sub_2_4":
+        model_acronym = _generate_doctoral_model_acronym(ctx)
+        hypos = ctx["graph"]["hypotheses"]
+        daftar_h_str = ""
+        for h in hypos:
+            stmt = h.get("statement", "")
+            if not stmt.lower().startswith("terdapat"):
+                stmt = f"Terdapat {stmt}"
+            daftar_h_str += f"   {h.get('code', 'H')}\t:\t{stmt}\n"
+
+        instruksi_khusus = f"""
+=== PETUNJUK SPESIFIK WAJIB SUB-BAB D: HIPOTESIS PENELITIAN (BAB II) ===
+Judul Sub-bab WAJIB ditulis persis: D. Hipotesis Penelitian
+SUB-BAB INDUK: D. HIPOTESIS PENELITIAN (Format Baku TAPD 2026 Disertasi Doktor S3).
+
+ATURAN STRUKTURAL & METODOLOGIS MUTLAK:
+1. ATURAN PANJANG PARAGRAF: SETIAP PARAGRAF NARATIF TIDAK BOLEH KURANG DARI 4 BARIS TEKS UTUH (minimal 4–6 kalimat analitis substantif mendalam atau 70–100 kata per paragraf). DILARANG KERAS membuat paragraf pendek (1, 2, atau 3 baris teks)!
+2. KEHARUSAN SITASI DI SETIAP PARAGRAF: Paragraf pengantar dan paragraf penutup metodologis WAJIB memuat rujukan ilmiah (misal: Sekaran & Bougie, 2020; Cooper & Schindler, 2022; Creswell & Creswell, 2023; Hair et al., 2022; Hayes, 2022; Santoso et al., 2026).
+3. STRUKTUR SISTEMATIKA PENULISAN SUB-BAB D:
+   Naskah WAJIB disusun dalam 3 Komponen Baku Sesuai Acuan DISERTASI S3.docx:
+   a. Paragraf Pengantar Hipotesis Deduktif (>= 4 baris teks utuh, bersitasi):
+      Menguraikan sintesis tinjauan Grand Theory, penelitian empiris terdahulu, dan kerangka pemikiran di atas yang melandasi perumusan hipotesis operasional model {model_acronym} pada {instansi}. Diakhiri kalimat transisi: "Berdasarkan uraian pada tinjauan teori yang diuraikan sebelumnya dan hasil penelitian terdahulu yang relevan serta kerangka pemikiran di atas, maka hipotesis yang dirumuskan pada penelitian ini adalah sebagai berikut:"
+   b. Tabel Borderless 3 Kolom Formulasi Hipotesis Formal Berarah ({total_h} Hipotesis Formal H1 s.d H{total_h}):
+      Disajikan dalam format tabel 3 kolom tanpa garis bingkai (borderless table):
+      - Kolom 1: Kode Hipotesis (H1, H2, ... H{total_h})
+      - Kolom 2: Simbol Pemisah (:)
+      - Kolom 3: Pernyataan Formal Hipotesis Berarah yang selaras 1-ke-1 secara sekuensial dengan Rumusan Masalah dan Tujuan Penelitian di Bab I.
+{daftar_h_str}
+   c. Paragraf Penutup Metodologis Pengujian PLS-SEM (>= 4 baris teks utuh, bersitasi):
+      Menjelaskan bahwa seluruh {total_h} hipotesis formal berarah diuji secara simultan menggunakan Partial Least Squares Structural Equation Modeling (PLS-SEM) dengan SmartPLS 4, estimasi koefisien jalur path beta, uji signifikansi bootstrapping 5.000 subsampel (t > 1,96 dan p < 0,05), specific indirect effects untuk mediasi, dan interaction effect untuk moderasi (Hair et al., 2022; Hayes, 2022).
+"""
 
     prompt = f"""Anda adalah Guru Besar dan Pakar Metodologi Penelitian Manajemen yang bertindak sebagai Penulis Ahli Disertasi Doktor (S3) Ilmu Manajemen Pascasarjana Indonesia.
 
@@ -1231,21 +1288,38 @@ def _build_doc_sub_1_3(doc: Document, ctx: Dict[str, Any]):
 
 
 def _build_doc_sub_1_4(doc: Document, ctx: Dict[str, Any]):
-    """1.4 Manfaat Penelitian (Teoretis & Praktis)."""
+    """1.4 Manfaat Penelitian (Teoretis & Praktis) sesuai standar TAPD 2026."""
     h2(doc, "D. Manfaat Penelitian")
-    instansi = ctx["instansi"]
+    instansi = ctx.get("instansi", "Instansi Pemerintah")
+    x_vars = ctx.get("x_vars", ["Variabel Bebas 1", "Variabel Bebas 2"])
+    x_vars_str = ", ".join(x_vars)
+    m_list = ctx.get("m_vars", ["Variabel Mediasi"])
+    m = m_list[0] if m_list else "Variabel Mediasi"
+    z_list = ctx.get("z_vars", ["Variabel Moderasi"])
+    z = z_list[0] if z_list else "Variabel Moderasi"
+    y = ctx.get("y_var", "Kinerja Aparatur")
+    model_acronym = _generate_doctoral_model_acronym(ctx)
 
-    p(doc, "Penelitian Disertasi Doktor ini diharapkan mampu memberikan kontribusi dan manfaat substantif, baik secara teoretis-akademis maupun secara praktis-kebijakan:", indent=0.5, space_after=6)
+    # 1. Paragraf Pengantar Sub-Bab D (>= 4 baris teks utuh, bervitasi)
+    p(doc, f"Penelitian Disertasi Doktor ini dirancang secara sistemik guna memberikan kontribusi nyata dan kebaruan substantif yang melampaui riset-riset empiris sebelumnya pada jenjang magister maupun sarjana (Sekaran & Bougie, 2020; Creswell & Creswell, 2023). Hasil dari penelitian ini tidak hanya ditujukan untuk mengonfirmasi keterkaitan statistik semata, melainkan dirancang untuk memberikan sumbangsih ganda yang seimbang, yakni manfaat teoretis dalam pengayaan khazanah keilmuan manajemen publik serta manfaat praktis dalam pemecahan problem tata kelola kelembagaan pada {instansi} (Cooper & Schindler, 2022). Secara terperinci, kedua dimensi kemanfaatan penelitian tersebut diuraikan sebagai berikut:", indent=0.5, space_after=6)
 
-    p(doc, "1. Manfaat Teoretis (Pengembangan Keilmuan & Novelty):", bold=True, indent=0.5, space_after=3)
-    p(doc, f"a. Memberikan kontribusi nyata bagi pengembangan khazanah ilmu manajemen sumber daya manusia dan perilaku keorganisasian, khususnya dalam memperluas validitas ekologis Contingency Theory dan Social Cognitive Theory pada sektor pemerintahan daerah.", indent=0.75, space_after=3)
-    p(doc, f"b. Menghadirkan kebaruan ilmiah (novelty) berupa sintesis model mediasi termoderasi terpadu yang memetakan mekanisme transmisi psikologis dan kondisi batas pengaruh kepemimpinan serta iklim kerja terhadap kinerja.", indent=0.75, space_after=3)
-    p(doc, f"c. Menjadi rujukan akademik mutakhir berstandar doktoral bagi peneliti selanjutnya dalam mengkaji dinamika struktural organisasi publik kontemporer.", indent=0.75, space_after=6)
+    # 2. Manfaat Teoretis
+    p(doc, "1. Manfaat Teoretis (Pengembangan Keilmuan & Novelty)", bold=True, indent=0.5, space_after=3)
+    p(doc, f"Secara keilmuan, penelitian Disertasi Doktor ini diarahkan untuk melahirkan teori substantif dan kebaruan konseptual (novelty) yang signifikan dalam bidang manajemen kinerja sektor publik, perilaku keorganisasian, dan sistem pengendalian intern (Snyder, 2019; Cooper & Schindler, 2022). Kontribusi teoretis ini tidak hanya memperkaya diskursus akademis mengenai efektivitas tata kelola birokrasi di negara berkembang, melainkan juga menjawab secara tuntas perdebatan teoretis mengenai keterbatasan model pengaruh langsung melalui integrasi pendekatan kontingensi (Hitt et al., 2023). Kontribusi teoretis fundamental dari penelitian ini mencakup dua ranah strategis:", indent=0.75, space_after=4)
 
-    p(doc, "2. Manfaat Praktis (Kebijakan Strategis Organisasi):", bold=True, indent=0.5, space_after=3)
-    p(doc, f"a. Bagi Pimpinan {instansi}, hasil riset ini menjadi dasar formulasi kebijakan berbasis bukti (evidence-based policy) dalam mendesain program penguatan kepemimpinan, perbaikan iklim kerja, dan pemeliharaan etos kerja pegawai.", indent=0.75, space_after=3)
-    p(doc, f"b. Bagi Aparatur Pegawai, memberikan pemahaman komprehensif mengenai pentingnya motivasi internal dan etos kerja profesional dalam menunjang capaian kinerja prima.", indent=0.75, space_after=3)
-    p(doc, f"c. Bagi Pemerintah Daerah, menjadi acuan strategis dalam penyusunan peta jalan reformasi birokrasi dan peningkatan akuntabilitas kinerja instansi daerah secara berkelanjutan.", indent=0.75, space_after=6)
+    p(doc, f"a. Melahirkan Model Empiris Baru (Model Doktoral {model_acronym}): Penelitian ini menciptakan sebuah model struktural moderated-mediation baru yang secara holistik mengintegrasikan tiga pilar analitis secara berkesinambungan: pengaruh langsung pilar kapasitas organisasi ({x_vars_str}), peran mediasi {m} sebagai jembatan eksekusi perilaku (behavioral execution bridge), serta peran moderasi {z} sebagai katalisator pelindung ekosistem kerja terhadap ketercapaian {y} (Hair et al., 2022; Hayes, 2022). Kehadiran model hibrida terpadu ini berhasil mematahkan dominasi model linier konvensional yang kerap kali mengabaikan dinamika psikologis aparatur dan relasi kuasa hierarkis di birokrasi pemerintahan (Santoso et al., 2026).", indent=0.75, space_after=4)
+
+    p(doc, f"b. Pengembangan Teori Multidisiplin: Penelitian ini memberikan sumbangsih teoretis komprehensif dengan menyatukan Agency Theory, Resource-Based View (RBV), Contingency Theory, dan Stewardship Theory ke dalam satu kerangka eksplanasi yang kohesif (Jensen & Meckling, 1976, dalam Hitt et al., 2023; Donaldson & Davis, 1991, dalam Yukl, 2022). Model yang dihasilkan memberikan eksplanasi ilmiah baru guna memecahkan inkonsistensi temuan riset terdahulu (empirical research gap) mengenai mengapa instrumen tata kelola sering kali gagal mencegah deviasi dan mendongkrak kinerja apabila tidak dioperasionalkan melalui penghayatan etika profesi dan tidak dibentengi oleh keteladanan pimpinan (tone at the top) (Daft, 2022; Chen et al., 2023).", indent=0.75, space_after=6)
+
+    # 3. Manfaat Praktis
+    p(doc, "2. Manfaat Praktis (Kebijakan Strategis Organisasi)", bold=True, indent=0.5, space_after=3)
+    p(doc, f"Secara praktis, hasil penelitian dan rekomendasi model yang ditemukan diharapkan dapat diaplikasikan secara langsung oleh para pengambil keputusan, jajaran pimpinan, dan pemangku kepentingan strategis birokrasi guna mereformasi tata kelola kinerja publik secara berkesinambungan (Robbins & Judge, 2022; Daft, 2022). Temuan empiris disertasi ini menyediakan panduan operasional yang dapat diterjemahkan ke dalam kebijakan teknis organisasi, yang terdistribusi ke dalam tiga tingkatan aplikatif sebagai berikut:", indent=0.75, space_after=4)
+
+    p(doc, f"a. Bagi Pemerintah Daerah dan Jajaran Pimpinan {instansi}: Model penelitian ini dapat diimplementasikan sebagai acuan strategis dan cetak biru (blueprint) bagi jajaran pimpinan dalam merekonstruksi sistem tata kelola kinerja dan mitigasi penyimpangan (Alamsyah et al., 2024). Khususnya dalam merancang intervensi kebijakan yang tidak hanya berfokus pada pengadaan infrastruktur fisik atau aplikasi teknologi semata, melainkan pada penguatan moralitas, penegakan disiplin profesi, serta ketegasan sanksi manajerial tanpa kompromi guna memastikan perlindungan bagi aparatur yang berintegritas di lapangan (Putri & Rachman, 2024).", indent=0.75, space_after=4)
+
+    p(doc, f"b. Bagi Aparat Pengawasan Internal Pemerintah (APIP) dan Unit Evaluasi Kinerja: Menjadi instrumen pedoman operasional bagi auditor dan pengawas internal dalam memetakan titik-titik rawan inefisiensi yang bersumber dari risiko intervensi kekuasaan (management override) dan longgarnya kepatuhan etika (Irianti, 2025; Yulfani et al., 2025). Dengan memanfaatkan indikator-indikator empiris dari model disertasi ini, pendekatan pengawasan internal dapat bergeser dari sekadar audit kepatuhan administratif formal (checklist compliance) menjadi pengawasan berbasis risiko perilaku dan budaya organisasi (Lonto et al., 2023).", indent=0.75, space_after=4)
+
+    p(doc, f"c. Bagi Masyarakat Luas dan Pemangku Kepentingan Publik: Peningkatan efektivitas tata kelola dan pencegahan penyimpangan pada instansi pemerintah akan secara langsung menyelamatkan alokasi anggaran pembangunan daerah, menjamin kualitas pelayanan publik berjalan secara transparan dan berkeadilan, serta memulihkan dan meningkatkan kepercayaan publik (public trust) terhadap kredibilitas institusi pemerintah secara berkesinambungan (Mawikere & Loupatty, 2025; Santoso et al., 2026).", indent=0.75, space_after=6)
 
 
 def _build_doc_sub_1_5(doc: Document, ctx: Dict[str, Any]):
@@ -1942,14 +2016,70 @@ def _build_doc_sub_2_3(doc: Document, ctx: Dict[str, Any]):
 
 
 def _build_doc_sub_2_4(doc: Document, ctx: Dict[str, Any]):
-    """2.4 Pengembangan Hipotesis Penelitian Doktoral."""
+    """2.4 Pengembangan Hipotesis Penelitian Doktoral sesuai format baku TAPD 2026 (Tabel 7)."""
     h2(doc, "D. Hipotesis Penelitian")
-    hypos = ctx["graph"]["hypotheses"]
+    instansi = ctx.get("instansi", "Instansi Pemerintah")
+    y = ctx.get("y_var", "Kinerja Aparatur")
+    hypos = ctx.get("graph", {}).get("hypotheses", [])
+    model_acronym = _generate_doctoral_model_acronym(ctx)
 
-    p(doc, "Berdasarkan telaah teori substantif, integrasi kerangka konseptual, serta dukungan temuan empiris terdahulu, maka hipotesis dalam Disertasi Doktor ini dirumuskan secara formal sebagai berikut:", indent=0.5, space_after=6)
+    # 1. Paragraf Pengantar Deduktif Sub-Bab D (>= 4 baris teks utuh, bervitasi)
+    p(doc, f"Berdasarkan telaah mendalam terhadap kajian pustaka, sintesis temuan penelitian empiris terdahulu yang relevan, serta alur silogisme deduktif dalam kerangka pemikiran konseptual di atas, maka perumusan hipotesis operasional dalam Disertasi Doktor ini disusun secara formal guna menguji validitas model struktural {model_acronym} pada {instansi} (Sekaran & Bougie, 2020; Cooper & Schindler, 2022). Hipotesis-hipotesis ini diformulasikan untuk menguji signifikansi statistik pengaruh langsung pilar-pilar kapasitas organisasi, daya transmisi variabel mediasi sebagai jembatan eksekusi perilaku, serta kekuatan kontingensi variabel moderasi pengawal integritas terhadap pencapaian {y} (Creswell & Creswell, 2023). Berdasarkan uraian pada tinjauan teori yang diuraikan sebelumnya dan hasil penelitian terdahulu yang relevan serta kerangka pemikiran di atas, maka hipotesis yang dirumuskan pada penelitian ini adalah sebagai berikut:", indent=0.5, space_after=6)
 
-    for h in hypos:
-        p(doc, f"{h['code']}: {h['statement']}", bold=True, indent=0.5, space_after=3)
+    # 2. Tabel Borderless 3 Kolom Baku TAPD 2026 (Tabel 7)
+    if hypos:
+        tbl = doc.add_table(rows=len(hypos), cols=3)
+        tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+        tblPr = tbl._tbl.tblPr
+        tblBorders = parse_xml(
+            r'<w:tblBorders %s>'
+            r'  <w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+            r'  <w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+            r'  <w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+            r'  <w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+            r'  <w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+            r'  <w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+            r'</w:tblBorders>' % nsdecls('w')
+        )
+        tblPr.append(tblBorders)
+
+        col_widths = [Cm(1.2), Cm(0.6), Cm(14.0)]
+        for r_idx, h in enumerate(hypos):
+            row = tbl.rows[r_idx]
+            for c_idx, w in enumerate(col_widths):
+                row.cells[c_idx].width = w
+
+            # Col 0: Kode Hipotesis (H1, H2.. bold)
+            p0 = row.cells[0].paragraphs[0]
+            p0.paragraph_format.space_before = Pt(2)
+            p0.paragraph_format.space_after = Pt(2)
+            r0 = p0.add_run(h.get("code", f"H{r_idx+1}"))
+            r0.bold = True
+            r0.font.name = "Times New Roman"
+            r0.font.size = Pt(12)
+
+            # Col 1: Simbol Pemisah (:)
+            p1 = row.cells[1].paragraphs[0]
+            p1.paragraph_format.space_before = Pt(2)
+            p1.paragraph_format.space_after = Pt(2)
+            r1 = p1.add_run(":")
+            r1.font.name = "Times New Roman"
+            r1.font.size = Pt(12)
+
+            # Col 2: Pernyataan Hipotesis Formal Berarah (Justify)
+            p2 = row.cells[2].paragraphs[0]
+            p2.paragraph_format.space_before = Pt(2)
+            p2.paragraph_format.space_after = Pt(2)
+            p2.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            stmt = h.get("statement", "")
+            if not stmt.lower().startswith("terdapat"):
+                stmt = f"Terdapat {stmt}"
+            r2 = p2.add_run(stmt)
+            r2.font.name = "Times New Roman"
+            r2.font.size = Pt(12)
+
+    # 3. Paragraf Penutup Metodologis Pengujian Hipotesis (>= 4 baris teks utuh, bervitasi)
+    p(doc, f"Seluruh hipotesis formal berarah (H1 s.d H{len(hypos)}) di atas diuji secara simultan menggunakan teknik Structural Equation Modeling berbasis varian (PLS-SEM) dengan bantuan perangkat lunak SmartPLS 4 (Hair et al., 2022). Uji signifikansi koefisien jalur struktural dilakukan melalui prosedur non-parametrik bootstrapping sebanyak 5.000 subsampel dengan tingkat signifikansi alpha 5% (t-statistik > 1,96 dan p-value < 0,05) guna memastikan ketahanan estimasi parameter model (Hayes, 2022). Dengan pendekatan analitis inferensial ini, penelitian mampu mengonfirmasi signifikansi statistik dari setiap lintasan kausalitas langsung, efek tidak langsung mediasi, maupun efek interaksi moderasi secara komprehensif dalam setting empiris pada {instansi} (Santoso et al., 2026).", indent=0.5, space_before=6, space_after=6)
 
 
 def _build_doc_sub_3_1(doc: Document, ctx: Dict[str, Any]):

@@ -43,6 +43,7 @@ from datetime import datetime
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
+from docx.enum.table import WD_TABLE_ALIGNMENT
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 if CURRENT_DIR not in sys.path:
@@ -127,7 +128,17 @@ S3_SUBCHAPTER_CATALOG = {
     "sub_2_3": {
         "chapter": 2, "code": "C",
         "title": "C. Kerangka Berfikir",
-        "desc": "Arsitektur pemikiran teoretis terpadu kausalitas struktural moderated-mediation, argumentasi fenomena kelembagaan, dan Gambar 2.1 Bagan Kerangka Konseptual."
+        "desc": "Arsitektur pemikiran teoretis terpadu kausalitas struktural moderated-mediation, dekonstruksi paradigma direct effect, matriks silogisme deduktif H1-Hn, elaborasi empiris mutakhir (2022-2026), Gambar 2.1 Bagan Kerangka Berfikir, Gambar 2.2 State of the Art, dan argumentasi kritis boundary conditions variabel moderasi."
+    },
+    "sub_2_3_1": {
+        "chapter": 2, "code": "C.1",
+        "title": "C.1 Kerangka Berfikir Bagian 1: Silogisme Deduktif & Elaborasi Jalur Hipotesis",
+        "desc": "Dekonstruksi paradigma direct effect, rasionalisasi mediasi sebagai behavioral execution bridge, silogisme deduktif H1-Hn (Premis Mayor & Premis Minor), dan elaborasi teori & empiris mutakhir (2022-2026)."
+    },
+    "sub_2_3_2": {
+        "chapter": 2, "code": "C.2",
+        "title": "C.2 Kerangka Berfikir Bagian 2: Bagan Model, Multi-Teori State of The Art & Boundary Conditions",
+        "desc": "Gambar 2.1 Kerangka Berfikir, integrasi lintas Grand Theory & akronim model doktoral, Gambar 2.2 State of the Art, dan analisis kritis boundary conditions variabel moderasi (3 fenomena kegagalan sistemik)."
     },
     "sub_2_4": {
         "chapter": 2, "code": "D",
@@ -817,6 +828,89 @@ STRUKTUR SISTEMATIKA PENULISAN SUB-BAB B:
    Membedah inkonsistensi temuan antarpeneliti terdahulu (seperti pengaruh langsung yang gugur/tidak signifikan pada setting kelembagaan kaku) yang membuktikan bahwa infrastruktur formal bersifat pasif tanpa adanya jembatan mediasi keperilakuan ({m_vars_str}) dan benteng kontingensi ({z_vars_str}).
 5. Paragraf Sintesis Kebaruan Ilmiah (Novelty) Doktoral Model Terpadu (1 Paragraf Utuh, >= 4 baris, bervitasi):
    Merumuskan kebaruan orisinal disertasi ini yang mengintegrasikan seluruh konstruk dalam satu model struktural terpadu moderated-mediation yang belum pernah diuji secara simultan oleh studi-studi terdahulu.
+"""
+    elif sub_id in ("sub_2_3", "sub_2_3_1"):
+        instruksi_khusus = f"""
+=== PETUNJUK SPESIFIK WAJIB SUB-BAB C: KERANGKA BERFIKIR (BAGIAN 1: SILOGISME DEDUKTIF & ELABORASI JALUR HIPOTESIS) ===
+Judul Sub-bab WAJIB ditulis persis: C. Kerangka Berfikir
+SUB-BAB INDUK: C. KERANGKA BERFIKIR (Format Baku TAPD 2026 Disertasi Doktor S3).
+
+CATATAN GENERATE:
+Sub-Bab C pada standar Disertasi Doktor TAPD 2026 merupakan naskah sangat padat dan mendalam. Anda sedang menyusun BAGIAN 1 yang berfokus penuh pada: Dekonstruksi Paradigma Direct Effect, Matriks Silogisme Deduktif Ilmiah untuk seluruh hipotesis (H1 s.d H{total_h}), dan Elaborasi Dinamika Kausalitas Teoretis & Empiris Mutakhir (2022-2026).
+
+ATURAN STRUKTURAL & METODOLOGIS MUTLAK:
+1. ATURAN PANJANG PARAGRAF: SETIAP PARAGRAF NARATIF TIDAK BOLEH KURANG DARI 4 BARIS TEKS UTUH (minimal 4–6 kalimat analitis substantif mendalam atau 70–100 kata per paragraf). DILARANG KERAS membuat paragraf pendek (1, 2, atau 3 baris teks)!
+2. KEHARUSAN SITASI DI SETIAP PARAGRAF: SETIAP PARAGRAF NARATIF TANPA TERKECUALI HARUS MEMILIKI KUTIPAN ILMIAH (nama pakar dan tahun terbit mutakhir 2022-2026 atau teori klasik yang disitasi dalam literatur mutakhir):
+   - Paragraf Pengantar & Dekonstruksi: Wajib memuat rujukan teori perilaku keorganisasian dan metodologis (misal: Snyder, 2019; Robbins & Judge, 2022; Cooper & Schindler, 2022).
+   - Paragraf Rasionalisasi Mediasi: Wajib memuat rujukan Theory of Planned Behavior dan psikologi keperilakuan (misal: Ajzen, 1991, dalam Bosnjak et al., 2022; Schaufeli et al., 2022).
+   - Paragraf Pengantar Silogisme: Wajib memuat rujukan metodologi logika deduktif ilmiah (misal: Sekaran & Bougie, 2020; Creswell & Creswell, 2023).
+   - Paragraf Elaborasi Tiap Jalur Kausalitas: Wajib memuat rujukan empiris mutakhir (2022-2026).
+   DILARANG KERAS menghasilkan paragraf naratif yang hampa tanpa kutipan referensi ilmiah!
+
+3. STRUKTUR SILOGISME ILMIAH DEDUKTIF PER JALUR HIPOTESIS:
+   Setiap jalur hubungan kausalitas formal (H1 s.d H{total_h}) WAJIB dirumuskan dengan format silogisme baku:
+   [Nomor Urut]. Pengaruh [Konstruk Eksogen] terhadap [Konstruk Endogen]
+   - Premis Mayor: Pijakan teoretis makro (Grand Theory / Middle Range Theory relevan, seperti Human Capital Theory, Control Theory, Social Cognitive Theory, Theory of Planned Behavior, Resource-Based View).
+   - Premis Minor: Realitas kontekstual empiris aparatur dan tata kelola pada {instansi}.
+   - Formulasi Hipotesis: Pernyataan formal hipotesis berarah (H1, H2.. s.d H{total_h}).
+
+4. ELABORASI DINAMIKA KAUSALITAS TEORITIS & EMPIRIS (2022-2026):
+   Uraikan elaborasi mendalam untuk setiap kelompok jalur kausalitas:
+   a. Pengaruh langsung pilar eksogen ({x_vars_str}) terhadap mediasi ({m_vars_str}).
+   b. Pengaruh langsung pilar eksogen ({x_vars_str}) terhadap unjuk kerja endogen ({y_var}).
+   c. Pengaruh langsung mediasi ({m_vars_str}) terhadap unjuk kerja endogen ({y_var}).
+   d. Efek transmisi mediasi tidak langsung ({x_vars_str} -> {m_vars_str} -> {y_var}).
+   e. Efek kontingensi moderasi ({z_vars_str}) terhadap keterkaitan ({x_vars_str} -> {y_var}).
+   Setiap paragraf elaborasi wajib >= 4 baris teks utuh dan 100% didukung sitasi ilmiah mutakhir (2022-2026).
+
+SISTEMATIKA PENULISAN BAGIAN 1:
+1. Paragraf Pengantar & Dekonstruksi Paradigma Direct Effect (>= 4 baris teks utuh, bervitasi).
+2. Paragraf Rasionalisasi Mediasi sebagai Behavioral Execution Bridge (>= 4 baris teks utuh, bervitasi).
+3. Paragraf Pengantar Metodologi Silogisme Deduktif Ilmiah (>= 4 baris teks utuh, bervitasi).
+4. Rangkaian Silogisme Deduktif Lengkap untuk Seluruh Hipotesis (H1 s.d H{total_h}) masing-masing memuat Premis Mayor, Premis Minor, dan Rumusan Hipotesis Formal.
+5. Elaborasi Dinamika Kausalitas Teoretis & Pembuktian Empiris Mutakhir (2022-2026) per kelompok jalur kausalitas (masing-masing >= 4 baris teks utuh, bervitasi).
+"""
+    elif sub_id == "sub_2_3_2":
+        instruksi_khusus = f"""
+=== PETUNJUK SPESIFIK WAJIB SUB-BAB C: KERANGKA BERFIKIR (BAGIAN 2: BAGAN MODEL, MULTI-TEORI & BOUNDARY CONDITIONS) ===
+Judul Sub-bab: C. Kerangka Berfikir (Bagian 2: Arsitektur Visual Bagan Model, Integrasi Multi-Teori & Boundary Conditions)
+SUB-BAB INDUK: C. KERANGKA BERFIKIR (Format Baku TAPD 2026 Disertasi Doktor S3).
+
+CATATAN GENERATE:
+Anda sedang menyusun BAGIAN 2 dari Sub-Bab C. Bagian ini merupakan kelanjutan langsung dari Bagian 1, berfokus penuh pada: Visualisasi Bagan Gambar 2.1 Kerangka Berfikir, Integrasi Multi-Teori Doktoral (State of The Art Framework Gambar 2.2), Perumusan Akronim Model Kebaruan Doktoral ({model_acronym}), serta Analisis Rasionalisasi Kritis Boundary Conditions Variabel Moderasi ({z_vars_str}).
+
+ATURAN STRUKTURAL & METODOLOGIS MUTLAK:
+1. ATURAN PANJANG PARAGRAF: SETIAP PARAGRAF NARATIF TIDAK BOLEH KURANG DARI 4 BARIS TEKS UTUH (minimal 4–6 kalimat analitis substantif mendalam atau 70–100 kata per paragraf). DILARANG KERAS membuat paragraf pendek (1, 2, atau 3 baris teks)!
+2. KEHARUSAN SITASI DI SETIAP PARAGRAF: SETIAP PARAGRAF NARATIF TANPA TERKECUALI HARUS MEMILIKI KUTIPAN ILMIAH (nama pakar dan tahun terbit mutakhir 2022-2026 atau teori klasik yang disitasi dalam literatur mutakhir):
+   - Paragraf Pengantar Gambar 2.1: Wajib memuat rujukan metodologis pemodelan (misal: Snyder, 2019; Cooper & Schindler, 2022; Creswell & Creswell, 2023).
+   - Paragraf Pembacaan Arsitektur Bagan: Wajib memuat rujukan pemodelan moderated-mediation (misal: Hair et al., 2022; Hayes, 2022; Santoso et al., 2026).
+   - Paragraf Integrasi Multi-Teori: Wajib memuat rujukan teori makro (Agency Theory, RBV, Contingency Theory, Stewardship Theory).
+   - Paragraf Boundary Conditions Moderasi: Wajib memuat rujukan kepemimpinan dan kontrol organisasi (misal: Yukl, 2022; Putri & Rachman, 2024; Alamsyah et al., 2024).
+
+3. RUJUKAN BAGAN GAMBAR 2.1 KERANGKA BERFIKIR:
+   - Diawali paragraf pengantar substantif (>= 4 baris, bervitasi).
+   - Disajikan rujukan visual:
+     Gambar 2. 1
+     Kerangka Berfikir
+     Sumber : Data diolah peneliti, (2026)
+   - Diikuti narasi pembacaan arsitektur bagan keterkaitan simultan moderated-mediation (>= 4 baris teks utuh).
+
+4. INTEGRASI MULTI-TEORI & STATE OF THE ART FRAMEWORK:
+   - Uraikan harmonisasi payung teoretis multidimensi (Agency Theory, Organizational Behavior Theory, Contingency Theory, Resource-Based View, Transformational Leadership Theory, Stewardship Theory).
+   - Rumuskan akronim model doktoral kebaruan (novelty model acronym, persis akronim: {model_acronym}).
+   - Sertakan rujukan visual:
+     Gambar 2. 2
+     State of The Art
+     Sumber : Data diolah peneliti, (2026)
+   - Diikuti narasi analitis kebaruan model terpadu hibrida (>= 4 baris teks utuh).
+
+5. RASIONALISASI BOUNDARY CONDITIONS VARIABEL MODERASI:
+   Jawab pertanyaan kritis tingkat doktoral: "Mengapa sistem tata kelola yang sudah dirancang dengan baik kerap kali tetap lumpuh dan gagal mencapai hasil yang diharapkan?"
+   Bedah secara mendalam 3 fenomena kelembagaan birokrasi (masing-masing >= 4 baris teks utuh & bervitasi):
+   a. Rentan Terhadap Intervensi Struktural (Management Override): Relasi kuasa hierarkis yang melumpuhkan kompetensi teknis bawahan jika pimpinan tidak memiliki komitmen integritas.
+   b. Ketergantungan Eksekusi Otoritas Formal: Fungsi pengawasan internal bersifat pasif tanpa otorisasi pimpinan puncak; efektivitas audit bergantung pada ketegasan pimpinan.
+   c. Legitimasi dan Keteladanan Budaya Organisasi (Tone at the Top): Budaya kerja etis hanya menjadi slogan administratif tanpa keteladanan pimpinan tertinggi.
+   Tutup dengan paragraf kesimpulan kontingensi kelembagaan bahwa tata kelola bersifat kondisional pada komitmen pimpinan instansi ({instansi}).
 """
 
     prompt = f"""Anda adalah Guru Besar dan Pakar Metodologi Penelitian Manajemen yang bertindak sebagai Penulis Ahli Disertasi Doktor (S3) Ilmu Manajemen Pascasarjana Indonesia.
@@ -1705,18 +1799,146 @@ def _build_doc_sub_2_2(doc: Document, ctx: Dict[str, Any]):
     p(doc, f"Kesenjangan penelitian empiris dan teoretis tersebut dijawab secara tuntas melalui kebaruan (novelty) model konseptual yang diajukan dalam Disertasi Doktor ini. Sebagian besar penelitian terdahulu cenderung menguji pengaruh variabel penjelas secara parsial atau menggunakan model mediasi sederhana yang belum memperhitungkan kondisi batas kontingensi lingkungan kerja (Chen et al., 2023; Pratama & Suryani, 2022). Belum ditemukan studi yang secara terpadu dan simultan mengintegrasikan {x1} dan {x2} sebagai pilar eksogen komprehensif, {m} sebagai jembatan mediasi transmisi keperilakuan, serta {z} sebagai variabel moderasi pengawal kontingensi terhadap {y} dalam satu kerangka model moderated-mediation terintegrasi (Hair et al., 2022; Hayes, 2022; Santoso et al., 2026). Kehadiran model struktural hibrida inilah yang menjadi distingsi dan kontribusi orisinal riset doktoral ini dalam memperkaya khazanah ilmu manajemen kinerja dan tata kelola kelembagaan publik.", indent=0.5, space_after=6)
 
 
+def _build_doc_sub_2_3_1(doc: Document, ctx: Dict[str, Any], include_heading: bool = True):
+    """2.3.1 Kerangka Berfikir Bagian 1: Silogisme Deduktif & Elaborasi Jalur Hipotesis."""
+    if include_heading:
+        h2(doc, "C. Kerangka Berfikir")
+
+    instansi = ctx.get("instansi", "Instansi Pemerintah")
+    x_vars = ctx.get("x_vars", ["Variabel Bebas 1", "Variabel Bebas 2"])
+    x1 = x_vars[0] if len(x_vars) > 0 else "Variabel Bebas 1"
+    x2 = x_vars[1] if len(x_vars) > 1 else "Variabel Bebas 2"
+    x_vars_str = ", ".join(x_vars)
+    m_list = ctx.get("m_vars", ["Variabel Mediasi"])
+    m = m_list[0] if m_list else "Variabel Mediasi"
+    z_list = ctx.get("z_vars", ["Variabel Moderasi"])
+    z = z_list[0] if z_list else "Variabel Moderasi"
+    y = ctx.get("y_var", "Kinerja Aparatur")
+    hypos = ctx.get("graph", {}).get("hypotheses", [])
+
+    # 1. Paragraf Pengantar & Dekonstruksi Paradigma Direct Effect (>= 4 baris teks utuh, bervitasi)
+    p(doc, f"Kerangka konseptual dalam Disertasi Doktor ini dibangun atas dasar premis kritis bahwa variabel-variabel eksogen dasar ({x_vars_str}) tidak serta-merta menghasilkan peningkatan unjuk kerja dan mitigasi risiko ({y}) secara mekanistis atau otomatis (direct effect paradigm) (Snyder, 2019; Robbins & Judge, 2022). Sering kali, organisasi publik terjebak pada asumsi linier sederhana bahwa peningkatan kompetensi melalui pelatihan formal atau penguatan instrumen regulasi dan pengawasan internal akan langsung membuahkan hasil kinerja prima secara instan. Asumsi mekanistis tersebut terbukti memiliki kelemahan yang fatal dalam realitas kelembagaan kontemporer, di mana keberadaan sistem infrastruktur formal kerap kali berstatus pasif dan terdistorsi oleh dinamika kebiasaan birokrasi di lapangan (Cooper & Schindler, 2022).", indent=0.5, space_after=6)
+
+    # 2. Rasionalisasi Teoretis Peran Mediasi (>= 4 baris teks utuh, bervitasi)
+    p(doc, f"Oleh karena itu, kerangka pemikiran disertasi ini menempatkan {m} sebagai variabel mediasi (intervening variable) yang memiliki rasionalisasi teoretis mendalam sebagai 'jembatan eksekusi perilaku' (behavioral execution bridge) (Ajzen, 1991, dalam Bosnjak et al., 2022; Schaufeli et al., 2022). Keberadaan variabel perantara ini dibutuhkan secara absolut guna mentransformasikan kapasitas potensial, modal intelektual, serta norma tata kelola pasif menjadi tindakan terukur yang konsisten di lingkungan kerja. Tanpa internalisasi komitmen moral dan kepatuhan etis dalam menjalankan tugas sehari-hari, keunggulan kapasitas aparatur tidak akan mampu mengeliminasi celah penyimpangan maupun mendongkrak capaian unjuk kerja ({y}) secara berkesinambungan (Creswell & Creswell, 2023).", indent=0.5, space_after=6)
+
+    # 3. Paragraf Pengantar Silogisme Deduktif Ilmiah (>= 4 baris teks utuh, bervitasi)
+    p(doc, f"Perumusan hipotesis kausalitas dalam Disertasi Doktor ini disusun secara ketat melalui pendekatan silogisme deduktif ilmiah guna menjamin validitas logika penalaran akademik (Sekaran & Bougie, 2020; Cooper & Schindler, 2022). Pendekatan silogisme ini mengintegrasikan Premis Mayor sebagai pijakan dalil teoretis makro yang bersumber dari Grand Theory dan Middle Range Theory, Premis Minor sebagai hasil observasi dan identifikasi realitas kontekstual empiris pada {instansi}, serta Formulasi Hipotesis sebagai konklusi deduktif yang diuji secara empiris (Creswell & Creswell, 2023). Melalui struktur logika formal berjenjang ini, setiap proposisi keterkaitan antarvariabel memiliki akar argumentasi teoretis yang kokoh sekaligus berpijak nyata pada fenomena kelembagaan di lapangan. Rangkaian silogisme deduktif untuk membuktikan hipotesis-hipotesis penelitian disajikan sebagai berikut:", indent=0.5, space_after=6)
+
+    # 4. Silogisme Deduktif H1 s.d Hn
+    if not hypos:
+        hypos = [
+            {"code": "H1", "statement": f"{x1} berpengaruh positif terhadap {m}."},
+            {"code": "H2", "statement": f"{x2} berpengaruh positif terhadap {m}."},
+            {"code": "H3", "statement": f"{m} berpengaruh positif terhadap {y}."},
+            {"code": "H4", "statement": f"{m} memediasi pengaruh {x1} terhadap {y}."}
+        ]
+
+    for idx, h in enumerate(hypos, 1):
+        h_code = h.get("code", f"H{idx}")
+        h_stmt = h.get("statement", "")
+        p(doc, f"{idx}. {h_stmt.replace(' berpengaruh positif', '').replace(' memediasi', ' Peran Mediasi').replace(' memoderasi', ' Peran Moderasi')}", bold=True, indent=0.5, space_after=2)
+        
+        # Tentukan teori mayor secara kontekstual
+        if "mediasi" in h_stmt.lower() or "intervening" in h_stmt.lower():
+            p_mayor = f"Premis Mayor: Berdasarkan Theory of Planned Behavior dan Social Cognitive Theory, kapasitas kognitif dan norma organisasi membutuhkan jembatan niat keperilakuan etis ({m}) agar potensi laten kelembagaan terkonversi menjadi aksi pencegahan dan kinerja nyata (Bandura, 1986, dalam Schunk, 2022; Bosnjak et al., 2022)."
+            p_minor = f"Premis Minor: Penguatan sistem tata kelola pada {instansi} hanya akan efektif mengoptimalkan capaian {y} manakala seluruh pilar kebijakan dioperasionalkan melalui konsistensi aparatur dalam menjunjung tinggi {m} di setiap proses kerja."
+        elif "moderasi" in h_stmt.lower() or "interaksi" in h_stmt.lower():
+            p_mayor = f"Premis Mayor: Merujuk pada Contingency Theory dan Leadership Stewardship Theory, efektivitas sistem tata kelola dan modal manusia sangat bergantung pada batas kondisi pengawalan struktural, keteladanan pimpinan, serta keberanian eksekusi sanksi (Fiedler, 1964, dalam Daft, 2022; Donaldson & Davis, 1991, dalam Yukl, 2022)."
+            p_minor = f"Premis Minor: Keberadaan {z} yang kuat pada {instansi} akan memberikan perlindungan psikologis dan legitimasi kekuasaan nyata, sehingga daya dorong pilar-pilar kapasitas terhadap pencapaian {y} berlipat ganda secara signifikan."
+        elif any(k in h_stmt.lower() for k in ["kompetensi", "kualitas sdm", "sdm", "kapasitas"]):
+            p_mayor = f"Premis Mayor: Berdasarkan Human Capital Theory dan Resource-Based View (RBV), modal pengetahuan, keterampilan analitis, dan kecakapan teknis aparatur merupakan aset strategis internal yang memampukan organisasi mendeteksi risiko serta menjalankan standar profesional secara prima (Barney, 1991, dalam Hitt et al., 2023)."
+            p_minor = f"Premis Minor: Aparatur pada {instansi} yang dibekali pemahaman regulasi mendalam dan keahlian operasional mumpuni akan lebih berdaya dalam menegakkan integritas tugas dan menghasilkan capaian unjuk kerja yang akuntabel."
+        elif any(k in h_stmt.lower() for k in ["budaya", "iklim", "kultur"]):
+            p_mayor = f"Premis Mayor: Menurut Organizational Culture Theory, asumsi dasar, sistem nilai inti, dan norma kolektif yang diyakini bersama di tempat kerja akan membentuk pola perilaku standar dan mendisiplinkan tindakan individu (Schein, 2010, dalam Robbins & Judge, 2022)."
+            p_minor = f"Premis Minor: Lingkungan birokrasi pada {instansi} yang menjunjung tinggi transparansi, integritas, dan penolakan terhadap toleransi penyimpangan akan mendorong lahirnya ekosistem kerja yang kondusif bagi pencapaian {y}."
+        elif any(k in h_stmt.lower() for k in ["audit", "pengendalian", "kontrol", "spip"]):
+            p_mayor = f"Premis Mayor: Berdasarkan Control Theory dan Agency Theory, pengawasan independen dan sistem pemantauan berlapis didesain untuk membatasi asimetri informasi, menciptakan efek deterrence, serta menutup ruang gerak penyimpangan operasional (Jensen & Meckling, 1976, dalam Hitt et al., 2023)."
+            p_minor = f"Premis Minor: Pelaksanaan fungsi evaluasi internal yang objektif dan berbasis risiko pada {instansi} secara langsung memperkuat kepatuhan terhadap prosedur tata kelola yang bersih dan tertib."
+        else:
+            p_mayor = f"Premis Mayor: Berdasarkan Goal-Setting Theory dan Dynamic Capabilities Framework, penetapan arah kelembagaan yang jelas dan pengelolaan kapasitas organisasi secara terintegrasi merupakan determinan fundamental keberhasilan performa strategis institusi (Locke & Latham, 1990, dalam Schunk, 2022; Teece, 2020)."
+            p_minor = f"Premis Minor: Penyelarasan komitmen tata kelola pada seluruh unit kerja di lingkungan {instansi} akan mengarahkan fokus aparatur dalam merealisasikan sasaran-sasaran strategis organisasi secara optimal."
+
+        p(doc, p_mayor, indent=0.75, space_after=2)
+        p(doc, p_minor, indent=0.75, space_after=2)
+        p(doc, f"{h_code}: {h_stmt}", bold=True, indent=0.75, space_after=6)
+
+    # 5. Elaborasi Teoretis & Pembuktian Empiris Mutakhir (2022-2026) (>= 4 baris per paragraf, bervitasi)
+    p(doc, f"Elaborasi teoretis terhadap keterkaitan langsung antara pilar-pilar kapasitas organisasi ({x_vars_str}) dengan {m} berakar pada premis bahwa pembentukan iklim etika kerja dan dedikasi profesional aparatur merupakan fungsi langsung dari kualitas lingkungan kerja dan keunggulan kepemimpinan (Bassi et al., 2022; Denison et al., 2023). Aparatur yang didukung oleh penguasaan kompetensi yang tinggi dan sistem pengawasan yang sehat memiliki keyakinan diri yang lebih kokoh untuk menolak berbagai bentuk intervensi yang bertentangan dengan standar operasional prosedur (Chen et al., 2023). Konsistensi temuan empiris mutakhir mengonfirmasi bahwa investasi pada pengembangan kapasitas sumber daya manusia dan pembenahan tata kelola sistemik berkorelasi positif sangat kuat terhadap tumbuhnya kepatuhan etis aparatur di sektor publik (Astuti & Raharjo, 2024; Wibowo & Kusuma, 2025).", indent=0.5, space_after=6)
+
+    p(doc, f"Sementara itu, keterkaitan struktural antara {m} dan capaian {y} berlandaskan pada premis sentral Theory of Planned Behavior bahwa perilaku nyata merupakan hasil langsung dari intensi etis dan kepatuhan normatif aparatur (Ajzen, 1991, dalam Bosnjak et al., 2022; Rich et al., 2022). Standar etika yang telah mendarah daging dalam rutinitas kerja aparatur menjamin bahwa setiap proses pelayanan publik dan administrasi dilaksanakan dengan mengedepankan prinsip kehati-hatian, akuntabilitas, serta efisiensi penggunaan sumber daya (Schaufeli et al., 2022; Mawikere & Loupatty, 2025). Berbagai penelitian empiris terdahulu membuktikan bahwa kepatuhan pada nilai-nilai integritas profesional secara signifikan meminimalkan risiko kesalahan administratif, menutup ruang manipulasi data, dan meningkatkan kepuasan para pemangku kepentingan secara berkelanjutan (Lonto et al., 2023; Santoso et al., 2026).", indent=0.5, space_after=6)
+
+
+def _build_doc_sub_2_3_2(doc: Document, ctx: Dict[str, Any], include_heading: bool = False):
+    """2.3.2 Kerangka Berfikir Bagian 2: Bagan Model, Multi-Teori State of The Art & Boundary Conditions."""
+    if include_heading:
+        h2(doc, "C. Kerangka Berfikir")
+
+    instansi = ctx.get("instansi", "Instansi Pemerintah")
+    x_vars = ctx.get("x_vars", ["Variabel Bebas 1", "Variabel Bebas 2"])
+    x1 = x_vars[0] if len(x_vars) > 0 else "Variabel Bebas 1"
+    x2 = x_vars[1] if len(x_vars) > 1 else "Variabel Bebas 2"
+    x_vars_str = ", ".join(x_vars)
+    m_list = ctx.get("m_vars", ["Variabel Mediasi"])
+    m = m_list[0] if m_list else "Variabel Mediasi"
+    z_list = ctx.get("z_vars", ["Variabel Moderasi"])
+    z = z_list[0] if z_list else "Variabel Moderasi"
+    y = ctx.get("y_var", "Kinerja Aparatur")
+    model_acronym = _generate_doctoral_model_acronym(ctx)
+
+    # 1. Rujukan Gambar 2.1 Kerangka Berfikir (>= 4 baris teks utuh, bervitasi)
+    p(doc, f"Berdasarkan sintesis teori-teori substantif yang relevan dan didukung oleh pembuktian empiris pada penelitian-penelitian terdahulu yang telah ditelaah secara mendalam, maka konstelasi model penelitian dalam Disertasi Doktor ini dituangkan ke dalam kerangka berpikir konseptual yang utuh (Snyder, 2019; Cooper & Schindler, 2022). Kerangka berpikir ini memadukan paradigma kausalitas simultan antara variabel bebas ({x_vars_str}), variabel perantara ({m}), dan variabel pengawal kontingensi ({z}) dalam memengaruhi ketercapaian ({y}) pada {instansi} (Creswell & Creswell, 2023). Arsitektur pemikiran teoretis terpadu yang memvisualisasikan seluruh arah hipotesis penelitian disajikan dalam bagan konseptual sebagai berikut:", indent=0.5, space_after=6)
+
+    # Box Visualisasi Bagan Struktural Sederhana yang Sangat Rapi di Word
+    t_box = doc.add_table(rows=1, cols=1)
+    t_box.alignment = WD_TABLE_ALIGNMENT.CENTER
+    cell = t_box.rows[0].cells[0]
+    cell.width = Cm(15.5)
+    
+    p(cell, "BAGAN MODEL STRUKTURAL DOKTORAL (HYBRID MODERATED-MEDIATION MODEL)", bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, space_before=6, space_after=4)
+    p(cell, f"[ Variabel Bebas (X): {x_vars_str} ]", bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)
+    p(cell, "│ (Pengaruh Langsung H1..Hn)           │ (Pengaruh Eksogen ke Mediasi)", align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)
+    p(cell, f"▼                                     ▼\n[ Variabel Mediasi (M): {m} ] ───(Efek Transmisi)───► [ Variabel Terikat (Y): {y} ]", bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=4)
+    p(cell, f"▲\n│ (Efek Kontingensi Moderasi / Boundary Condition)\n[ Variabel Moderasi (Z): {z} ]", bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
+    
+    p(doc, "Sumber : Data diolah peneliti, (2026)", align=WD_ALIGN_PARAGRAPH.CENTER, space_before=4, space_after=2)
+    p(doc, "Gambar 2. 1\nKerangka Berfikir", bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, space_before=0, space_after=8)
+
+    # Narasi Pembacaan Gambar 2.1 (>= 4 baris, bervitasi)
+    p(doc, f"Arsitektur visual pada Gambar 2.1 di atas menggambarkan keterkaitan simultan yang mengintegrasikan pilar-pilar kapasitas eksogen ({x_vars_str}) dengan variabel terikat ({y}) melalui dua jalur utama, yakni jalur pengaruh langsung dan jalur tidak langsung melalui mediasi {m} (Hair et al., 2022; Hayes, 2022). Garis panah tebal menunjukkan hubungan langsung antar-konstruk laten yang diuji secara empiris, sedangkan garis panah putus-putus merepresentasikan mekanisme transmisi mediasi di mana pengaruh variabel bebas disalurkan melalui peningkatan keterlibatan dan kepatuhan aparatur di lapangan. Sementara itu, garis interaksi kontingensi memposisikan {z} sebagai variabel pemoderasi yang memperkuat keterkaitan struktural, memastikan bahwa seluruh potensi kapasitas organisasi teraktualisasi secara optimal di lingkungan {instansi} (Santoso et al., 2026).", indent=0.5, space_after=6)
+
+    # 2. Integrasi Multi-Teori & Framework State of The Art
+    p(doc, f"Model konseptual doktoral yang dibangun dalam disertasi ini menyintesiskan keterpaduan lintas teori manajemen modern guna memecahkan problematika tata kelola dan akuntabilitas kinerja publik pada {instansi} (Barney, 1991, dalam Hitt et al., 2023; Daft, 2022). Agency Theory menyediakan landasan fundamental mengenai potensi konflik kepentingan dan asimetri informasi yang menuntut adanya mekanisme pengawasan independen dan pembenahan kapasitas sumber daya internal (Jensen & Meckling, 1976, dalam Boxall & Purcell, 2022). Selanjutnya, Organizational Behavior Theory dan Theory of Planned Behavior menerangkan bahwa efektivitas instrumen formal sangat ditentukan oleh iklim nilai kolektif dan komitmen etika individu ({m}), sehingga sistem tidak dapat bekerja secara mekanistis tanpa adanya penghayatan perilaku di tempat kerja (Ajzen, 1991, dalam Bosnjak et al., 2022; Robbins & Judge, 2022).", indent=0.5, space_after=6)
+
+    p(doc, f"Penelitian ini menghadirkan kebaruan ilmiah (novelty) melalui perumusan model hibrida terpadu yang diberi akronim model doktoral {model_acronym}. Model ini mengintegrasikan secara simultan pilar kapasitas sistemik ({x_vars_str}), jembatan mediasi transmisi ({m}), serta benteng pengawal kontingensi ({z}) dalam memitigasi risiko kegagalan dan mendongkrak capaian {y}. Integrasi multi-teori dan kerangka konseptual kebaruan ini dirangkum pada visualisasi State of The Art berikut:", indent=0.5, space_after=6)
+
+    # Box Visualisasi State of the Art
+    t_box2 = doc.add_table(rows=1, cols=1)
+    t_box2.alignment = WD_TABLE_ALIGNMENT.CENTER
+    c2 = t_box2.rows[0].cells[0]
+    c2.width = Cm(15.5)
+    p(c2, f"STATE OF THE ART FRAMEWORK: MODEL DOKTORAL {model_acronym}", bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, space_before=6, space_after=4)
+    p(c2, f"Grand Theory: Resource-Based View (RBV) & Agency Theory\nMiddle Theory: Organizational Behavior Theory & Contingency Theory\nApplied Theory: Theory of Planned Behavior & Stewardship Theory\nIntegrasi Konstruk: {x_vars_str} ──► {m} ──► {y} (Dimoderasi {z})", align=WD_ALIGN_PARAGRAPH.CENTER, space_after=6)
+
+    p(doc, "Sumber : Data diolah peneliti, (2026)", align=WD_ALIGN_PARAGRAPH.CENTER, space_before=4, space_after=2)
+    p(doc, "Gambar 2. 2\nState of The Art", bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, space_before=0, space_after=8)
+
+    # 3. Rasionalisasi Boundary Conditions Variabel Moderasi (3 Argumen Kegagalan Sistemik)
+    p(doc, f"Meskipun pilar-pilar kapasitas dasar ({x_vars_str}) dan jembatan eksekusi ({m}) telah dirancang secara komprehensif, implementasi pada sektor pemerintahan kerap kali menghadapi benturan struktural yang memunculkan pertanyaan fundamental doktoral: Mengapa sistem tata kelola yang sudah dirancang dengan baik kerap kali tetap lumpuh dan gagal mencegah penyimpangan serta mendongkrak kinerja? (Pratama & Suryani, 2022; Wang et al., 2023). Jawaban ilmiah atas paradoks tersebut terletak pada adanya kelemahan batas kondisi (boundary conditions) dari sistem internal ketika berhadapan dengan tekanan relasi kuasa hierarkis birokrasi (Yukl, 2022). Di sinilah letak alasan rasional mengapa model penelitian disertasi ini mutlak membutuhkan kehadiran variabel moderasi {z} yang diuji melalui tiga argumentasi fenomena kelembagaan:", indent=0.5, space_after=6)
+
+    p(doc, f"1. Rentan Terhadap Intervensi Struktural (Management Override): Sehebat apa pun penguasaan kompetensi teknis dan kapasitas aparatur, posisi hierarkis bawahan berada pada kedudukan yang rentan manakala berhadapan dengan instruksi atau intervensi kepentingan dari level manajerial puncak (Putri & Rachman, 2024). Variabel moderasi {z} hadir untuk membuktikan dalil bahwa kapasitas aparatur dan kepatuhan etis hanya akan berdaya guna secara maksimal apabila pucuk pimpinan memberikan jaminan perlindungan psikologis dan dukungan manajerial nyata tanpa kompromi (Alamsyah et al., 2024).", indent=0.75, space_after=4)
+
+    p(doc, f"2. Ketergantungan Eksekusi Hasil Pengawasan dan Evaluasi: Instrumen pemantauan dan evaluasi internal didesain sebagai sistem deteksi dini, namun unit evaluasi tidak memiliki kewenangan eksekutif untuk mengeksekusi sanksi administratif secara sepihak (Irianti, 2025; Yulfani et al., 2025). Rekomendasi perbaikan tata kelola berisiko menjadi sekadar tumpukan dokumen administratif formal tanpa adanya kemauan politik dan ketegasan dari pimpinan instansi untuk menindaklanjuti temuan tersebut secara konsisten (Lonto et al., 2023).", indent=0.75, space_after=4)
+
+    p(doc, f"3. Legitimasi dan Keteladanan Budaya Organisasi (Tone at the Top): Nilai-nilai budaya kerja luhur dan slogan integritas kelembagaan hanya akan menjadi jargon retorika yang hampa apabila jajaran pimpinan tertinggi mempertontonkan tindakan yang permisif terhadap pelanggaran (Umar, 2025; Mawikere & Loupatty, 2025). Kehadiran {z} memoderasi efektivitas budaya organisasi dengan memberikan roh keteladanan; norma etika hanya akan terinternalisasi menjadi perilaku bawahan jika pimpinan mempraktikkan akuntabilitas nyata dalam setiap kebijakan (Santoso et al., 2026).", indent=0.75, space_after=6)
+
+    p(doc, f"Dengan demikian, pengujian variabel moderasi ({z}) dalam Disertasi Doktor ini bukanlah sekadar instrumen pelengkap statistik multivariat semata, melainkan merupakan pembuktian teoretis mendalam bahwa keberhasilan sistem tata kelola dan pencapaian {y} bersifat kontingen (bergantung) pada payung perlindungan kekuasaan dan komitmen pimpinan pada {instansi} (Donaldson & Davis, 1991, dalam Yukl, 2022; Hayes, 2022). Kerangka moderated-mediation ini secara paripurna menutup celah kelemahan pendekatan linier terdahulu dan menyajikan model holistik bagi kemajuan tata kelola manajemen publik kontemporer.", indent=0.5, space_after=6)
+
+
 def _build_doc_sub_2_3(doc: Document, ctx: Dict[str, Any]):
-    """2.3 Kerangka Konseptual & Model Struktural Disertasi."""
-    h2(doc, "C. Kerangka Berfikir")
-    instansi = ctx["instansi"]
-    m_type = ctx["model_type"].replace("_", " ").title()
-
-    p(doc, f"Kerangka konseptual dalam Disertasi Doktor ini dibangun sebagai arsitektur teoretis yang mengintegrasikan alur pemikiran deduktif dari Grand Theory menuju hipotesis empiris. Model ini menggunakan pendekatan {m_type} yang memadukan tiga dimensi kausalitas:", indent=0.5, space_after=6)
-    p(doc, f"1. Pengaruh Langsung (Direct Effect): Pengaruh langsung variabel-variabel eksogen ({', '.join(ctx['x_vars'])}) terhadap variabel endogen utama ({ctx['y_var']}) serta terhadap mediator ({', '.join(ctx['m_vars'])}).", indent=0.75, space_after=3)
-    p(doc, f"2. Efek Mediasi Transmisi (Indirect Effect): Mekanisme penyaluran pengaruh eksogen ke endogen melalui perantara psikologis ({', '.join(ctx['m_vars'])}).", indent=0.75, space_after=3)
-    p(doc, f"3. Efek Kontingensi Moderasi (Interaction Effect): Peran variabel ({', '.join(ctx['z_vars'])}) dalam memperkuat daya dorong kausalitas pada berbagai tingkatan kontingensi.", indent=0.75, space_after=6)
-
-    p(doc, f"Secara skematis, model struktural hibrida pada {instansi} ini menghubungkan {ctx['graph'].get('total_nodes', 0)} konstruk laten dengan {ctx['graph'].get('total_hypotheses', 0)} hipotesis keterkaitan struktural yang diestimasi secara simultan menggunakan SmartPLS 4.", indent=0.5, space_after=6)
+    """2.3 Kerangka Konseptual & Model Struktural Disertasi (Gabungan Utuh Bagian 1 & Bagian 2)."""
+    _build_doc_sub_2_3_1(doc, ctx, include_heading=True)
+    _build_doc_sub_2_3_2(doc, ctx, include_heading=False)
 
 
 def _build_doc_sub_2_4(doc: Document, ctx: Dict[str, Any]):
@@ -2266,6 +2488,8 @@ S3_BUILDER_MAP = {
     "sub_2_1_3": _build_doc_sub_2_1_3,
     "sub_2_2": _build_doc_sub_2_2,
     "sub_2_3": _build_doc_sub_2_3,
+    "sub_2_3_1": _build_doc_sub_2_3_1,
+    "sub_2_3_2": _build_doc_sub_2_3_2,
     "sub_2_4": _build_doc_sub_2_4,
 
     "sub_3_1": _build_doc_sub_3_1,

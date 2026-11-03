@@ -23,6 +23,32 @@ ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = ROOT / "manifest_online.xml"
 
 
+def tidy(xml: str, base: str) -> str:
+    """Rapikan manifest: AppDomain unik + Requirements WordApi bila belum ada."""
+    # 1) Buang <AppDomain> duplikat (template lama mendaftarkan origin 2x).
+    seen = set()
+
+    def keep(match):
+        url = match.group(1).strip()
+        if url in seen:
+            return ""
+        seen.add(url)
+        return match.group(0)
+
+    xml = re.sub(r"[ \t]*<AppDomain>(.*?)</AppDomain>\s*\n", keep, xml)
+
+    # 2) Tambahkan Requirements WordApi 1.1 setelah </Hosts> tingkat atas.
+    if "<Requirements>" not in xml:
+        req = ('  <Requirements>\n'
+               '    <Sets DefaultMinVersion="1.1">\n'
+               '      <Set Name="WordApi" MinVersion="1.1" />\n'
+               '    </Sets>\n'
+               '  </Requirements>\n\n')
+        xml = xml.replace("</Hosts>\n", "</Hosts>\n\n" + req, 1)
+
+    return xml
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--base-url", required=True,
@@ -54,6 +80,8 @@ def main():
     else:
         xml = xml.replace(old_origin, base)
         print(f"Origin diganti: {old_origin} -> {base}")
+
+    xml = tidy(xml, base)
 
     out = Path(args.out) if args.out else ROOT / f"manifest_{parsed.netloc.replace('.', '_')}.xml"
     out.write_text(xml, encoding="utf-8")

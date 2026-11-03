@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="taskpane.css">
+  <link rel="stylesheet" href="taskpane.css?v=20261031toast">
 </head>
 <body>
   <div class="app-container">
@@ -24,8 +24,11 @@
       <p class="header-desc" id="app-header-desc">Penulisan otomatis 5 Bab & Olah Data PLS-SEM langsung ke dokumen Microsoft Word.</p>
     </header>
 
-    <!-- Master Switcher (S2 Tesis vs S3 Disertasi) -->
+    <!-- Master Switcher (S1 Skripsi vs S2 Tesis vs S3 Disertasi) -->
     <div class="master-switcher">
+      <button type="button" class="master-tab-btn" id="btn-master-s1" data-master="s1">
+        🎓 MASTER S1: SKRIPSI SARJANA
+      </button>
       <button type="button" class="master-tab-btn active" id="btn-master-s2" data-master="s2">
         🎓 MASTER S2: TESIS MAGISTER
       </button>
@@ -33,6 +36,14 @@
         👑 MASTER S3: DISERTASI DOKTOR [ Hibrida & Moderasi ]
       </button>
     </div>
+
+    <!-- Navigation Tabs S1 (Skripsi Sarjana - 4 Tab) -->
+    <nav class="nav-tabs hidden" id="nav-tabs-s1">
+      <button type="button" class="tab-btn active" data-tab="s1-config">1. Konfigurasi</button>
+      <button type="button" class="tab-btn" data-tab="s1-chapters">2. Tulis Bab</button>
+      <button type="button" class="tab-btn" data-tab="s1-analysis">3. Analisis SPSS</button>
+      <button type="button" class="tab-btn" data-tab="s1-full">4. 1 Unduh Lengkap</button>
+    </nav>
 
     <!-- Navigation Tabs S2 (Tesis Magister - 4 Tab) -->
     <nav class="nav-tabs" id="nav-tabs-s2">
@@ -101,15 +112,15 @@
           <h2 class="card-title">Struktur Variabel (Model Mediasi 7 Hipotesis)</h2>
           <div class="form-group">
             <label for="input-x1">Variabel Bebas 1 (X1)</label>
-            <input type="text" id="input-x1" value="Kecerdasan Emosional">
+            <input type="text" id="input-x1" value="">
           </div>
           <div class="form-group">
             <label for="input-x2">Variabel Bebas 2 (X2)</label>
-            <input type="text" id="input-x2" value="Motivasi Kerja">
+            <input type="text" id="input-x2" value="">
           </div>
           <div class="form-group">
             <label for="input-m">Variabel Mediasi (M)</label>
-            <input type="text" id="input-m" value="Etos Kerja">
+            <input type="text" id="input-m" value="">
           </div>
           <div class="form-group">
             <label for="input-y">Variabel Terikat (Y)</label>
@@ -166,8 +177,8 @@
           <div class="mode-select-box mb-3">
             <label><strong>Mode Pengetikan ke Word:</strong></label>
             <div class="radio-row">
-              <label><input type="radio" name="write-mode" value="officejs" checked> 📄 Langsung ke Dokumen Aktif (Office.js)</label>
-              <label><input type="radio" name="write-mode" value="native"> ⚡ Background Process (Native COM)</label>
+              <label><input type="radio" name="write-mode" value="native" checked> ⚡ Background Process (Native COM) <span class="badge-mini" style="background: #dcfce7; color: #15803d; font-size: 10px; margin-left: 4px;">Rekomendasi</span></label>
+              <label><input type="radio" name="write-mode" value="officejs"> 📄 Langsung ke Dokumen Aktif (Office.js)</label>
             </div>
           </div>
 
@@ -957,6 +968,1182 @@
       </section>
 
       <!-- ========================================================================= -->
+      <!-- MASTER S1: PANEL 1 - KONFIGURASI SKRIPSI SARJANA (S1)                      -->
+      <!-- ========================================================================= -->
+      <section id="panel-s1-config" class="tab-panel">
+        <div class="card highlight-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h2 class="card-title" style="margin-bottom: 0;">Identitas Skripsi Sarjana (S1)</h2>
+            <span style="font-size: 10px; background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 10px; font-weight: 700;">Sarjana (S1)</span>
+          </div>
+
+          <div class="form-group">
+            <label for="input-s1-judul"><strong>Judul Penelitian Skripsi Sarjana</strong></label>
+            <textarea id="input-s1-judul" rows="3" placeholder="Ketik atau tempel judul skripsi di sini...">PENGARUH KEPEMIMPINAN TRANSFORMASIONAL DAN BUDAYA ORGANISASI TERHADAP KINERJA PEGAWAI PADA DINAS PENDIDIKAN KOTA PALEMBANG</textarea>
+            <div style="display: flex; gap: 6px; margin-top: 6px;">
+              <button type="button" class="btn btn-outline btn-xs" id="btn-s1-auto-detect" style="flex: 1; font-weight: 700; color: #059669; border-color: #6ee7b7;">⚡ Deteksi Otomatis Variabel &amp; Objek S1</button>
+            </div>
+            <div id="s1-detect-status" style="display: none; font-size: 11px; margin-top: 5px; color: #059669; font-weight: 600;"></div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="input-s1-model-type">Jenis Model Riset S1</label>
+              <select id="input-s1-model-type">
+                <option value="regression">Regresi Linier Berganda (2–5 Variabel X → Y)</option>
+                <option value="mediation">Analisis Jalur Mediasi (X1, X2 → M → Y)</option>
+              </select>
+            </div>
+            <div class="form-group half">
+              <label for="input-s1-instansi">Instansi / Objek Penelitian</label>
+              <input type="text" id="input-s1-instansi" value="Dinas Pendidikan Kota Palembang">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="input-s1-populasi">Jumlah Populasi (N)</label>
+              <input type="number" id="input-s1-populasi" value="75">
+            </div>
+            <div class="form-group half">
+              <label for="input-s1-sampel">Jumlah Sampel (n) (Slovin e=5% / Sensus)</label>
+              <input type="number" id="input-s1-sampel" value="60" readonly style="background: #f9fafb;">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="input-s1-penulis">Nama Mahasiswa / Peneliti</label>
+              <input type="text" id="input-s1-penulis" value="MUHAMMAD RIZKY PRATAMA">
+            </div>
+            <div class="form-group half">
+              <label for="input-s1-nim">NIM / NPM</label>
+              <input type="text" id="input-s1-nim" value="01011382227045">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="input-s1-prodi">Program Studi</label>
+              <input type="text" id="input-s1-prodi" value="Manajemen">
+            </div>
+            <div class="form-group half">
+              <label for="input-s1-konsentrasi">Konsentrasi</label>
+              <input type="text" id="input-s1-konsentrasi" value="Manajemen Sumber Daya Manusia">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="input-s1-fakultas">Fakultas</label>
+              <input type="text" id="input-s1-fakultas" value="Fakultas Ekonomi dan Bisnis">
+            </div>
+            <div class="form-group half">
+              <label for="input-s1-univ">Universitas / Perguruan Tinggi</label>
+              <input type="text" id="input-s1-univ" value="Universitas Sriwijaya">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="input-s1-kota">Kota Kampus</label>
+              <input type="text" id="input-s1-kota" value="Palembang">
+            </div>
+            <div class="form-group half">
+              <label for="input-s1-tahun">Tahun Akademik</label>
+              <input type="text" id="input-s1-tahun" value="2026">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="input-s1-pembimbing1">Dosen Pembimbing I</label>
+              <input type="text" id="input-s1-pembimbing1" value="Dr. H. Ahmad Fauzi, S.E., M.Si.">
+            </div>
+            <div class="form-group half">
+              <label for="input-s1-pembimbing2">Dosen Pembimbing II</label>
+              <input type="text" id="input-s1-pembimbing2" value="Dra. Hj. Nurjanah, M.M.">
+            </div>
+          </div>
+
+          <div style="margin-top: 10px; padding: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <strong style="color: #166534; font-size: 11px;">Rincian Variabel Penelitian S1:</strong>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <label for="input-s1-n-x" style="font-size: 11px; margin: 0; color: #166534; font-weight: 700;">Jumlah Variabel Bebas (X):</label>
+                <select id="input-s1-n-x" style="padding: 2px 6px; font-size: 11px; border-radius: 4px; border: 1px solid #86efac; font-weight: 700; color: #065f46; background: #fff;">
+                  <option value="2">2 Variabel (X1, X2)</option>
+                  <option value="3">3 Variabel (X1, X2, X3)</option>
+                  <option value="4">4 Variabel (X1, X2, X3, X4)</option>
+                  <option value="5">5 Variabel (X1, X2, X3, X4, X5)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row mt-2">
+              <div class="form-group half">
+                <label for="input-s1-x1">Variabel Bebas 1 (X1)</label>
+                <input type="text" id="input-s1-x1" value="Kepemimpinan Transformasional">
+              </div>
+              <div class="form-group half">
+                <label for="input-s1-x2">Variabel Bebas 2 (X2)</label>
+                <input type="text" id="input-s1-x2" value="Budaya Organisasi">
+              </div>
+            </div>
+            <div class="form-row" id="row-s1-x3-x4" style="display: none;">
+              <div class="form-group half" id="group-s1-x3" style="display: none;">
+                <label for="input-s1-x3">Variabel Bebas 3 (X3)</label>
+                <input type="text" id="input-s1-x3" value="Motivasi Kerja">
+              </div>
+              <div class="form-group half" id="group-s1-x4" style="display: none;">
+                <label for="input-s1-x4">Variabel Bebas 4 (X4)</label>
+                <input type="text" id="input-s1-x4" value="Disiplin Kerja">
+              </div>
+            </div>
+            <div class="form-row" id="row-s1-x5" style="display: none;">
+              <div class="form-group half" id="group-s1-x5" style="display: none;">
+                <label for="input-s1-x5">Variabel Bebas 5 (X5)</label>
+                <input type="text" id="input-s1-x5" value="Kompetensi Pegawai">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group half" id="group-s1-m" style="display: none;">
+                <label for="input-s1-m">Variabel Mediasi (M)</label>
+                <input type="text" id="input-s1-m" value="Komitmen Organisasional">
+              </div>
+              <div class="form-group half">
+                <label for="input-s1-y">Variabel Terikat (Y)</label>
+                <input type="text" id="input-s1-y" value="Kinerja Pegawai">
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Riset Dimensi & Indikator S1 via Live Academic API -->
+          <div class="card" style="margin-top: 12px; margin-bottom: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 12px; font-weight: 700; color: #166534;">🔬 Riset Dimensi &amp; Indikator Baku S1:</span>
+              <span id="badge-s1-ontology-status" style="font-size: 10px; padding: 2px 8px; border-radius: 12px; background: #dcfce7; color: #15803d; font-weight: 600;">Live Academic Engine</span>
+            </div>
+            <p style="font-size: 11px; color: #166534; line-height: 1.5; margin: 0 0 8px 0;">
+              AI meneliti Grand Theory, tokoh ahli, dimensi baku, dan indikator Likert (1–5) dari literatur ilmiah bereputasi guna mengunci <strong>Benang Merah</strong> Skripsi S1 dari Bab I, Bab II, Kisi-kisi Bab III, Google Form, SPSS, s/d Bab IV &amp; V.
+            </p>
+            <button type="button" class="btn btn-outline btn-xs" id="btn-s1-research-ontology" style="width: 100%; border-color: #16a34a; color: #15803d; font-weight: 600; padding: 6px;">
+              🔍 Telusuri Dimensi &amp; Indikator via Live Academic API
+            </button>
+            <div id="s1-ontology-preview-box" style="display: none; margin-top: 8px; font-size: 11px; color: #1e293b; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px;">
+              <!-- Container Hasil Riset Dimensi & Indikator S1 -->
+            </div>
+          </div>
+
+          <!-- Card Pengaturan Sitasi (Sumber Rujukan & Kutipan) -->
+          <div class="card" style="margin-top: 12px; margin-bottom: 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 12px; font-weight: 700; color: #1e40af;">📚 Pengaturan Sitasi</span>
+              <span id="badge-s1-cite-status" style="font-size: 10px; padding: 2px 8px; border-radius: 12px; background: #dbeafe; color: #1e40af; font-weight: 600;">Siap</span>
+            </div>
+            <p style="font-size: 11px; color: #1e40af; line-height: 1.5; margin: 0 0 8px 0;">
+              Sesuaikan referensi dan format penulisan dengan kebutuhan penelitianmu. 95 referensi pendukung (PDF) dipakai <strong>HANYA</strong> sebagai korpus dimensi &amp; indikator dan TIDAK masuk daftar pustaka ini.
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin-bottom: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <label for="input-s1-cite-min-year" style="font-size: 11px; margin: 0; color: #1e40af; font-weight: 700;">Tahun terbit minimum</label>
+                <select id="input-s1-cite-min-year" style="padding: 4px 6px; font-size: 11px; border-radius: 4px; border: 1px solid #93c5fd; font-weight: 600; color: #1e40af; background: #fff;">
+                  <option value="all" selected>Semua tahun</option>
+                </select>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <label for="input-s1-cite-origin" style="font-size: 11px; margin: 0; color: #1e40af; font-weight: 700;">Asal referensi</label>
+                <select id="input-s1-cite-origin" style="padding: 4px 6px; font-size: 11px; border-radius: 4px; border: 1px solid #93c5fd; font-weight: 600; color: #1e40af; background: #fff;">
+                  <option value="all" selected>Indonesia + Internasional</option>
+                  <option value="indonesia">Utama Indonesia</option>
+                  <option value="internasional">Utama Internasional</option>
+                </select>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <label for="input-s1-cite-style" style="font-size: 11px; margin: 0; color: #1e40af; font-weight: 700;">Gaya sitasi</label>
+                <select id="input-s1-cite-style" style="padding: 4px 6px; font-size: 11px; border-radius: 4px; border: 1px solid #93c5fd; font-weight: 600; color: #1e40af; background: #fff;">
+                  <option value="apa7" selected>APA 7th</option>
+                  <option value="apa6">APA 6th</option>
+                  <option value="harvard">Harvard</option>
+                  <option value="ieee">IEEE</option>
+                  <option value="vancouver">Vancouver</option>
+                  <option value="mla9">MLA 9th</option>
+                  <option value="chicago">Chicago</option>
+                  <option value="chicago-fullnote">Chicago Fullnote (Footnote)</option>
+                  <option value="turabian">Turabian (Footnote)</option>
+                </select>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <label for="input-s1-cite-language" style="font-size: 11px; margin: 0; color: #1e40af; font-weight: 700;">Bahasa penulisan</label>
+                <select id="input-s1-cite-language" style="padding: 4px 6px; font-size: 11px; border-radius: 4px; border: 1px solid #93c5fd; font-weight: 600; color: #1e40af; background: #fff;">
+                  <option value="id" selected>Indonesia</option>
+                  <option value="en">Inggris (English)</option>
+                  <option value="ms">Melayu</option>
+                  <option value="es">Spanyol (Español)</option>
+                  <option value="fr">Prancis (Français)</option>
+                  <option value="zh">Mandarin (中文)</option>
+                  <option value="hi">Hindi (हिन्दी)</option>
+                  <option value="ar">Arab (العربية)</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-bottom: 6px;">
+              <div style="font-size: 11px; color: #1e40af; font-weight: 700; margin-bottom: 4px;">Sumber referensi</div>
+              <div style="font-size: 10px; color: #64748b; margin-bottom: 4px;">Pilih satu atau lebih kategori sumber referensi.</div>
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 11px; color: #1e293b; margin: 0;">
+                  <input type="checkbox" id="input-s1-cite-src-umum" value="umum" checked> Umum
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 11px; color: #1e293b; margin: 0;">
+                  <input type="checkbox" id="input-s1-cite-src-sinta" value="sinta"> Terindeks Sinta
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 11px; color: #1e293b; margin: 0;">
+                  <input type="checkbox" id="input-s1-cite-src-scopus" value="scopus"> Terindeks Scopus
+                </label>
+              </div>
+              <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Umum: referensi dari sumber mana pun (default).</div>
+            </div>
+            <!-- Unggah artikel / buku (opsional) -->
+            <div style="margin-bottom: 8px; border: 1px dashed #93c5fd; border-radius: 6px; padding: 8px; background: #ffffff;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 11px; font-weight: 700; color: #1e40af;">📎 Unggah artikel atau buku</span>
+                <span style="font-size: 9px; padding: 1px 6px; border-radius: 8px; background: #fef3c7; color: #92400e; font-weight: 700;">OPTIONAL</span>
+              </div>
+              <p style="font-size: 10px; color: #475569; line-height: 1.4; margin: 0 0 6px 0;">
+                Tambahkan referensi khusus yang ingin digunakan dalam penelitian. Untuk sumber yang wajib kamu pakai — arahan pembimbing, buku teori, atau jurnal berlangganan yang tak muncul di pencarian. Sistem membaca identitasnya, lalu kamu periksa dulu sebelum disimpan. Sumber ini ikut masuk Daftar Pustaka bila benar-benar dikutip.
+              </p>
+              <label for="input-s1-cite-files" class="btn btn-outline btn-xs" style="border-color:#3b82f6; color:#1d4ed8; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px; margin:0;">
+                📄 Pilih File
+              </label>
+              <input type="file" id="input-s1-cite-files" accept=".pdf,application/pdf" multiple style="display:none;">
+              <span id="s1-cite-files-count" style="font-size: 10px; color: #64748b; margin-left: 6px;">0/10 sumber</span>
+              <div id="s1-cite-files-list" style="margin-top: 6px; display: none;"></div>
+              <p style="font-size: 9px; color: #94a3b8; margin: 4px 0 0 0;">Maks 15MB. PDF hasil scan tak bisa dibaca otomatis.</p>
+            </div>
+            <button type="button" class="btn btn-outline btn-xs" id="btn-s1-cite-refs" style="width: 100%; border-color: #3b82f6; color: #1d4ed8; font-weight: 600; padding: 6px;">
+              🔍 Telusuri Sumber Rujukan &amp; Kutipan (daftar pustaka)
+            </button>
+            <div id="s1-cite-refs-box" style="display: none; margin-top: 8px; font-size: 11px; color: #1e293b; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px; max-height: 280px; overflow-y: auto;">
+              <!-- Hasil Sumber Rujukan & Kutipan -->
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-top: 15px;">
+            <button class="btn btn-success" id="btn-s1-save-config" style="flex: 1; padding: 9px; font-weight: 700;">💾 Simpan Konfigurasi Skripsi S1</button>
+            <button class="btn btn-outline" id="btn-s1-unlock-config" style="display: none; flex: 1; padding: 9px; font-weight: 700; border-color: #d97706; color: #b45309;">✏️ Ubah Konfigurasi</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- MASTER S1: PANEL 2 - TULIS BAB SKRIPSI SARJANA (S1)                        -->
+      <!-- ========================================================================= -->
+      <section id="panel-s1-chapters" class="tab-panel">
+        <div class="card">
+          <div class="pipeline-header-title">
+            <h2 class="card-title">⚡ Penulisan Bab Skripsi Sarjana (S1 Standar SPSS)</h2>
+            <span class="badge-mini" style="background: #d1fae5; color: #065f46;">Sarjana (S1)</span>
+          </div>
+
+          <div class="pipeline-alert" style="background: #f0fdf4; border-color: #86efac; color: #166534;">
+            <strong>✅ Standar Skripsi Sarjana (S1) 5 Bab Lengkap:</strong> Disusun sesuai kaidah akademik Sarjana Manajemen (Uji Asumsi Klasik, Uji Validitas &amp; Reliabilitas Pearson/Cronbach's Alpha, Uji Hipotesis ANOVA F &amp; t Parsial) lengkap dengan Tabel Akademik Terbuka dan Daftar Pustaka APA 7th Edition (Zero Ghost Reference).
+          </div>
+
+          <!-- SELECTOR TARGET PENYISIPAN NASKAH -->
+          <div class="s1-target-box">
+            <div class="s1-target-title">📍 Target Penyisipan Naskah ke Microsoft Word</div>
+            <label class="s1-target-opt">
+              <input type="radio" name="s1-write-target" value="cursor">
+              <span><strong>Sisip di posisi kursor</strong> — naskah masuk tepat di titik kursor aktif (Native COM)</span>
+            </label>
+            <label class="s1-target-opt">
+              <input type="radio" name="s1-write-target" value="end" checked>
+              <span><strong>Sisip di akhir dokumen</strong> — naskah ditambahkan paling bawah (Native COM)</span>
+            </label>
+            <label class="s1-target-opt">
+              <input type="radio" name="s1-write-target" value="officejs">
+              <span><strong>Office.js</strong> — sisip ke dokumen yang sedang terbuka melalui add-in</span>
+            </label>
+          </div>
+
+          <!-- LIST 44 UNIT SUB-BAB MANDIRI SKRIPSI S1 -->
+          <div class="pipeline-section" id="s1-subchapter-tree">
+
+            <!-- BAGIAN AWAL (11 UNIT) -->
+            <div class="pipeline-chapter-card" id="card-s1-ch-0">
+              <div class="chapter-accordion-header" data-toggle="list-s1-ch-0">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #059669;">AWAL</span>
+                  <div class="chapter-title-group">
+                    <h3>Bagian Awal — Front Matter</h3>
+                    <span class="subchapter-count">11 Unit • 10 bagian mandiri + 1 paket lengkap</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-accordion-toggle">▶</button>
+                </div>
+              </div>
+              <div class="subchapter-list collapsed" id="list-s1-ch-0">
+                <div class="subchapter-row" id="row-s1-sub_cover">
+                  <div class="sub-info">
+                    <span class="sub-badge">COVER</span>
+                    <div class="sub-text">
+                      <strong>Halaman Sampul / Cover Luar</strong>
+                      <span class="sub-meta">🎯 1 Hlm | Sampul resmi, logo instansi, judul penelitian, nama &amp; NIM</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="sub_cover">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="sub_cover">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-sub_persetujuan">
+                  <div class="sub-info">
+                    <span class="sub-badge">PERSETUJUAN</span>
+                    <div class="sub-text">
+                      <strong>Lembar Persetujuan Pembimbing</strong>
+                      <span class="sub-meta">🎯 1 Hlm | Kolom tanda tangan Komisi Pembimbing &amp; Ketua Program Studi</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="sub_persetujuan">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="sub_persetujuan">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-sub_pernyataan">
+                  <div class="sub-info">
+                    <span class="sub-badge">PERNYATAAN</span>
+                    <div class="sub-text">
+                      <strong>Lembar Pernyataan Keaslian Skripsi</strong>
+                      <span class="sub-meta">🎯 1 Hlm | Surat pernyataan bebas plagiasi, kolom materai &amp; tanda tangan</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="sub_pernyataan">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="sub_pernyataan">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-sub_motto">
+                  <div class="sub-info">
+                    <span class="sub-badge">MOTTO</span>
+                    <div class="sub-text">
+                      <strong>Halaman Motto dan Persembahan</strong>
+                      <span class="sub-meta">🎯 1 Hlm | Motto hidup akademik &amp; lembar persembahan</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="sub_motto">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="sub_motto">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-sub_kata_pengantar">
+                  <div class="sub-info">
+                    <span class="sub-badge">KATA PENGANTAR</span>
+                    <div class="sub-text">
+                      <strong>Kata Pengantar</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | Ucapan syukur, terima kasih pembimbing, instansi &amp; keluarga</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="sub_kata_pengantar">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="sub_kata_pengantar">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-sub_abstrak">
+                  <div class="sub-info">
+                    <span class="sub-badge">ABSTRAK</span>
+                    <div class="sub-text">
+                      <strong>Abstrak (Bahasa Indonesia)</strong>
+                      <span class="sub-meta">🎯 1 Hlm | 150-250 kata, kata kunci, sintesis hasil Uji F &amp; Uji t</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="sub_abstrak">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="sub_abstrak">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-sub_abstract">
+                  <div class="sub-info">
+                    <span class="sub-badge">ABSTRACT</span>
+                    <div class="sub-text">
+                      <strong>Abstract (English)</strong>
+                      <span class="sub-meta">🎯 1 Hlm | Versi bahasa Inggris abstrak &amp; keywords</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="sub_abstract">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="sub_abstract">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-sub_daftar_isi">
+                  <div class="sub-info">
+                    <span class="sub-badge">DAFTAR ISI</span>
+                    <div class="sub-text">
+                      <strong>Daftar Isi</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | Hierarki bab, sub-bab &amp; kolom nomor halaman</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="sub_daftar_isi">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="sub_daftar_isi">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-sub_daftar_tabel">
+                  <div class="sub-info">
+                    <span class="sub-badge">DAFTAR TABEL</span>
+                    <div class="sub-text">
+                      <strong>Daftar Tabel</strong>
+                      <span class="sub-meta">🎯 1 Hlm | Rekapitulasi seluruh tabel Bab I s.d. Bab IV</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="sub_daftar_tabel">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="sub_daftar_tabel">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-sub_daftar_gambar">
+                  <div class="sub-info">
+                    <span class="sub-badge">DAFTAR GAMBAR</span>
+                    <div class="sub-text">
+                      <strong>Daftar Gambar</strong>
+                      <span class="sub-meta">🎯 1 Hlm | Gambar 2.1 Kerangka Berpikir &amp; diagram jalur</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="sub_daftar_gambar">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="sub_daftar_gambar">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-chapter-complete" id="row-s1-front_matter">
+                  <div class="sub-info">
+                    <span class="sub-badge">PAKET</span>
+                    <div class="sub-text">
+                      <strong>Bagian Awal Lengkap (Cover s.d. Daftar Gambar)</strong>
+                      <span class="sub-meta">🎯 10-12 Hlm | Seluruh 10 bagian awal dirangkai sekali jalan</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="front_matter">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="front_matter">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BAB I (5 UNIT) -->
+            <div class="pipeline-chapter-card" id="card-s1-ch-1">
+              <div class="chapter-accordion-header" data-toggle="list-s1-ch-1">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #059669;">BAB I</span>
+                  <div class="chapter-title-group">
+                    <h3>BAB I: PENDAHULUAN</h3>
+                    <span class="subchapter-count">5 Unit • 1.1 s.d. 1.4 + Bab Lengkap</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-accordion-toggle">▶</button>
+                </div>
+              </div>
+              <div class="subchapter-list collapsed" id="list-s1-ch-1">
+                <div class="subchapter-row" id="row-s1-1_1">
+                  <div class="sub-info">
+                    <span class="sub-badge">1.1</span>
+                    <div class="sub-text">
+                      <strong>Latar Belakang</strong>
+                      <span class="sub-meta">🎯 4-6 Hlm | Tabel 1.1 Target IKU &amp; Tabel 1.2 Rekap Absensi, fenomena empiris &amp; research gap</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="1.1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="1.1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-1_2">
+                  <div class="sub-info">
+                    <span class="sub-badge">1.2</span>
+                    <div class="sub-text">
+                      <strong>Perumusan Masalah</strong>
+                      <span class="sub-meta">🎯 1 Hlm | 3 butir rumusan masalah kausalitas simultan &amp; parsial</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="1.2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="1.2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-1_3">
+                  <div class="sub-info">
+                    <span class="sub-badge">1.3</span>
+                    <div class="sub-text">
+                      <strong>Tujuan Penelitian</strong>
+                      <span class="sub-meta">🎯 1 Hlm | 3 butir tujuan pembuktian statistik Uji F &amp; Uji t</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="1.3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="1.3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-1_4">
+                  <div class="sub-info">
+                    <span class="sub-badge">1.4</span>
+                    <div class="sub-text">
+                      <strong>Manfaat Penelitian</strong>
+                      <span class="sub-meta">🎯 1-2 Hlm | Manfaat teoretis MSDM &amp; praktis bagi instansi</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="1.4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="1.4">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-chapter-complete" id="row-s1-bab1">
+                  <div class="sub-info">
+                    <span class="sub-badge">BAB I</span>
+                    <div class="sub-text">
+                      <strong>BAB I Lengkap (1.1 s.d. 1.4)</strong>
+                      <span class="sub-meta">🎯 14-18 Hlm | Seluruh sub-bab Bab I termasuk Tabel 1.1 &amp; Tabel 1.2</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="bab1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="bab1">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BAB II (5 UNIT) -->
+            <div class="pipeline-chapter-card" id="card-s1-ch-2">
+              <div class="chapter-accordion-header" data-toggle="list-s1-ch-2">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #059669;">BAB II</span>
+                  <div class="chapter-title-group">
+                    <h3>BAB II: TINJAUAN PUSTAKA</h3>
+                    <span class="subchapter-count">5 Unit • 2.1 s.d. 2.4 + Bab Lengkap</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-accordion-toggle">▶</button>
+                </div>
+              </div>
+              <div class="subchapter-list collapsed" id="list-s1-ch-2">
+                <div class="subchapter-row" id="row-s1-2_1">
+                  <div class="sub-info">
+                    <span class="sub-badge">2.1</span>
+                    <div class="sub-text">
+                      <strong>Kajian Teori</strong>
+                      <span class="sub-meta">🎯 6-8 Hlm | Grand theory &amp; teori variabel X1..Xk, Y beserta indikator</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="2.1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="2.1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-2_2">
+                  <div class="sub-info">
+                    <span class="sub-badge">2.2</span>
+                    <div class="sub-text">
+                      <strong>Hasil Penelitian Lain yang Relevan</strong>
+                      <span class="sub-meta">🎯 3-4 Hlm | Tabel 2.1 komparasi 5 jurnal mutakhir (≥ 2022, ber-DOI)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="2.2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="2.2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-2_3">
+                  <div class="sub-info">
+                    <span class="sub-badge">2.3</span>
+                    <div class="sub-text">
+                      <strong>Kerangka Berpikir</strong>
+                      <span class="sub-meta">🎯 2 Hlm | Gambar 2.1 diagram jalur regresi X1..Xk → Y</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="2.3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="2.3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-2_4">
+                  <div class="sub-info">
+                    <span class="sub-badge">2.4</span>
+                    <div class="sub-text">
+                      <strong>Hipotesis Penelitian</strong>
+                      <span class="sub-meta">🎯 1 Hlm | H1 simultan, H2..H(k+1) parsial per variabel X</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="2.4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="2.4">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-chapter-complete" id="row-s1-bab2">
+                  <div class="sub-info">
+                    <span class="sub-badge">BAB II</span>
+                    <div class="sub-text">
+                      <strong>BAB II Lengkap (2.1 s.d. 2.4)</strong>
+                      <span class="sub-meta">🎯 12-16 Hlm | Kajian teori, Tabel 2.1, kerangka berpikir &amp; hipotesis</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="bab2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="bab2">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BAB III (10 UNIT) -->
+            <div class="pipeline-chapter-card" id="card-s1-ch-3">
+              <div class="chapter-accordion-header" data-toggle="list-s1-ch-3">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #059669;">BAB III</span>
+                  <div class="chapter-title-group">
+                    <h3>BAB III: METODE PENELITIAN</h3>
+                    <span class="subchapter-count">10 Unit • 3.1 s.d. 3.9 + Bab Lengkap</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-accordion-toggle">▶</button>
+                </div>
+              </div>
+              <div class="subchapter-list collapsed" id="list-s1-ch-3">
+                <div class="subchapter-row" id="row-s1-3_1">
+                  <div class="sub-info">
+                    <span class="sub-badge">3.1</span>
+                    <div class="sub-text">
+                      <strong>Tempat dan Waktu Penelitian</strong>
+                      <span class="sub-meta">🎯 1-2 Hlm | Profil lokasi riset &amp; Tabel 3.1 jadwal penelitian</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="3.1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="3.1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-3_2">
+                  <div class="sub-info">
+                    <span class="sub-badge">3.2</span>
+                    <div class="sub-text">
+                      <strong>Sumber dan Teknik Pengumpulan Data</strong>
+                      <span class="sub-meta">🎯 1-2 Hlm | Data primer (kuesioner) &amp; sekunder (dokumentasi)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="3.2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="3.2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-3_3">
+                  <div class="sub-info">
+                    <span class="sub-badge">3.3</span>
+                    <div class="sub-text">
+                      <strong>Populasi, Sampel dan Teknik Sampling</strong>
+                      <span class="sub-meta">🎯 2 Hlm | Metode sensus / sampling jenuh bila N ≤ 100</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="3.3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="3.3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-3_4">
+                  <div class="sub-info">
+                    <span class="sub-badge">3.4</span>
+                    <div class="sub-text">
+                      <strong>Rancangan Penelitian</strong>
+                      <span class="sub-meta">🎯 1 Hlm | Kuantitatif asosiatif kausal (hubungan sebab-akibat)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="3.4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="3.4">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-3_5">
+                  <div class="sub-info">
+                    <span class="sub-badge">3.5</span>
+                    <div class="sub-text">
+                      <strong>Variabel dan Definisi Operasional Variabel</strong>
+                      <span class="sub-meta">🎯 3 Hlm | Tabel 3.2 kisi-kisi operasional variabel X1..Xk, Y</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="3.5">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="3.5">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-3_6">
+                  <div class="sub-info">
+                    <span class="sub-badge">3.6</span>
+                    <div class="sub-text">
+                      <strong>Instrumen Penelitian</strong>
+                      <span class="sub-meta">🎯 2 Hlm | Tabel 3.3 skala penafsiran Likert 1-5</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="3.6">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="3.6">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-3_7">
+                  <div class="sub-info">
+                    <span class="sub-badge">3.7</span>
+                    <div class="sub-text">
+                      <strong>Uji Instrumen</strong>
+                      <span class="sub-meta">🎯 2 Hlm | Uji validitas Pearson &amp; reliabilitas Cronbach's Alpha</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="3.7">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="3.7">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-3_8">
+                  <div class="sub-info">
+                    <span class="sub-badge">3.8</span>
+                    <div class="sub-text">
+                      <strong>Teknik Analisa Data</strong>
+                      <span class="sub-meta">🎯 3 Hlm | Statistik deskriptif &amp; inferensial, Tabel 3.4 asumsi klasik</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="3.8">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="3.8">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-3_9">
+                  <div class="sub-info">
+                    <span class="sub-badge">3.9</span>
+                    <div class="sub-text">
+                      <strong>Uji Hipotesis Statistik</strong>
+                      <span class="sub-meta">🎯 2 Hlm | Uji F simultan &amp; Uji t parsial beserta kriteria</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="3.9">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="3.9">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-chapter-complete" id="row-s1-bab3">
+                  <div class="sub-info">
+                    <span class="sub-badge">BAB III</span>
+                    <div class="sub-text">
+                      <strong>BAB III Lengkap (3.1 s.d. 3.9)</strong>
+                      <span class="sub-meta">🎯 18-22 Hlm | Seluruh metode penelitian termasuk Tabel 3.1 s.d. 3.4</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="bab3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="bab3">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BAB IV (7 UNIT) -->
+            <div class="pipeline-chapter-card" id="card-s1-ch-4">
+              <div class="chapter-accordion-header" data-toggle="list-s1-ch-4">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #059669;">BAB IV</span>
+                  <div class="chapter-title-group">
+                    <h3>BAB IV: HASIL PENELITIAN DAN PEMBAHASAN</h3>
+                    <span class="subchapter-count">7 Unit • 4.1 s.d. 4.6 + Bab Lengkap (23 Tabel)</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-accordion-toggle">▶</button>
+                </div>
+              </div>
+              <div class="subchapter-list collapsed" id="list-s1-ch-4">
+                <div class="subchapter-row" id="row-s1-4_1">
+                  <div class="sub-info">
+                    <span class="sub-badge">4.1</span>
+                    <div class="sub-text">
+                      <strong>Hasil Penelitian &amp; Karakteristik Responden</strong>
+                      <span class="sub-meta">🎯 6 Hlm | Sejarah, visi-misi, struktur, Tabel 4.1 s.d. 4.7</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="4.1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="4.1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-4_2">
+                  <div class="sub-info">
+                    <span class="sub-badge">4.2</span>
+                    <div class="sub-text">
+                      <strong>Uji Instrumen Penelitian</strong>
+                      <span class="sub-meta">🎯 4 Hlm | Tabel 4.8 s.d. 4.14 validitas Pearson &amp; reliabilitas</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="4.2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="4.2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-4_3">
+                  <div class="sub-info">
+                    <span class="sub-badge">4.3</span>
+                    <div class="sub-text">
+                      <strong>Teknik Analisis Data dan Deskripsi Variabel</strong>
+                      <span class="sub-meta">🎯 4 Hlm | Tabel 4.15 statistik &amp; Tabel 4.16 s.d. 4.18 mean skor</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="4.3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="4.3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-4_4">
+                  <div class="sub-info">
+                    <span class="sub-badge">4.4</span>
+                    <div class="sub-text">
+                      <strong>Analisis Uji Asumsi Klasik</strong>
+                      <span class="sub-meta">🎯 3 Hlm | Tabel 4.19 normalitas K-S, 4.20 VIF, 4.21 Glejser</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="4.4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="4.4">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-4_5">
+                  <div class="sub-info">
+                    <span class="sub-badge">4.5</span>
+                    <div class="sub-text">
+                      <strong>Regresi Linier Berganda &amp; Uji Hipotesis</strong>
+                      <span class="sub-meta">🎯 4 Hlm | Tabel 4.22 Uji F (ANOVA) &amp; Tabel 4.23 Uji t parsial</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="4.5">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="4.5">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-4_6">
+                  <div class="sub-info">
+                    <span class="sub-badge">4.6</span>
+                    <div class="sub-text">
+                      <strong>Pembahasan</strong>
+                      <span class="sub-meta">🎯 4 Hlm | 4 alinea per hipotesis: simultan dan parsial per variabel X</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="4.6">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="4.6">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-chapter-complete" id="row-s1-bab4">
+                  <div class="sub-info">
+                    <span class="sub-badge">BAB IV</span>
+                    <div class="sub-text">
+                      <strong>BAB IV Lengkap (4.1 s.d. 4.6)</strong>
+                      <span class="sub-meta">🎯 25-30 Hlm | Seluruh tabel berformat tertutup penuh (Full Borders)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="bab4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="bab4">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BAB V (3 UNIT) -->
+            <div class="pipeline-chapter-card" id="card-s1-ch-5">
+              <div class="chapter-accordion-header" data-toggle="list-s1-ch-5">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #059669;">BAB V</span>
+                  <div class="chapter-title-group">
+                    <h3>BAB V: KESIMPULAN DAN SARAN</h3>
+                    <span class="subchapter-count">3 Unit • 5.1, 5.2 + Bab Lengkap</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-accordion-toggle">▶</button>
+                </div>
+              </div>
+              <div class="subchapter-list collapsed" id="list-s1-ch-5">
+                <div class="subchapter-row" id="row-s1-5_1">
+                  <div class="sub-info">
+                    <span class="sub-badge">5.1</span>
+                    <div class="sub-text">
+                      <strong>Kesimpulan</strong>
+                      <span class="sub-meta">🎯 2 Hlm | Simpulan komprehensif: simultan, parsial per variabel X, R²</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="5.1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="5.1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s1-5_2">
+                  <div class="sub-info">
+                    <span class="sub-badge">5.2</span>
+                    <div class="sub-text">
+                      <strong>Saran</strong>
+                      <span class="sub-meta">🎯 2 Hlm | 5.2.1 saran praktis instansi &amp; 5.2.2 saran akademis</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="5.2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="5.2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-chapter-complete" id="row-s1-bab5">
+                  <div class="sub-info">
+                    <span class="sub-badge">BAB V</span>
+                    <div class="sub-text">
+                      <strong>BAB V Lengkap (5.1 &amp; 5.2)</strong>
+                      <span class="sub-meta">🎯 4-6 Hlm | Kesimpulan &amp; saran dalam satu berkas bab utuh</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="bab5">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="bab5">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- DAFTAR PUSTAKA (1 UNIT) -->
+            <div class="pipeline-chapter-card" id="card-s1-ch-6">
+              <div class="chapter-accordion-header" data-toggle="list-s1-ch-6">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #059669;">DAPUS</span>
+                  <div class="chapter-title-group">
+                    <h3>DAFTAR PUSTAKA</h3>
+                    <span class="subchapter-count">1 Unit • APA 7th Edition, Zero Ghost Reference</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-accordion-toggle">▶</button>
+                </div>
+              </div>
+              <div class="subchapter-list collapsed" id="list-s1-ch-6">
+                <div class="subchapter-row" id="row-s1-dapus">
+                  <div class="sub-info">
+                    <span class="sub-badge">DAPUS</span>
+                    <div class="sub-text">
+                      <strong>Daftar Pustaka</strong>
+                      <span class="sub-meta">🎯 3-4 Hlm | Referensi ≥ 2022 ber-DOI, seluruh sitasi Bab I–V terdaftar</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="dapus">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="dapus">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- LAMPIRAN (1 UNIT) -->
+            <div class="pipeline-chapter-card" id="card-s1-ch-7">
+              <div class="chapter-accordion-header" data-toggle="list-s1-ch-7">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #059669;">LAMPIRAN</span>
+                  <div class="chapter-title-group">
+                    <h3>LAMPIRAN</h3>
+                    <span class="subchapter-count">1 Unit • Kuesioner Likert 1–5 &amp; Tabulasi Data SPSS</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-accordion-toggle">▶</button>
+                </div>
+              </div>
+              <div class="subchapter-list collapsed" id="list-s1-ch-7">
+                <div class="subchapter-row" id="row-s1-lampiran">
+                  <div class="sub-info">
+                    <span class="sub-badge">LAMPIRAN</span>
+                    <div class="sub-text">
+                      <strong>Lampiran Penelitian</strong>
+                      <span class="sub-meta">🎯 4-6 Hlm | Instrumen angket, tabulasi jawaban responden &amp; berkas SPSS</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="lampiran">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="lampiran">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- NASKAH UTUH (1 UNIT) -->
+            <div class="pipeline-chapter-card" id="card-s1-ch-8">
+              <div class="chapter-accordion-header" data-toggle="list-s1-ch-8">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #065f46;">UTUH</span>
+                  <div class="chapter-title-group">
+                    <h3>NASKAH UTUH SKRIPSI</h3>
+                    <span class="subchapter-count">1 Unit • Bagian Awal s.d. Lampiran (± 61 Halaman)</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-accordion-toggle">▶</button>
+                </div>
+              </div>
+              <div class="subchapter-list collapsed" id="list-s1-ch-8">
+                <div class="subchapter-row sub-chapter-complete" id="row-s1-all">
+                  <div class="sub-info">
+                    <span class="sub-badge">UTUH</span>
+                    <div class="sub-text">
+                      <strong>Naskah Utuh Skripsi S1 Lengkap</strong>
+                      <span class="sub-meta">🎯 61 Hlm | 5 Bab + Bagian Awal + Daftar Pustaka + Lampiran sekaligus</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s1-sub-write" data-sub="all">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s1-sub-docx" data-sub="all">📄 .docx</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div style="margin-top: 14px;">
+            <button class="btn btn-success" id="btn-s1-run-all-chapters" style="width: 100%; padding: 11px; font-weight: 700; font-size: 13px;">
+              ⚡ Tulis Seluruh Naskah Skripsi Sekaligus (Bab I s.d. Bab V Lengkap)
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- MASTER S1: PANEL 3 - ANALISIS DATA STATISTIK SPSS                          -->
+      <!-- ========================================================================= -->
+      <section id="panel-s1-analysis" class="tab-panel">
+        <div class="card">
+          <h2 class="card-title">Wizard Olah Data Statistik SPSS (Skripsi Sarjana S1)</h2>
+          <p class="hint">Modul komputasi statistik standar IBM SPSS Statistics 26 untuk Skripsi Sarjana (Uji Validitas Pearson, Reliabilitas Cronbach's Alpha, Uji Normalitas Kolmogorov-Smirnov, Uji Multikolinearitas VIF, Uji Heteroskedastisitas Glejser, serta Uji F dan Uji t).</p>
+
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="input-s1-analysis-n">Ukuran Sampel Responden (n)</label>
+              <input type="number" id="input-s1-analysis-n" value="60">
+            </div>
+            <div class="form-group half">
+              <label>Taraf Signifikansi (Alpha)</label>
+              <input type="text" value="0,05 (5%) - 2-tailed" disabled style="background: #f9fafb;">
+            </div>
+          </div>
+
+          <!-- Langkah 1: Kuesioner Google Form -->
+          <div class="wizard-step">
+            <div class="wizard-head"><span class="wizard-no" style="background: #059669;">1</span> Kuesioner Penelitian &amp; Google Form</div>
+            <button class="btn btn-secondary" id="btn-s1-generate-gform">📋 Buat Skrip Google Form (Salin Apps Script 1-Klik)</button>
+            <p class="hint">Membuat kuesioner Google Form skala Likert 1–5 secara otomatis di Google Drive Anda.</p>
+
+            <div id="s1-gform-result" class="hidden mt-2">
+              <textarea id="s1-gform-script" class="gform-script" rows="5" readonly spellcheck="false"></textarea>
+              <div class="upload-row mt-1">
+                <button class="btn btn-secondary btn-xs" id="btn-s1-copy-gform">📋 Salin Skrip</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Langkah 2: Pembangkitan Data Responden SPSS -->
+          <div class="wizard-step">
+            <div class="wizard-head"><span class="wizard-no" style="background: #059669;">2</span> Siapkan Data Responden (Simulator SPSS)</div>
+            <p class="hint">Bangkitkan data jawaban responden realistis (non-straight-lining) berskala 1–5 yang <strong>dijamin 100% lolos seluruh uji SPSS</strong> (Validitas Pearson, Alpha &gt; 0,80, Asumsi Klasik Normal/Multiko/Hetero, serta Uji F dan t signifikan).</p>
+            <button class="btn btn-secondary" id="btn-s1-generate-data">🤖 Bangkitkan Data Responden Realistis S1</button>
+          </div>
+
+          <!-- Langkah 3: Olah Data SPSS -->
+          <div class="wizard-step">
+            <div class="wizard-head"><span class="wizard-no" style="background: #059669;">3</span> Eksekusi Olah Data Regresi SPSS</div>
+            <button class="btn btn-success" id="btn-s1-run-spss" style="font-weight: 700;">⚙️ Olah Data Statistik SPSS Sekarang</button>
+            <p class="hint">Menghitung koefisien korelasi Pearson, Cronbach's Alpha, K-S Asymp Sig, Tolerance, VIF, Glejser Sig, R², ANOVA F, dan t-test.</p>
+          </div>
+
+          <div id="s1-spss-download-box" class="hidden mt-2">
+            <div style="display: flex; gap: 8px;">
+              <a href="#" class="btn btn-success" id="link-s1-download-excel" target="_blank" style="flex: 1; text-align: center;">📥 Unduh Lembar Kerja Excel (.xlsx)</a>
+              <a href="#" class="btn btn-secondary" id="link-s1-download-csv" target="_blank" style="flex: 1; text-align: center;">📥 Unduh Data CSV (.csv)</a>
+            </div>
+          </div>
+
+          <div id="s1-spss-preview" class="results-box hidden mt-3">
+            <h4>Ringkasan Hasil Olah Data SPSS S1:</h4>
+            <div class="metric-grid" id="s1-spss-metrics" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px;">
+              <!-- Metrik dinamis -->
+            </div>
+            <p class="stat-status mt-2" id="s1-spss-status" style="font-size: 11px; font-weight: 600; color: #059669;"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- MASTER S1: PANEL 4 - 1 UNDUH LENGKAP SKRIPSI SARJANA                       -->
+      <!-- ========================================================================= -->
+      <section id="panel-s1-full" class="tab-panel">
+        <div class="card highlight-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h2 class="card-title" style="margin-bottom: 0;">1 Unduh Lengkap Skripsi Sarjana (S1)</h2>
+            <span style="font-size: 10px; background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 10px; font-weight: 700;">Siap Ujian Sidang</span>
+          </div>
+          <p>Rangkai seluruh naskah Skripsi Sarjana (S1) utuh (Cover Luar, Lembar Persetujuan Pembimbing, Lembar Pengesahan Penguji, Surat Pernyataan Keaslian, Abstrak Bahasa Indonesia &amp; Inggris, Kata Pengantar, Daftar Isi, Bab I s.d. Bab V Lengkap, Tabel Statistik SPSS Terbuka, Daftar Pustaka APA 7th Zero Ghost Reference, dan Lampiran Kuesioner/Tabulasi) langsung ke lembar kerja Word.</p>
+
+          <div class="specs-box" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+            <ul style="color: #166534;">
+              <li><strong>Ukuran Kertas:</strong> A4, Margin Kiri 4cm, Atas 4cm, Kanan 3cm, Bawah 3cm</li>
+              <li><strong>Tipografi:</strong> Times New Roman 12 pt, Spasi 1.5, Indent Paragraf 1.27 cm</li>
+              <li><strong>Tabel Akademik:</strong> Format Terbuka (Open-Border Standar Pascasarjana &amp; Sarjana)</li>
+              <li><strong>Metode Analisis:</strong> Regresi Linier Berganda / Path Analysis Berbasis IBM SPSS Statistics</li>
+              <li><strong>Integritas Pustaka:</strong> 100% Zero Ghost Reference (Seluruh sitasi saling bertaut)</li>
+            </ul>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-top: 15px;">
+            <button class="btn btn-primary" id="btn-s1-write-full-word" style="flex: 1; padding: 10px; font-weight: 700;">✍️ Tulis Dokumen Penuh ke Word (Native COM)</button>
+            <button class="btn btn-success" id="btn-s1-download-full" style="flex: 1; padding: 10px; font-weight: 700;">📥 Unduh Berkas Skripsi (.docx)</button>
+          </div>
+          <div id="s1-full-download-link" class="hidden mt-3">
+            <a href="#" class="btn btn-success" id="link-s1-download" target="_blank" style="display: block; text-align: center;">📥 Unduh File Dokumen (.docx)</a>
+          </div>
+          <p class="hint" style="margin-top: 10px;">Tips: Anda juga dapat menggunakan generator per bab di Tab 2 untuk menulis bab secara terpisah.</p>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
       <!-- MASTER S3: PANEL 1 - KONFIGURASI DISERTASI & DETEKSI OTOMATIS             -->
       <!-- ========================================================================= -->
       <section id="panel-s3-config" class="tab-panel">
@@ -976,13 +2163,17 @@
 
           <div class="form-row">
             <div class="form-group half">
-              <label for="input-s3-populasi">Jumlah Populasi (N)</label>
-              <input type="number" id="input-s3-populasi" value="150">
+              <label for="input-s3-populasi">Jumlah Populasi (N) <span style="color:#b91c1c;">*</span></label>
+              <input type="number" id="input-s3-populasi" min="1" step="1" value="" placeholder="wajib diisi, mis. 87">
             </div>
             <div class="form-group half">
               <label for="input-s3-sampel">Jumlah Sampel (otomatis)</label>
-              <input type="text" id="input-s3-sampel" value="110" readonly>
+              <input type="text" id="input-s3-sampel" value="" placeholder="dihitung dari N (Slovin 5%)" readonly>
             </div>
+          </div>
+          <div style="font-size: 11px; color: #6b7280; margin: -4px 0 8px;">
+            Populasi wajib diisi sesuai data kepegawaian instansi. Sampel dihitung otomatis:
+            N ≤ 100 memakai sampling jenuh; N &gt; 100 memakai Rumus Slovin (e = 5%).
           </div>
           <div class="form-row">
             <div class="form-group half">
@@ -1106,8 +2297,8 @@
           <div class="mode-select-box mb-3">
             <label><strong>Mode Pengetikan ke Word:</strong></label>
             <div class="radio-row">
-              <label><input type="radio" name="write-mode-s3" value="officejs" checked> 📄 Langsung ke Dokumen Aktif (Office.js)</label>
-              <label><input type="radio" name="write-mode-s3" value="native"> ⚡ Background Process (Native COM)</label>
+              <label><input type="radio" name="write-mode-s3" value="native" checked> ⚡ Background Process (Native COM) <span class="badge-mini" style="background: #f3e8ff; color: #7e22ce; font-size: 10px; margin-left: 4px;">Rekomendasi</span></label>
+              <label><input type="radio" name="write-mode-s3" value="officejs"> 📄 Langsung ke Dokumen Aktif (Office.js)</label>
             </div>
           </div>
 
@@ -1125,10 +2316,11 @@
                   <span class="chapter-badge" style="background: #7c3aed;">AWAL</span>
                   <div class="chapter-title-group">
                     <h3>Bagian Awal (Front Matter)</h3>
-                    <span class="subchapter-count">1 Unit • Est. 8-10 Halaman • Disisipkan di Awal Dokumen</span>
+                    <span class="subchapter-count" id="count-s3-ch-0">1 Unit Baku • Est. 8-10 Halaman</span>
                   </div>
                 </div>
                 <div class="chapter-header-actions">
+                  <button class="btn-chain btn-s3-chain" data-chapter="0">⚡ Run Chain Bagian Awal</button>
                   <button class="btn-accordion-toggle">▼</button>
                 </div>
               </div>
@@ -1144,6 +2336,33 @@
                   <div class="sub-actions">
                     <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_bagian_awal">✍️ Tulis</button>
                     <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_bagian_awal">📄 .docx</button>
+                  </div>
+                </div>
+
+                <!-- KONTINER SUB-BAB KUSTOM BAGIAN AWAL -->
+                <div id="s3-custom-sub-list-0"></div>
+
+                <!-- MENU TAMBAH SUB-BAB BEBAS JUDUL BAGIAN AWAL -->
+                <div class="add-subchapter-box" style="margin-top: 8px; padding: 8px 12px; background: #faf5ff; border: 1px dashed #c084fc; border-radius: 6px;">
+                  <div id="btn-add-sub-trigger-ch-0" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <span style="font-size: 11px; font-weight: 600; color: #7c3aed;">➕ Tambah Sub-Bab Baru Bagian Awal (Bebas Judul)</span>
+                    <span class="badge-mini" style="background: #ede9fe; color: #6d28d9; cursor: pointer;">+ Tambah</span>
+                  </div>
+                  <div id="form-add-sub-ch-0" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f3e8ff;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                      <div style="flex: 0 0 65px;">
+                        <label style="font-size: 10px; color: #6b7280; font-weight: 600; display: block; margin-bottom: 2px;">Kode</label>
+                        <input type="text" id="input-custom-sub-code-0" placeholder="Awal-2" value="Awal-2" maxlength="10" style="width: 100%; font-size: 11px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 4px; text-transform: uppercase; font-weight: bold; text-align: center;">
+                      </div>
+                      <div style="flex: 1;">
+                        <label style="font-size: 10px; color: #6b7280; font-weight: 600; display: block; margin-bottom: 2px;">Judul Dokumen/Bagian Awal (Ketik Bebas)</label>
+                        <input type="text" id="input-custom-sub-title-0" placeholder="Contoh: Pernyataan Keaslian Naskah Disertasi atau Prakata Tambahan" style="width: 100%; font-size: 11px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                      </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                      <button type="button" class="btn btn-outline btn-xs" id="btn-cancel-custom-sub-0">Batal</button>
+                      <button type="button" class="btn btn-primary btn-xs" id="btn-save-custom-sub-0" style="background: #7c3aed; border-color: #7c3aed;">💾 Simpan Sub-Bab</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1327,13 +2546,70 @@
                   <div class="sub-info">
                     <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">A.5</span>
                     <div class="sub-text">
-                      <strong>A.5 5. Kajian Teoritis Variabel Bebas (X1, X2... Xn)</strong>
-                      <span class="sub-meta">🎯 8-12 Hlm | Pilar Kapasitas Eksogen + 10 Definisi per X + Matriks + Tabel Dimensi &amp; Indikator</span>
+                      <strong>A.5 5. Kajian Teoritis Variabel Bebas (X1, X2... Xn) [Komposit]</strong>
+                      <span class="sub-meta">🎯 8-12 Hlm | Seluruh Pilar Eksogen + Definisi Ahli + Sintesis Naratif murni tanpa tabel</span>
                     </div>
                   </div>
                   <div class="sub-actions">
                     <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_1_3">✍️ Tulis</button>
                     <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_1_3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <!-- Anak Baris Granular A.5 (Per Variabel Eksogen) -->
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_2_1_3_x1">
+                  <div class="sub-info">
+                    <span class="sub-badge">A.5.1</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_2_1_3_x1">A.5.1 Kajian Teoritis Variabel Bebas X1</strong>
+                      <span class="sub-meta">🎯 Mandiri X1 | Hakikat kapasitas, 10 definisi ahli, sintesis, & dimensi/indikator teks</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_1_3_x1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_1_3_x1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_2_1_3_x2">
+                  <div class="sub-info">
+                    <span class="sub-badge">A.5.2</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_2_1_3_x2">A.5.2 Kajian Teoritis Variabel Bebas X2</strong>
+                      <span class="sub-meta">🎯 Mandiri X2 | Hakikat kapasitas, 10 definisi ahli, sintesis, & dimensi/indikator teks</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_1_3_x2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_1_3_x2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_2_1_3_x3">
+                  <div class="sub-info">
+                    <span class="sub-badge">A.5.3</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_2_1_3_x3">A.5.3 Kajian Teoritis Variabel Bebas X3</strong>
+                      <span class="sub-meta">🎯 Mandiri X3 | Hakikat kapasitas, 10 definisi ahli, sintesis, & dimensi/indikator teks</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_1_3_x3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_1_3_x3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_2_1_3_x4">
+                  <div class="sub-info">
+                    <span class="sub-badge">A.5.4</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_2_1_3_x4">A.5.4 Kajian Teoritis Variabel Bebas X4</strong>
+                      <span class="sub-meta">🎯 Mandiri X4 | Hakikat kapasitas, 10 definisi ahli, sintesis, & dimensi/indikator teks</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_1_3_x4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_1_3_x4">📄 .docx</button>
                   </div>
                 </div>
 
@@ -1356,13 +2632,56 @@
                   <div class="sub-info">
                     <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">C</span>
                     <div class="sub-text">
-                      <strong>C. Kerangka Berfikir</strong>
+                      <strong>C. Kerangka Berfikir [Komposit]</strong>
                       <span class="sub-meta">🎯 5-7 Hlm | Alur Logika Moderated-Mediation + State of the Art + Gambar 2.1 Bagan Kerangka Konseptual</span>
                     </div>
                   </div>
                   <div class="sub-actions">
                     <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_3">✍️ Tulis</button>
                     <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <!-- Anak Baris Granular Sub-Bab C -->
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_2_3_1">
+                  <div class="sub-info">
+                    <span class="sub-badge">C.1</span>
+                    <div class="sub-text">
+                      <strong>C.1 Kerangka Konseptual & Silogisme Deduktif</strong>
+                      <span class="sub-meta">🎯 Silogisme logika deduktif, premis mayor, premis minor, & sintesis integratif</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_3_1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_3_1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_2_3_2">
+                  <div class="sub-info">
+                    <span class="sub-badge">C.2</span>
+                    <div class="sub-text">
+                      <strong>C.2 Sintesis Keterkaitan Kausalitas Antar-Konstruk</strong>
+                      <span class="sub-meta">🎯 Transmisi mediasi kognitif-motivasional & efek kontingensi pemoderasi</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_3_2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_3_2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_2_3_3">
+                  <div class="sub-info">
+                    <span class="sub-badge">C.3</span>
+                    <div class="sub-text">
+                      <strong>C.3 Paradigma Model Struktural & Boundary Conditions</strong>
+                      <span class="sub-meta">🎯 Gambar 2.1 Model Orisinal Doktoral, dimensi, indikator & batas kontingensi</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_2_3_3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_2_3_3">📄 .docx</button>
                   </div>
                 </div>
 
@@ -1416,7 +2735,7 @@
                   <span class="chapter-badge" style="background: #7c3aed;">BAB III</span>
                   <div class="chapter-title-group">
                     <h3>BAB III: Metode Penelitian</h3>
-                    <span class="subchapter-count">6 Sub-Bab • Est. 20-30 Halaman</span>
+                    <span class="subchapter-count" id="count-s3-ch-3">Sub-Bab A s/d I (Default) • Est. 20-30 Halaman</span>
                   </div>
                 </div>
                 <div class="chapter-header-actions">
@@ -1499,13 +2818,112 @@
                   <div class="sub-info">
                     <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">F</span>
                     <div class="sub-text">
-                      <strong>Definisi Konseptual & Operasional</strong>
-                      <span class="sub-meta">🎯 4 Kuadran (Y, M, Z, X) | Definisi Konseptual, Operasional & Tabel 3.4-3.10 Kisi-Kisi</span>
+                      <strong>F. Definisi Konseptual & Operasional [Komposit]</strong>
+                      <span class="sub-meta">🎯 4 Kuadran (Y, M, Z, X) | Kompilasi Utuh Definisi & Seluruh Tabel Kisi-Kisi Instrumen</span>
                     </div>
                   </div>
                   <div class="sub-actions">
                     <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_f">✍️ Tulis</button>
                     <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_f">📄 .docx</button>
+                  </div>
+                </div>
+
+                <!-- Anak Baris Granular Sub-Bab F (Per Variabel) -->
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_3_f_y">
+                  <div class="sub-info">
+                    <span class="sub-badge">F.1</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_3_f_y">F.1 Definisi & Kisi-Kisi Variabel Terikat (Y)</strong>
+                      <span class="sub-meta">🎯 Variabel Terikat (Y) | Definisi konseptual, operasional Likert, & tabel kisi-kisi empiris</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_f_y">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_f_y">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_3_f_m">
+                  <div class="sub-info">
+                    <span class="sub-badge">F.2</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_3_f_m">F.2 Definisi & Kisi-Kisi Variabel Mediasi (M)</strong>
+                      <span class="sub-meta">🎯 Variabel Mediasi (M) | Definisi konseptual, operasional Likert, & tabel kisi-kisi empiris</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_f_m">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_f_m">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_3_f_z">
+                  <div class="sub-info">
+                    <span class="sub-badge">F.3</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_3_f_z">F.3 Definisi & Kisi-Kisi Variabel Moderasi (Z)</strong>
+                      <span class="sub-meta">🎯 Variabel Moderasi (Z) | Definisi konseptual, operasional Likert, & tabel kisi-kisi empiris</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_f_z">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_f_z">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_3_f_x1">
+                  <div class="sub-info">
+                    <span class="sub-badge">F.4.1</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_3_f_x1">F.4.1 Definisi & Kisi-Kisi Variabel Bebas X1</strong>
+                      <span class="sub-meta">🎯 Variabel Bebas X1 | Definisi konseptual, operasional Likert, & tabel kisi-kisi empiris</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_f_x1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_f_x1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_3_f_x2">
+                  <div class="sub-info">
+                    <span class="sub-badge">F.4.2</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_3_f_x2">F.4.2 Definisi & Kisi-Kisi Variabel Bebas X2</strong>
+                      <span class="sub-meta">🎯 Variabel Bebas X2 | Definisi konseptual, operasional Likert, & tabel kisi-kisi empiris</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_f_x2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_f_x2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_3_f_x3">
+                  <div class="sub-info">
+                    <span class="sub-badge">F.4.3</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_3_f_x3">F.4.3 Definisi & Kisi-Kisi Variabel Bebas X3</strong>
+                      <span class="sub-meta">🎯 Variabel Bebas X3 | Definisi konseptual, operasional Likert, & tabel kisi-kisi empiris</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_f_x3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_f_x3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_3_f_x4">
+                  <div class="sub-info">
+                    <span class="sub-badge">F.4.4</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_3_f_x4">F.4.4 Definisi & Kisi-Kisi Variabel Bebas X4</strong>
+                      <span class="sub-meta">🎯 Variabel Bebas X4 | Definisi konseptual, operasional Likert, & tabel kisi-kisi empiris</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_3_f_x4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_f_x4">📄 .docx</button>
                   </div>
                 </div>
 
@@ -1550,6 +2968,33 @@
                     <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_3_i">📄 .docx</button>
                   </div>
                 </div>
+
+                <!-- KONTINER SUB-BAB KUSTOM BAB III -->
+                <div id="s3-custom-sub-list-3"></div>
+
+                <!-- MENU TAMBAH SUB-BAB BEBAS JUDUL BAB III -->
+                <div class="add-subchapter-box" style="margin-top: 8px; padding: 8px 12px; background: #faf5ff; border: 1px dashed #c084fc; border-radius: 6px;">
+                  <div id="btn-add-sub-trigger-ch-3" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <span style="font-size: 11px; font-weight: 600; color: #7c3aed;">➕ Tambah Sub-Bab Baru Bab III (Bebas Judul)</span>
+                    <span class="badge-mini" style="background: #ede9fe; color: #6d28d9; cursor: pointer;">+ Tambah</span>
+                  </div>
+                  <div id="form-add-sub-ch-3" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f3e8ff;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                      <div style="flex: 0 0 55px;">
+                        <label style="font-size: 10px; color: #6b7280; font-weight: 600; display: block; margin-bottom: 2px;">Kode</label>
+                        <input type="text" id="input-custom-sub-code-3" placeholder="J" value="J" maxlength="3" style="width: 100%; font-size: 11px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 4px; text-transform: uppercase; font-weight: bold; text-align: center;">
+                      </div>
+                      <div style="flex: 1;">
+                        <label style="font-size: 10px; color: #6b7280; font-weight: 600; display: block; margin-bottom: 2px;">Judul Sub-Bab Metodologi (Ketik Bebas)</label>
+                        <input type="text" id="input-custom-sub-title-3" placeholder="Contoh: Protokol Etik Riset & Uji Robustness Metodologis" style="width: 100%; font-size: 11px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                      </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                      <button type="button" class="btn btn-outline btn-xs" id="btn-cancel-custom-sub-3">Batal</button>
+                      <button type="button" class="btn btn-primary btn-xs" id="btn-save-custom-sub-3" style="background: #7c3aed; border-color: #7c3aed;">💾 Simpan Sub-Bab</button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1559,8 +3004,8 @@
                 <div class="chapter-header-left">
                   <span class="chapter-badge" style="background: #7c3aed;">BAB IV</span>
                   <div class="chapter-title-group">
-                    <h3>BAB IV: Hasil & Pembahasan</h3>
-                    <span class="subchapter-count">12 Sub-Bab • Est. 40-60 Halaman</span>
+                    <h3>BAB IV: Hasil Analisis dan Pembahasan</h3>
+                    <span class="subchapter-count" id="count-s3-ch-4">6 Kluster Doktoral • 25 Tabel & 2 Bagan Box • Est. 45-70 Halaman</span>
                   </div>
                 </div>
                 <div class="chapter-header-actions">
@@ -1569,172 +3014,483 @@
                 </div>
               </div>
               <div class="subchapter-list" id="list-s3-ch-4">
-                <div class="subchapter-row" id="row-s3-sub_4_1_1">
+                <div class="subchapter-row" id="row-s3-sub_4_a_1">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.1.1</span>
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">A.1</span>
                     <div class="sub-text">
-                      <strong>Deskripsi Karakteristik Responden</strong>
-                      <span class="sub-meta">🎯 4-5 Hlm | Tabel Gender, Usia, Pendidikan + narasi AI</span>
+                      <strong>Karakteristik Demografis Responden</strong>
+                      <span class="sub-meta">🎯 4-5 Hlm | Tabel 4.1 s.d 4.3 (Gender, Usia, Pangkat/Golongan) + 6 Narasi Analitis</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_1_1">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_1_1">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_1">📄 .docx</button>
                   </div>
                 </div>
 
-                <div class="subchapter-row" id="row-s3-sub_4_1_2">
+                <div class="subchapter-row" id="row-s3-sub_4_a_2">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.1.2</span>
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">A.2</span>
                     <div class="sub-text">
-                      <strong>Analisis Statistik Deskriptif Variabel</strong>
-                      <span class="sub-meta">🎯 3-4 Hlm | Tabel Interval & Kategori Rata-rata + narasi AI</span>
+                      <strong>A.2 Analisis Statistik Deskriptif Variabel [Komposit]</strong>
+                      <span class="sub-meta">🎯 6-8 Hlm | Kompilasi Tabel Seluruh Variabel + Kriteria Sugiyono + Tabel Rekapitulasi</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_1_2">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_1_2">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_2">📄 .docx</button>
                   </div>
                 </div>
 
-                <div class="subchapter-row" id="row-s3-sub_4_1_3">
+                <!-- Anak Baris Granular A.2 (Per Variabel & Rekap) -->
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_2_y">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.1.3</span>
+                    <span class="sub-badge">A.2.1</span>
                     <div class="sub-text">
-                      <strong>Analisis Outer Model</strong>
-                      <span class="sub-meta">🎯 6-8 Hlm | Outer Loadings, AVE/CA/CR, Fornell-Larcker, HTMT, VIF + narasi AI</span>
+                      <strong id="label-s3-sub_4_a_2_y">A.2.1 Deskriptif Variabel Terikat (Y)</strong>
+                      <span class="sub-meta">🎯 Tabel 5 parameter (Min, Max, Med, Mean, SD) & interpretasi 3-box Sugiyono</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_1_3">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_1_3">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_2_y">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_2_y">📄 .docx</button>
                   </div>
                 </div>
 
-                <div class="subchapter-row" id="row-s3-sub_4_1_4">
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_2_mz">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.1.4</span>
+                    <span class="sub-badge">A.2.2</span>
                     <div class="sub-text">
-                      <strong>Analisis Inner Model</strong>
-                      <span class="sub-meta">🎯 3-4 Hlm | Tabel f-Square, R-Square, Q-Square & SRMR + narasi AI</span>
+                      <strong id="label-s3-sub_4_a_2_mz">A.2.2 Deskriptif Variabel Mediasi (M) & Moderasi (Z)</strong>
+                      <span class="sub-meta">🎯 Tabel 5 parameter & interpretasi kategori Sugiyono untuk variabel M dan Z</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_1_4">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_1_4">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_2_mz">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_2_mz">📄 .docx</button>
                   </div>
                 </div>
 
-                <div class="subchapter-row" id="row-s3-sub_4_1_5">
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_2_x1">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.1.5</span>
+                    <span class="sub-badge">A.2.3.1</span>
                     <div class="sub-text">
-                      <strong>Pengujian Hipotesis</strong>
-                      <span class="sub-meta">🎯 3-4 Hlm | Rekapitulasi Hipotesis, Indirect Effect & Moderasi + narasi AI</span>
+                      <strong id="label-s3-sub_4_a_2_x1">A.2.3.1 Deskriptif Variabel Bebas X1</strong>
+                      <span class="sub-meta">🎯 Tabel 5 parameter & narasi interpretasi Sugiyono untuk X1</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_1_5">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_1_5">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_2_x1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_2_x1">📄 .docx</button>
                   </div>
                 </div>
 
-                <!-- 4.2 PEMBAHASAN PER POIN H1 s/d H7 -->
-                <div class="subchapter-row" id="row-s3-sub_4_2_poin_1">
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_2_x2">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.1</span>
+                    <span class="sub-badge">A.2.3.2</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H1: X1 &rarr; M</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                      <strong id="label-s3-sub_4_a_2_x2">A.2.3.2 Deskriptif Variabel Bebas X2</strong>
+                      <span class="sub-meta">🎯 Tabel 5 parameter & narasi interpretasi Sugiyono untuk X2</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_1">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_1">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_2_x2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_2_x2">📄 .docx</button>
                   </div>
                 </div>
 
-                <div class="subchapter-row" id="row-s3-sub_4_2_poin_2">
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_2_x3">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.2</span>
+                    <span class="sub-badge">A.2.3.3</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H2: X2 &rarr; M</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                      <strong id="label-s3-sub_4_a_2_x3">A.2.3.3 Deskriptif Variabel Bebas X3</strong>
+                      <span class="sub-meta">🎯 Tabel 5 parameter & narasi interpretasi Sugiyono untuk X3</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_2">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_2">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_2_x3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_2_x3">📄 .docx</button>
                   </div>
                 </div>
 
-                <div class="subchapter-row" id="row-s3-sub_4_2_poin_3">
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_2_x4">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.3</span>
+                    <span class="sub-badge">A.2.3.4</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H3: X1 &rarr; Y</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                      <strong id="label-s3-sub_4_a_2_x4">A.2.3.4 Deskriptif Variabel Bebas X4</strong>
+                      <span class="sub-meta">🎯 Tabel 5 parameter & narasi interpretasi Sugiyono untuk X4</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_3">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_3">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_2_x4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_2_x4">📄 .docx</button>
                   </div>
                 </div>
 
-                <div class="subchapter-row" id="row-s3-sub_4_2_poin_4">
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_2_rekap">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.4</span>
+                    <span class="sub-badge">A.2.R</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H4: X2 &rarr; Y</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                      <strong>A.2.Rekap Grand Mean & Kategori Sugiyono</strong>
+                      <span class="sub-meta">🎯 Tabel Rekapitulasi Rata-Rata Seluruh Variabel, Kategori Sugiyono, & Sintesis Makro</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_4">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_4">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_2_rekap">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_2_rekap">📄 .docx</button>
                   </div>
                 </div>
 
-                <div class="subchapter-row" id="row-s3-sub_4_2_poin_5">
+                <div class="subchapter-row" id="row-s3-sub_4_a_3">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.5</span>
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">A.3</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H5: M &rarr; Y</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                      <strong>A.3 Evaluasi Model Pengukuran (Outer Model SmartPLS 4) [Komposit]</strong>
+                      <span class="sub-meta">🎯 8-12 Hlm | Bagan Model + Validitas Konvergen, Diskriminan & Reliabilitas Konstruk</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_5">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_5">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_3">📄 .docx</button>
                   </div>
                 </div>
 
-                <div class="subchapter-row" id="row-s3-sub_4_2_poin_6">
+                <!-- Anak Baris Granular A.3 (Per Uji Outer Model) -->
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_3_1">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.6</span>
+                    <span class="sub-badge">A.3.1</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H6: X1 &rarr; M &rarr; Y (Mediasi)</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                      <strong>A.3.1 Evaluasi Validitas Konvergen (Outer Loadings & AVE)</strong>
+                      <span class="sub-meta">🎯 Tabel Outer Loadings (> 0.70), Nilai AVE (> 0.50), & Diagram Box Full Model</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_6">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_6">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_3_1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_3_1">📄 .docx</button>
                   </div>
                 </div>
 
-                <div class="subchapter-row" id="row-s3-sub_4_2_poin_7">
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_3_2">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">4.2.7</span>
+                    <span class="sub-badge">A.3.2</span>
                     <div class="sub-text">
-                      <strong>Pembahasan H7: X2 &rarr; M &rarr; Y (Mediasi)</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | 4 Alinea • Sitasi Terverifikasi (penelitian terdahulu)</span>
+                      <strong>A.3.2 Evaluasi Validitas Diskriminan (HTMT & Cross-Loadings)</strong>
+                      <span class="sub-meta">🎯 Matriks HTMT (< 0.90) Henseler & Tabel Matriks Cross-Loadings Indikator</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_2_poin_7">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_2_poin_7">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_3_2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_3_2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_3_3">
+                  <div class="sub-info">
+                    <span class="sub-badge">A.3.3</span>
+                    <div class="sub-text">
+                      <strong>A.3.3 Evaluasi Reliabilitas Konstruk (Cronbach & Composite)</strong>
+                      <span class="sub-meta">🎯 Tabel Cronbach Alpha (> 0.70) & Composite Reliability (rho_a, rho_c)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_3_3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_3_3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_a_4">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">A.4</span>
+                    <div class="sub-text">
+                      <strong>A.4 Evaluasi Model Struktural (Inner Model PLS-SEM) [Komposit]</strong>
+                      <span class="sub-meta">🎯 6-8 Hlm | Tabel R², f², Relevansi Prediktif PLSpredict, & Goodness of Fit</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_4">📄 .docx</button>
+                  </div>
+                </div>
+
+                <!-- Anak Baris Granular A.4 (Per Uji Inner Model) -->
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_4_1">
+                  <div class="sub-info">
+                    <span class="sub-badge">A.4.1</span>
+                    <div class="sub-text">
+                      <strong>A.4.1 Koefisien Determinasi (R²)</strong>
+                      <span class="sub-meta">🎯 Tabel R² & R² Adjusted variabel endogen M dan Y (kriteria Chin, 1998)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_4_1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_4_1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_4_2">
+                  <div class="sub-info">
+                    <span class="sub-badge">A.4.2</span>
+                    <div class="sub-text">
+                      <strong>A.4.2 Besaran Efek Ukuran Jalur (f² Effect Size)</strong>
+                      <span class="sub-meta">🎯 Matriks f² Cohen (0.02, 0.15, 0.35) & kontribusi determinan variabel</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_4_2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_4_2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_4_3">
+                  <div class="sub-info">
+                    <span class="sub-badge">A.4.3</span>
+                    <div class="sub-text">
+                      <strong>A.4.3 Relevansi Prediktif PLSpredict (Out-of-Sample)</strong>
+                      <span class="sub-meta">🎯 Tabel Komparasi PLS-SEM vs LM (RMSE & MAE) Shmueli et al. (2019)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_4_3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_4_3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_4_4">
+                  <div class="sub-info">
+                    <span class="sub-badge">A.4.4</span>
+                    <div class="sub-text">
+                      <strong>A.4.4 Model Fit SRMR, NFI & Tenenhaus GoF</strong>
+                      <span class="sub-meta">🎯 Kriteria SRMR (< 0.08), NFI (> 0.90), d_ULS, d_G & Tenenhaus GoF</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_4_4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_4_4">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_a_5">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">A.5</span>
+                    <div class="sub-text">
+                      <strong>A.5 Pengujian Hipotesis Penelitian [Komposit]</strong>
+                      <span class="sub-meta">🎯 8-10 Hlm | Direct Effects, Bagan T-Statistik, Persamaan Sub-Struktural, Mediasi & Moderasi</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_5">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_5">📄 .docx</button>
+                  </div>
+                </div>
+
+                <!-- Anak Baris Granular A.5 (Per Uji Hipotesis) -->
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_5_1">
+                  <div class="sub-info">
+                    <span class="sub-badge">A.5.1</span>
+                    <div class="sub-text">
+                      <strong>A.5.1 Pengujian Pengaruh Langsung & Persamaan Sub-Struktural</strong>
+                      <span class="sub-meta">🎯 Tabel Direct Effects, Bagan Box T-Statistik Bootstrapping, Persamaan 1 & 2</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_5_1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_5_1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_5_2">
+                  <div class="sub-info">
+                    <span class="sub-badge">A.5.2</span>
+                    <div class="sub-text">
+                      <strong>A.5.2 Pengujian Efek Mediasi (Indirect / Mediation Effects)</strong>
+                      <span class="sub-meta">🎯 Tabel Transmisi Mediasi & Klasifikasi Zhao et al. (Complementary Partial)</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_5_2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_5_2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_a_5_3">
+                  <div class="sub-info">
+                    <span class="sub-badge">A.5.3</span>
+                    <div class="sub-text">
+                      <strong>A.5.3 Pengujian Efek Moderasi (Interaction Effects)</strong>
+                      <span class="sub-meta">🎯 Tabel Interaction Term Dua Tahap, Koefisien Interaksi & Peran Kontingensi</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a_5_3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a_5_3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_b">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">B</span>
+                    <div class="sub-text">
+                      <strong>B. Pembahasan Hasil Penelitian [Komposit]</strong>
+                      <span class="sub-meta">🎯 25-35 Hlm | Kompilasi Utuh Seluruh Hipotesis Formula 5 Alinea Doktoral</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_b">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_b">📄 .docx</button>
+                  </div>
+                </div>
+
+                <!-- Anak Baris Granular Sub-Bab B (Per Hipotesis Formula 5 Alinea Doktoral) -->
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_b_h1">
+                  <div class="sub-info">
+                    <span class="sub-badge">B.1</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_4_b_h1">B.1 Pembahasan Hipotesis H1</strong>
+                      <span class="sub-meta">🎯 5 Alinea Doktoral: Statistik, Teori, Instansi, Riset 2022–2026, Implikasi Manajerial</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_b_h1">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_b_h1">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_b_h2">
+                  <div class="sub-info">
+                    <span class="sub-badge">B.2</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_4_b_h2">B.2 Pembahasan Hipotesis H2</strong>
+                      <span class="sub-meta">🎯 5 Alinea Doktoral: Statistik, Teori, Instansi, Riset 2022–2026, Implikasi Manajerial</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_b_h2">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_b_h2">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_b_h3">
+                  <div class="sub-info">
+                    <span class="sub-badge">B.3</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_4_b_h3">B.3 Pembahasan Hipotesis H3</strong>
+                      <span class="sub-meta">🎯 5 Alinea Doktoral: Statistik, Teori, Instansi, Riset 2022–2026, Implikasi Manajerial</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_b_h3">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_b_h3">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_b_h4">
+                  <div class="sub-info">
+                    <span class="sub-badge">B.4</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_4_b_h4">B.4 Pembahasan Hipotesis H4</strong>
+                      <span class="sub-meta">🎯 5 Alinea Doktoral: Statistik, Teori, Instansi, Riset 2022–2026, Implikasi Manajerial</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_b_h4">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_b_h4">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_b_h5">
+                  <div class="sub-info">
+                    <span class="sub-badge">B.5</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_4_b_h5">B.5 Pembahasan Hipotesis H5</strong>
+                      <span class="sub-meta">🎯 5 Alinea Doktoral: Statistik, Teori, Instansi, Riset 2022–2026, Implikasi Manajerial</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_b_h5">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_b_h5">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_b_h6">
+                  <div class="sub-info">
+                    <span class="sub-badge">B.6</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_4_b_h6">B.6 Pembahasan Hipotesis H6</strong>
+                      <span class="sub-meta">🎯 5 Alinea Doktoral: Statistik, Teori, Instansi, Riset 2022–2026, Implikasi Manajerial</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_b_h6">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_b_h6">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_b_h7">
+                  <div class="sub-info">
+                    <span class="sub-badge">B.7</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_4_b_h7">B.7 Pembahasan Hipotesis H7</strong>
+                      <span class="sub-meta">🎯 5 Alinea Doktoral: Statistik, Teori, Instansi, Riset 2022–2026, Implikasi Manajerial</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_b_h7">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_b_h7">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row sub-granular-child" id="row-s3-sub_4_b_h8">
+                  <div class="sub-info">
+                    <span class="sub-badge">B.8</span>
+                    <div class="sub-text">
+                      <strong id="label-s3-sub_4_b_h8">B.8 Pembahasan Hipotesis H8</strong>
+                      <span class="sub-meta">🎯 5 Alinea Doktoral: Statistik, Teori, Instansi, Riset 2022–2026, Implikasi Manajerial</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_b_h8">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_b_h8">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_4_a">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">A (All)</span>
+                    <div class="sub-text">
+                      <strong>Komposit Hasil Analisis Lengkap (A.1 s.d A.5)</strong>
+                      <span class="sub-meta">🎯 35-45 Hlm | Kompilasi Lengkap 26 Tabel & Bagan Box SmartPLS 4</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_4_a">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_4_a">📄 .docx</button>
+                  </div>
+                </div>
+
+                <!-- KONTINER SUB-BAB KUSTOM BAB IV -->
+                <div id="s3-custom-sub-list-4"></div>
+
+                <!-- MENU TAMBAH SUB-BAB BEBAS JUDUL BAB IV -->
+                <div class="add-subchapter-box" style="margin-top: 8px; padding: 8px 12px; background: #faf5ff; border: 1px dashed #c084fc; border-radius: 6px;">
+                  <div id="btn-add-sub-trigger-ch-4" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <span style="font-size: 11px; font-weight: 600; color: #7c3aed;">➕ Tambah Sub-Bab Baru Bab IV (Bebas Judul)</span>
+                    <span class="badge-mini" style="background: #ede9fe; color: #6d28d9; cursor: pointer;">+ Tambah</span>
+                  </div>
+                  <div id="form-add-sub-ch-4" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f3e8ff;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                      <div style="flex: 0 0 55px;">
+                        <label style="font-size: 10px; color: #6b7280; font-weight: 600; display: block; margin-bottom: 2px;">Kode</label>
+                        <input type="text" id="input-custom-sub-code-4" placeholder="C" value="C" maxlength="3" style="width: 100%; font-size: 11px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 4px; text-transform: uppercase; font-weight: bold; text-align: center;">
+                      </div>
+                      <div style="flex: 1;">
+                        <label style="font-size: 10px; color: #6b7280; font-weight: 600; display: block; margin-bottom: 2px;">Judul Sub-Bab Pembahasan/Analisis (Ketik Bebas)</label>
+                        <input type="text" id="input-custom-sub-title-4" placeholder="Contoh: Analisis Sensitivitas Model & Robustness Check PLS-SEM" style="width: 100%; font-size: 11px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                      </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                      <button type="button" class="btn btn-outline btn-xs" id="btn-cancel-custom-sub-4">Batal</button>
+                      <button type="button" class="btn btn-primary btn-xs" id="btn-save-custom-sub-4" style="background: #7c3aed; border-color: #7c3aed;">💾 Simpan Sub-Bab</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1746,8 +3502,8 @@
                 <div class="chapter-header-left">
                   <span class="chapter-badge" style="background: #7c3aed;">BAB V</span>
                   <div class="chapter-title-group">
-                    <h3>BAB V: Kesimpulan, Implikasi & Dapus</h3>
-                    <span class="subchapter-count">4 Sub-Bab • Est. 12-18 Halaman</span>
+                    <h3>BAB V: Simpulan dan Saran (Format Baku TAPD 2026)</h3>
+                    <span class="subchapter-count" id="count-s3-ch-5">Sub-Bab A s/d F (Format Baku TAPD 2026) • Est. 14-22 Halaman</span>
                   </div>
                 </div>
                 <div class="chapter-header-actions">
@@ -1756,54 +3512,155 @@
                 </div>
               </div>
               <div class="subchapter-list" id="list-s3-ch-5">
-                <div class="subchapter-row" id="row-s3-sub_5_1">
+                <div class="subchapter-row" id="row-s3-sub_5_a">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">5.1</span>
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">A</span>
                     <div class="sub-text">
-                      <strong>Kesimpulan Doktoral</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | Menjawab seluruh hipotesis tegas memuat angka beta, t-stat, p-value</span>
+                      <strong>Ringkasan Penelitian</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | Sintesis latar belakang, metodologi PLS-SEM, temuan empiris, novelty model, & ekosistem</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_5_1">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_5_1">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_5_a">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_5_a">📄 .docx</button>
                   </div>
                 </div>
 
-                <div class="subchapter-row" id="row-s3-sub_5_2">
+                <div class="subchapter-row" id="row-s3-sub_5_b">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">5.2</span>
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">B</span>
                     <div class="sub-text">
-                      <strong>Implikasi Kebijakan Manajerial & Novelty Teoretis</strong>
-                      <span class="sub-meta">🎯 3-4 Hlm | Pilar kebijakan strategis disesuaikan variabel & instansi</span>
+                      <strong>Kesimpulan Doktoral (17 Hipotesis)</strong>
+                      <span class="sub-meta">🎯 3-4 Hlm | Menjawab seluruh 17 hipotesis tegas memuat angka O, T-stat, P-value & justifikasi epistemologis</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_5_2">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_5_2">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_5_b">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_5_b">📄 .docx</button>
                   </div>
                 </div>
 
-                <div class="subchapter-row" id="row-s3-sub_5_3">
+                <div class="subchapter-row" id="row-s3-sub_5_c">
                   <div class="sub-info">
-                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">5.3</span>
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">C</span>
                     <div class="sub-text">
-                      <strong>Saran Praktis & Akademis</strong>
-                      <span class="sub-meta">🎯 2-3 Hlm | Rekomendasi manajerial & agenda riset lanjutan</span>
+                      <strong>Implikasi Teori (Doctoral Novelty)</strong>
+                      <span class="sub-meta">🎯 3-4 Hlm | Grand Theory, rekonstruksi Human Capital & OB, integrasi Agency & Stewardship, arsitektur model</span>
                     </div>
                   </div>
                   <div class="sub-actions">
-                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_5_3">✍️ Tulis</button>
-                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_5_3">📄 .docx</button>
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_5_c">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_5_c">📄 .docx</button>
                   </div>
                 </div>
 
+                <div class="subchapter-row" id="row-s3-sub_5_d">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">D</span>
+                    <div class="sub-text">
+                      <strong>Implikasi Manajerial</strong>
+                      <span class="sub-meta">🎯 3-4 Hlm | 4 Pilar kebijakan strategis: kepemimpinan pelindung, KPI & SOP, rekrutmen moral, reorientasi APIP</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_5_d">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_5_d">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_5_e">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">E</span>
+                    <div class="sub-text">
+                      <strong>Implikasi Praktis</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | 4 Poin taktis-operasional: protokol jarak, audit jejak digital, simulasi diklat, whistleblower darurat</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_5_e">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_5_e">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_5_f">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">F</span>
+                    <div class="sub-text">
+                      <strong>Saran dan Keterbatasan Penelitian</strong>
+                      <span class="sub-meta">🎯 2-3 Hlm | Keterbatasan metodologis (geografis, social desirability, variabel) & saran peneliti/pemda</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_5_f">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_5_f">📄 .docx</button>
+                  </div>
+                </div>
+
+                <div class="subchapter-row" id="row-s3-sub_5_all" style="background: #faf5ff; border: 1px dashed #c084fc;">
+                  <div class="sub-info">
+                    <span class="sub-badge" style="background: #7c3aed; color: #ffffff;">Bab V</span>
+                    <div class="sub-text">
+                      <strong style="color: #6b21a8;">Bab V Lengkap: Simpulan dan Saran (A s.d F)</strong>
+                      <span class="sub-meta">🎯 14-22 Hlm | Kompilasi lengkap seluruh sub-bab Bab V dalam 1 berkas naskah utuh berkesinambungan</span>
+                    </div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_5_all">✍️ Tulis</button>
+                    <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_5_all">📄 .docx</button>
+                  </div>
+                </div>
+
+                <!-- KONTINER SUB-BAB KUSTOM BAB V -->
+                <div id="s3-custom-sub-list-5"></div>
+
+                <!-- MENU TAMBAH SUB-BAB BEBAS JUDUL BAB V -->
+                <div class="add-subchapter-box" style="margin-top: 8px; padding: 8px 12px; background: #faf5ff; border: 1px dashed #c084fc; border-radius: 6px;">
+                  <div id="btn-add-sub-trigger-ch-5" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <span style="font-size: 11px; font-weight: 600; color: #7c3aed;">➕ Tambah Sub-Bab Baru Bab V (Bebas Judul)</span>
+                    <span class="badge-mini" style="background: #ede9fe; color: #6d28d9; cursor: pointer;">+ Tambah</span>
+                  </div>
+                  <div id="form-add-sub-ch-5" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f3e8ff;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                      <div style="flex: 0 0 55px;">
+                        <label style="font-size: 10px; color: #6b7280; font-weight: 600; display: block; margin-bottom: 2px;">Kode</label>
+                        <input type="text" id="input-custom-sub-code-5" placeholder="G" value="G" maxlength="3" style="width: 100%; font-size: 11px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 4px; text-transform: uppercase; font-weight: bold; text-align: center;">
+                      </div>
+                      <div style="flex: 1;">
+                        <label style="font-size: 10px; color: #6b7280; font-weight: 600; display: block; margin-bottom: 2px;">Judul Sub-Bab Simpulan/Rekomendasi (Ketik Bebas)</label>
+                        <input type="text" id="input-custom-sub-title-5" placeholder="Contoh: Roadmap & Agenda Kebijakan Implementasi Jangka Panjang" style="width: 100%; font-size: 11px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                      </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                      <button type="button" class="btn btn-outline btn-xs" id="btn-cancel-custom-sub-5">Batal</button>
+                      <button type="button" class="btn btn-primary btn-xs" id="btn-save-custom-sub-5" style="background: #7c3aed; border-color: #7c3aed;">💾 Simpan Sub-Bab</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BAGIAN AKHIR: DAFTAR PUSTAKA & LAMPIRAN -->
+            <div class="pipeline-chapter-card" id="card-s3-ch-6">
+              <div class="chapter-accordion-header" data-toggle="list-s3-ch-6">
+                <div class="chapter-header-left">
+                  <span class="chapter-badge" style="background: #7c3aed;">BAGIAN AKHIR</span>
+                  <div class="chapter-title-group">
+                    <h3>Bagian Akhir: Daftar Pustaka & Lampiran</h3>
+                    <span class="subchapter-count" id="count-s3-ch-6">2 Sub-Bab Baku • Est. 10-15 Halaman</span>
+                  </div>
+                </div>
+                <div class="chapter-header-actions">
+                  <button class="btn-chain btn-s3-chain" data-chapter="6">⚡ Run Chain Bagian Akhir</button>
+                  <button class="btn-accordion-toggle">▼</button>
+                </div>
+              </div>
+              <div class="subchapter-list" id="list-s3-ch-6">
                 <div class="subchapter-row" id="row-s3-sub_dapus">
                   <div class="sub-info">
                     <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">Dapus</span>
                     <div class="sub-text">
-                      <strong>Daftar Pustaka APA 7th Edition</strong>
-                      <span class="sub-meta">🎯 4-5 Hlm | Sitasi nyata yang benar-benar dipakai (Hanging Indent 1.27 cm)</span>
+                      <strong>Daftar Pustaka APA 7th Edition (100% Riil Ber-DOI Aktif)</strong>
+                      <span class="sub-meta">🎯 60+ Entri Riil | Terhubung live API Crossref & OpenAlex (2022-2026), DOI Aktif, Zero-Hallucination, Hanging Indent 1.27 cm</span>
                     </div>
                   </div>
                   <div class="sub-actions">
@@ -1811,36 +3668,45 @@
                     <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_dapus">📄 .docx</button>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <!-- LAMPIRAN -->
-            <div class="pipeline-chapter-card" id="card-s3-ch-6">
-              <div class="chapter-accordion-header" data-toggle="list-s3-ch-6">
-                <div class="chapter-header-left">
-                  <span class="chapter-badge" style="background: #7c3aed;">LAMPIRAN</span>
-                  <div class="chapter-title-group">
-                    <h3>Lampiran: Kuesioner Penelitian</h3>
-                    <span class="subchapter-count">1 Sub-Bab • Est. 4-6 Halaman</span>
-                  </div>
-                </div>
-                <div class="chapter-header-actions">
-                  <button class="btn-chain btn-s3-chain" data-chapter="6">⚡ Run Chain Lampiran</button>
-                  <button class="btn-accordion-toggle">▼</button>
-                </div>
-              </div>
-              <div class="subchapter-list" id="list-s3-ch-6">
                 <div class="subchapter-row" id="row-s3-sub_lampiran">
                   <div class="sub-info">
                     <span class="sub-badge" style="background: #ede9fe; color: #6d28d9;">Lampiran</span>
                     <div class="sub-text">
-                      <strong>Lampiran Kuesioner Doktoral Seluruh Variabel</strong>
-                      <span class="sub-meta">🎯 4-6 Hlm | Identitas responden, petunjuk, butir Likert 1-5 dengan kode item</span>
+                      <strong>Lampiran Kuesioner Doktoral & Output PLS-SEM</strong>
+                      <span class="sub-meta">🎯 6-8 Hlm | Instrumen skala Likert 1-5 (40 butir operasional), kisi-kisi instrumen, output SmartPLS 4</span>
                     </div>
                   </div>
                   <div class="sub-actions">
                     <button class="btn btn-primary btn-xs btn-s3-sub-write" data-sub="sub_lampiran">✍️ Tulis</button>
                     <button class="btn btn-outline btn-xs btn-s3-sub-docx" data-sub="sub_lampiran">📄 .docx</button>
+                  </div>
+                </div>
+
+                <!-- KONTINER SUB-BAB KUSTOM BAGIAN AKHIR -->
+                <div id="s3-custom-sub-list-6"></div>
+
+                <!-- MENU TAMBAH SUB-BAB BEBAS JUDUL BAGIAN AKHIR -->
+                <div class="add-subchapter-box" style="margin-top: 8px; padding: 8px 12px; background: #faf5ff; border: 1px dashed #c084fc; border-radius: 6px;">
+                  <div id="btn-add-sub-trigger-ch-6" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <span style="font-size: 11px; font-weight: 600; color: #7c3aed;">➕ Tambah Sub-Bab Baru Bagian Akhir (Bebas Judul)</span>
+                    <span class="badge-mini" style="background: #ede9fe; color: #6d28d9; cursor: pointer;">+ Tambah</span>
+                  </div>
+                  <div id="form-add-sub-ch-6" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f3e8ff;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                      <div style="flex: 0 0 85px;">
+                        <label style="font-size: 10px; color: #6b7280; font-weight: 600; display: block; margin-bottom: 2px;">Kode</label>
+                        <input type="text" id="input-custom-sub-code-6" placeholder="Lampiran 2" value="Lampiran 2" maxlength="15" style="width: 100%; font-size: 11px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 4px; text-transform: uppercase; font-weight: bold; text-align: center;">
+                      </div>
+                      <div style="flex: 1;">
+                        <label style="font-size: 10px; color: #6b7280; font-weight: 600; display: block; margin-bottom: 2px;">Judul Dokumen/Lampiran (Ketik Bebas)</label>
+                        <input type="text" id="input-custom-sub-title-6" placeholder="Contoh: Surat Izin Riset Kesbangpol / Sertifikat Uji Etik Penelitian" style="width: 100%; font-size: 11px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                      </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                      <button type="button" class="btn btn-outline btn-xs" id="btn-cancel-custom-sub-6">Batal</button>
+                      <button type="button" class="btn btn-primary btn-xs" id="btn-save-custom-sub-6" style="background: #7c3aed; border-color: #7c3aed;">💾 Simpan Sub-Bab</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1984,6 +3850,10 @@
 
   </div>
 
-  <script src="taskpane.js?v=20261023b"></script>
+  <!-- Notifikasi In-Pane Aman (pengganti window.alert/confirm yang tidak didukung Office.js) -->
+  <div id="toast-stack" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="taskpane.js?v=20261031src"></script>
 </body>
 </html>

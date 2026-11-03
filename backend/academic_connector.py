@@ -21,6 +21,7 @@ import os
 import re
 import time
 import hashlib
+import datetime
 
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache_academic_references.json")
 USED_CITATIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "used_citations_global.json")
@@ -197,27 +198,244 @@ def get_lead_author(paper):
 
 
 # ==============================================================================
-# KEBIJAKAN RENTANG TAHUN SITASI (kebutuhan pengguna)
+# KEBIJAKAN RENTANG TAHUN SITASI (dikonfigurasi di Menu 1. Konfigurasi)
 # --------------------------------------------------------------------------
-# SEMUA kutipan dalam naskah tesis — jurnal MAUPUN buku — wajib tahun
-# 2022-2026. Konstanta ini menjadi satu-satunya sumber kebenaran rentang dan
-# dipakai di tiga lapis pertahanan:
+# SEMUA kutipan dalam naskah tesis — jurnal MAUPUN buku — wajib berada dalam
+# rentang tahun yang dipilih pengguna (DEFAULT: 20 TAHUN KEBELAKANG, mis.
+# 2006-2026 pada tahun berjalan 2026). Sebelumnya rentang ini di-hardcode
+# 2022-2026; kini dinamis via set_cite_year_range() / get_cite_year_range() dan
+# tersimpan di cite_year_range.json. Konstanta MIN_CITE_YEAR / MAX_CITE_YEAR
+# tetap dipakai sebagai satu-satunya sumber kebenaran runtime di tiga lapis:
 #   1. academic_connector : filter pool lokal + filter hasil OpenAlex/Crossref.
 #   2. llm_background_writer : aturan keras prompt + validasi akhir _validate_bg.
 #   3. variable_tracer    : verifikasi tahun sumber ontologi.
-# Teori klasik (mis. Kristof, 1996) TIDAK dibuang; ia wajib naik sebagai
-# KUTIPAN DALAM (dalam sitasi baru 2022-2026): Kristof (1996) dalam Andra (2025).
+# Teori klasik TIDAK dibuang; ia wajib naik sebagai KUTIPAN DALAM (dalam sitasi
+# baru yang memenuhi rentang): Kristof (1996) dalam Andra (2025).
 # ==============================================================================
-MIN_CITE_YEAR = 2022
-MAX_CITE_YEAR = 2026
+_CITE_RANGE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "cite_year_range.json")
+_CURRENT_YEAR = datetime.datetime.now().year
+MIN_CITE_YEAR = _CURRENT_YEAR - 20
+MAX_CITE_YEAR = _CURRENT_YEAR
+
+
+def get_cite_year_range():
+    """Rentang tahun sitasi aktif (min, max)."""
+    return MIN_CITE_YEAR, MAX_CITE_YEAR
+
+
+def set_cite_year_range(min_year=None, max_year=None):
+    """Atur rentang tahun sitasi (default: 20 tahun kebelakang s/d tahun berjalan).
+
+    Persisten di cite_year_range.json sehingga berlaku lintas sesi server.
+    """
+    global MIN_CITE_YEAR, MAX_CITE_YEAR
+    now = _CURRENT_YEAR
+    lo = int(min_year) if min_year else (now - 20)
+    hi = int(max_year) if max_year else now
+    lo = max(1980, min(now, lo))
+    hi = max(lo, min(now, hi))
+    MIN_CITE_YEAR, MAX_CITE_YEAR = lo, hi
+    try:
+        with open(_CITE_RANGE_FILE, "w", encoding="utf-8") as f:
+            json.dump({"min_year": lo, "max_year": hi, "updated_at":
+                       datetime.datetime.now().isoformat(timespec="seconds")},
+                      f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"[cite_range] gagal simpan: {e}")
+    print(f"[cite_range] rentang sitasi aktif: {lo}-{hi}")
+    return lo, hi
+
+
+def _load_cite_range():
+    global MIN_CITE_YEAR, MAX_CITE_YEAR
+    try:
+        if os.path.exists(_CITE_RANGE_FILE):
+            with open(_CITE_RANGE_FILE, "r", encoding="utf-8") as f:
+                d = json.load(f)
+            now = _CURRENT_YEAR
+            lo = max(1980, min(now, int(d.get("min_year", now - 20))))
+            hi = max(lo, min(now, int(d.get("max_year", now))))
+            MIN_CITE_YEAR, MAX_CITE_YEAR = lo, hi
+    except Exception as e:
+        print(f"[cite_range] gagal memuat rentang tersimpan ({e}); pakai default")
+
+
+_load_cite_range()
+
+
+def _resolve_range(min_year=None, max_year=None):
+    """Resolusi parameter min_year/max_year agar memakai rentang aktif bila None."""
+    lo = MIN_CITE_YEAR if min_year is None else int(min_year)
+    hi = MAX_CITE_YEAR if max_year is None else int(max_year)
+    return lo, hi
 
 
 def in_cite_range(year):
-    """True bila tahun berada di jendela sitasi wajib 2022-2026."""
+    """True bila tahun berada di jendela sitasi wajib (default 20 tahun kebelakang)."""
     try:
         return MIN_CITE_YEAR <= int(year) <= MAX_CITE_YEAR
     except (TypeError, ValueError):
         return False
+
+
+# ==============================================================================
+# PENGATURAN SITASI LENGKAP (Menu 1 -> Sumber Rujukan & Kutipan)
+# min_year : int atau None (None = "Semua tahun", batas bawah efektif 1990)
+# year_mode: "all" | "last20" | "last15" | "last10" | "last5" | "custom"
+#            (diturunkan dari min_year utk kompatibilitas; sumber kebenaran
+#             adalah min_year)
+# Origin   : all | indonesia | internasional
+# Style    : apa7 (default) | apa6 | harvard | ieee | vancouver | mla9 |
+#            chicago | chicago-fullnote | turabian
+# Lang     : id (default) | en | ms | es | fr | zh | hi | ar
+# Sumber   : ["umum"] default; opsi lain: sinta, scopus
+# Files    : source_files (nama PDF unggahan, maks 10, UI "Unggah artikel/buku")
+# ==============================================================================
+_CITE_SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   "cite_settings.json")
+_CITE_SETTINGS = {
+    "year_mode": "all",
+    "min_year": None,
+    "origin": "all",
+    "style": "apa7",
+    "language": "id",
+    "source_types": ["umum"],
+    "source_files": [],
+}
+_YEAR_MODE_BACK = {
+    "last20": 20, "last15": 15, "last10": 10, "last5": 5, "all": 0,
+}
+_ALLOWED_STYLES = {"apa7", "apa6", "harvard", "ieee", "vancouver", "mla9",
+                   "chicago", "chicago-fullnote", "turabian"}
+_ALLOWED_LANGS = {"id", "en", "ms", "es", "fr", "zh", "hi", "ar"}
+_ALLOWED_SOURCES = {"umum", "sinta", "scopus"}
+_MAX_SOURCE_FILES = 10
+
+
+def _min_year_for_mode(year_mode):
+    """min_year (None utk 'Semua tahun') dari satu mode tahun (legacy)."""
+    if year_mode == "all":
+        return None
+    back = _YEAR_MODE_BACK.get(year_mode, 20)
+    return max(1980, _CURRENT_YEAR - back)
+
+
+def _mode_for_min_year(min_year):
+    """Mode display dari min_year (int atau None)."""
+    if not min_year:
+        return "all"
+    span = _CURRENT_YEAR - int(min_year) + 1
+    if span >= 20:
+        return "last20"
+    if span >= 15:
+        return "last15"
+    if span >= 10:
+        return "last10"
+    if span >= 5:
+        return "last5"
+    return "custom"
+
+
+def _load_cite_settings():
+    """Muat pengaturan sitasi tersimpan & sinkronkan rentang legacy."""
+    global _CITE_SETTINGS
+    try:
+        if os.path.exists(_CITE_SETTINGS_FILE):
+            with open(_CITE_SETTINGS_FILE, "r", encoding="utf-8") as f:
+                d = json.load(f)
+            if isinstance(d, dict):
+                merged = dict(_CITE_SETTINGS)
+                merged.update({k: v for k, v in d.items() if k in merged})
+                _CITE_SETTINGS = merged
+    except Exception as e:
+        print(f"[cite_settings] gagal memuat ({e}); pakai default")
+    # Jaga konsistensi: kalau hanya year_mode tersimpan (versi lama), turunkan
+    # min_year dari year_mode. Lalu sinkronkan rentang legacy agar konsumen lama
+    # (in_cite_range, validator sitasi) konsisten dgn pengaturan baru.
+    try:
+        mode = _CITE_SETTINGS.get("year_mode") or "all"
+        if _CITE_SETTINGS.get("min_year") is None and mode != "all":
+            _CITE_SETTINGS["min_year"] = _min_year_for_mode(mode)
+        lo = _CITE_SETTINGS.get("min_year") or 1990
+        set_cite_year_range(lo, _CURRENT_YEAR)
+    except Exception as e:
+        print(f"[cite_settings] sinkronisasi rentang gagal ({e})")
+
+
+def get_cite_settings():
+    """Pengaturan sitasi lengkap (tahun + asal + gaya + bahasa + sumber).
+
+    min_year: int (batas bawah) atau None ("Semua tahun"). max_year selalu
+    tahun berjalan. year_mode diturunkan utk kompatibilitas tampilan.
+    """
+    s = dict(_CITE_SETTINGS)
+    mn = s.get("min_year")
+    if isinstance(mn, str):
+        try:
+            mn = int(mn)
+        except Exception:
+            mn = None
+    s["min_year"] = mn
+    s["max_year"] = _CURRENT_YEAR
+    s["year_mode"] = _mode_for_min_year(mn)
+    return s
+
+
+def set_cite_settings(min_year=None, max_year=None, min_year_sent=False,
+                      year_mode=None, origin=None,
+                      style=None, language=None, source_types=None,
+                      source_files=None):
+    """Persist pengaturan sitasi lengkap. Tahun memakai set_cite_year_range.
+
+    min_year_sent=True bila key "min_year" benar-benar ada di payload:
+      None -> "Semua tahun" (tanpa batas bawah), int -> batas bawah.
+    Bila tidak, year_mode legacy (last20/last15/...) dipakai sebagai fallback.
+    """
+    global _CITE_SETTINGS
+    if min_year_sent:
+        try:
+            raw = (str(min_year).strip().lower()
+                   if min_year is not None else "none")
+            _CITE_SETTINGS["min_year"] = None if raw in ("all", "none", "0", "") else int(raw)
+        except Exception:
+            pass
+    elif year_mode is not None and (year_mode in _YEAR_MODE_BACK or year_mode == "all"):
+        _CITE_SETTINGS["min_year"] = _min_year_for_mode(year_mode)
+    # Sinkronkan rentang legacy mengikuti min_year aktif
+    mn = _CITE_SETTINGS.get("min_year")
+    try:
+        set_cite_year_range(int(mn) if mn is not None else 1990, _CURRENT_YEAR)
+    except Exception as e:
+        print(f"[cite_settings] sinkronisasi rentang set gagal ({e})")
+
+    s = dict(_CITE_SETTINGS)
+    if origin in ("all", "indonesia", "internasional"):
+        s["origin"] = origin
+    if style in _ALLOWED_STYLES:
+        s["style"] = style
+    if language in _ALLOWED_LANGS:
+        s["language"] = language
+    if isinstance(source_types, list):
+        keep = [st for st in source_types if st in _ALLOWED_SOURCES]
+        if keep:
+            s["source_types"] = keep
+    if isinstance(source_files, list):
+        clean = [str(f)[:255] for f in source_files if str(f).strip()][:_MAX_SOURCE_FILES]
+        s["source_files"] = clean
+    s["year_mode"] = _mode_for_min_year(s.get("min_year"))
+    _CITE_SETTINGS = s
+    try:
+        with open(_CITE_SETTINGS_FILE, "w", encoding="utf-8") as f:
+            json.dump(s, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"[cite_settings] gagal simpan: {e}")
+    print(f"[cite_settings] {get_cite_settings()}")
+    return get_cite_settings()
+
+
+_load_cite_settings()
+
 
 
 # Pola tahun yang benar-benar berkedudukan sebagai TAHUN SITASI APA, yaitu
@@ -1025,14 +1243,32 @@ def format_author_name(author_str):
     if not author_str:
         return ""
     s = _rapikan_nama_kapital(author_str.strip())
+    
+    # Deteksi penulis institusional / organisasi resmi (Corporate Authors)
+    corp_keywords = ["kementerian", "badan", "dinas", "pemerintah", "institute", "institution", "organization", "bank", "universitas", "komisi", "dewan", "bpkp", "bps", "bkn", "lan", "who", "unesco", "oecd"]
+    if any(k in s.lower() for k in corp_keywords):
+        return s
+
+    # Jika sudah berformat "LastName, FirstName/Initials" (misal: "Barney, J." atau "Sarstedt, M.")
+    if "," in s:
+        parts_comma = s.split(",", 1)
+        last = parts_comma[0].strip()
+        first_rest = parts_comma[1].strip()
+        f_parts = first_rest.split()
+        if f_parts:
+            initials = ". ".join([p[0].upper() for p in f_parts if re.search(r"[A-Za-z]", p)])
+            if initials:
+                return f"{last}, {initials}."
+        return last
+
     parts = s.split()
-    # Buang nama rusak dari metadata (mis. "J. ..........."): token tanpa huruf.
-    if not parts or any(not re.search(r"[A-Za-z]", p) for p in parts):
+    parts_letters = [p for p in parts if re.search(r"[A-Za-z]", p)]
+    if not parts_letters:
         return ""
-    if len(parts) == 1:
-        return parts[0]
-    last = parts[-1]
-    initials = ". ".join([p[0].upper() for p in parts[:-1]]) + "."
+    if len(parts_letters) == 1:
+        return parts_letters[0]
+    last = parts_letters[-1]
+    initials = ". ".join([p[0].upper() for p in parts_letters[:-1]]) + "."
     return f"{last}, {initials}"
 
 
@@ -1071,7 +1307,8 @@ def make_in_text_citation(authors, year, narrative=False):
     return f"{lbl} ({year})" if narrative else f"({lbl}, {year})"
 
 
-def search_crossref_books(query, limit=3, min_year=MIN_CITE_YEAR, max_year=MAX_CITE_YEAR):
+def search_crossref_books(query, limit=3, min_year=None, max_year=None):
+    min_year, max_year = _resolve_range(min_year, max_year)
     """
     Cari buku (book / book-chapter) di Crossref untuk variabel Y.
     Mengembalikan list dict dengan kunci: authors, year, title, publisher, doi, type.
@@ -1127,7 +1364,8 @@ def search_crossref_books(query, limit=3, min_year=MIN_CITE_YEAR, max_year=MAX_C
     return books
 
 
-def search_crossref_journals(query, limit=3, min_year=MIN_CITE_YEAR, max_year=MAX_CITE_YEAR):
+def search_crossref_journals(query, limit=3, min_year=None, max_year=None):
+    min_year, max_year = _resolve_range(min_year, max_year)
     """
     Cari artikel jurnal di Crossref untuk variabel Y.
     Diganti OpenAlex karena OpenAlex sering kena rate limit (429).
@@ -1189,7 +1427,8 @@ def search_crossref_journals(query, limit=3, min_year=MIN_CITE_YEAR, max_year=MA
     return papers
 
 
-def fetch_sources_for_variable_y(variable_name, instansi, x1=None, x2=None, m=None, judul=None, min_year=MIN_CITE_YEAR, max_year=MAX_CITE_YEAR, target_count=10):
+def fetch_sources_for_variable_y(variable_name, instansi, x1=None, x2=None, m=None, judul=None, min_year=None, max_year=None, target_count=10):
+    min_year, max_year = _resolve_range(min_year, max_year)
     """
     Pre-fetch 8-10 sources (4-5 jurnal + 4-5 buku) untuk Variabel Y tahun 2022-2026.
     Setiap source memiliki apa_in_text untuk validasi nanti.
@@ -1389,7 +1628,8 @@ def fetch_sources_for_variable_y(variable_name, instansi, x1=None, x2=None, m=No
 # =========================================================================
 # FETCH 1 JURNAL FAKTOR-FAKTOR YANG MEMPENGARUHI VARIABEL Y - 2.1.1.2
 # =========================================================================
-def fetch_journal_factors_y(variable_name, instansi, x1=None, x2=None, m=None, y=None, judul=None, min_year=MIN_CITE_YEAR, max_year=MAX_CITE_YEAR):
+def fetch_journal_factors_y(variable_name, instansi, x1=None, x2=None, m=None, y=None, judul=None, min_year=None, max_year=None):
+    min_year, max_year = _resolve_range(min_year, max_year)
     """
     Fetch SATU jurnal (2022-2026) yang spesifik membahas faktor-faktor 
     yang mempengaruhi Variabel Y, dengan variabel independen yang relevan
@@ -1511,7 +1751,8 @@ def fetch_journal_factors_y(variable_name, instansi, x1=None, x2=None, m=None, y
 # =========================================================================
 # FETCH SOURCES UNTUK VARIABEL M (Mediating) - 2.1.2.1
 # =========================================================================
-def fetch_sources_for_variable_m(variable_name, instansi, x1=None, x2=None, m=None, y=None, judul=None, min_year=MIN_CITE_YEAR, max_year=MAX_CITE_YEAR, target_count=10):
+def fetch_sources_for_variable_m(variable_name, instansi, x1=None, x2=None, m=None, y=None, judul=None, min_year=None, max_year=None, target_count=10):
+    min_year, max_year = _resolve_range(min_year, max_year)
     """
     Pre-fetch 8-10 sources untuk Variabel M (Mediating) tahun 2022-2026.
     Query disesuaikan dengan variabel M spesifik + instansi + judul penelitian.
@@ -1659,7 +1900,8 @@ def fetch_sources_for_variable_m(variable_name, instansi, x1=None, x2=None, m=No
 # =========================================================================
 # FETCH SOURCES UNTUK VARIABEL X1 (Independent 1) - 2.1.3.1
 # =========================================================================
-def fetch_sources_for_variable_x1(variable_name, instansi, x1=None, x2=None, m=None, y=None, judul=None, min_year=MIN_CITE_YEAR, max_year=MAX_CITE_YEAR, target_count=10):
+def fetch_sources_for_variable_x1(variable_name, instansi, x1=None, x2=None, m=None, y=None, judul=None, min_year=None, max_year=None, target_count=10):
+    min_year, max_year = _resolve_range(min_year, max_year)
     """
     Pre-fetch 8-10 sources untuk Variabel X1 (Independent 1) tahun 2022-2026.
     """
@@ -1804,7 +2046,8 @@ def fetch_sources_for_variable_x1(variable_name, instansi, x1=None, x2=None, m=N
 # =========================================================================
 # FETCH SOURCES UNTUK VARIABEL X2 (Independent 2) - 2.1.4.1
 # =========================================================================
-def fetch_sources_for_variable_x2(variable_name, instansi, x1=None, x2=None, m=None, y=None, judul=None, min_year=MIN_CITE_YEAR, max_year=MAX_CITE_YEAR, target_count=10):
+def fetch_sources_for_variable_x2(variable_name, instansi, x1=None, x2=None, m=None, y=None, judul=None, min_year=None, max_year=None, target_count=10):
+    min_year, max_year = _resolve_range(min_year, max_year)
     """
     Pre-fetch 8-10 sources untuk Variabel X2 (Independent 2) tahun 2022-2026.
     """
@@ -2043,6 +2286,7 @@ _BANNED_NON_HR_KEYWORDS = (
 
 
 def _oa_parse_papers(data, min_year, max_year):
+    min_year, max_year = _resolve_range(min_year, max_year)
     """Ubah hasil JSON OpenAlex menjadi daftar paper (filter DOI + tahun wajib)."""
     papers = []
     for item in (data or {}).get("results", []):
@@ -2124,6 +2368,7 @@ def _crossref_get_json(url, timeout=20, retries=3):
 
 
 def _crossref_parse_papers(data, min_year, max_year):
+    min_year, max_year = _resolve_range(min_year, max_year)
     """Ubah hasil Crossref menjadi daftar paper (bentuk sama seperti OpenAlex)."""
     papers = []
     for it in ((data or {}).get("message") or {}).get("items", []):
@@ -2162,7 +2407,8 @@ def _crossref_parse_papers(data, min_year, max_year):
     return papers
 
 
-def search_crossref_papers(query, limit=15, min_year=MIN_CITE_YEAR, max_year=MAX_CITE_YEAR):
+def search_crossref_papers(query, limit=15, min_year=None, max_year=None):
+    min_year, max_year = _resolve_range(min_year, max_year)
     """Sumber cadangan (Crossref) saat OpenAlex kosong atau kehabisan kuota."""
     clean_q = re.sub(r'[^\w\s]', ' ', query).strip()
     ck = "crossref|%s|%d|%d|%d" % (clean_q.lower(), limit, min_year, max_year)
@@ -2181,7 +2427,8 @@ def search_crossref_papers(query, limit=15, min_year=MIN_CITE_YEAR, max_year=MAX
     return papers
 
 
-def search_openalex_verified(query, limit=3, min_year=MIN_CITE_YEAR):
+def search_openalex_verified(query, limit=3, min_year=None):
+    min_year, max_year = _resolve_range(min_year, max_year)
     """OpenAlex terverifikasi DOI dengan cache disk + throttle + backoff anti-429."""
     clean_q = re.sub(r'[^\w\s]', ' ', query).strip()
     ck = "verified|%s|%d|%d" % (clean_q.lower(), limit, min_year)
@@ -2194,7 +2441,7 @@ def search_openalex_verified(query, limit=3, min_year=MIN_CITE_YEAR):
     data = _oa_fetch_json(url, timeout=10, retries=5)
     papers = _oa_parse_papers(data, min_year, MAX_CITE_YEAR)
     if not papers:
-        papers = search_crossref_papers(query, limit=limit, min_year=min_year, max_year=MAX_CITE_YEAR)
+        papers = search_crossref_papers(query, limit=limit, min_year=min_year, max_year=None)
     if papers:
         cache[ck] = papers
         _oa_cache_save()
@@ -2837,7 +3084,8 @@ def _reconstruct_abstract(item):
     return " ".join(positions[i] for i in sorted(positions))
 
 
-def search_openalex_papers(query, limit=15, min_year=MIN_CITE_YEAR, max_year=MAX_CITE_YEAR, retries=5):
+def search_openalex_papers(query, limit=15, min_year=None, max_year=None, retries=5):
+    min_year, max_year = _resolve_range(min_year, max_year)
     """OpenAlex: artikel ber-DOI + abstrak nyata (untuk verifikasi hasil penelitian).
 
     Cache disk + throttle + backoff ditambahkan agar pool sitasi 4.2.x tidak kosong
@@ -3157,7 +3405,7 @@ def fetch_relationship_studies(config, per_rel=2, use_cache=True):
 # P0 #9 — VERIFIKASI REFERENSI (DOI, Judul, Penulis, Tahun, Retraksi)
 # ==============================================================================
 
-def verify_references(references: list, min_year: int = MIN_CITE_YEAR, max_year: int = MAX_CITE_YEAR) -> dict:
+def verify_references(references: list, min_year: int = None, max_year: int = None) -> dict:
     """
     Verifikasi daftar referensi APA ke Crossref/OpenAlex.
 
@@ -3176,6 +3424,7 @@ def verify_references(references: list, min_year: int = MIN_CITE_YEAR, max_year:
     import urllib.parse
     import re
     
+    min_year, max_year = _resolve_range(min_year, max_year)
     results = []
     verified_count = 0
     issues = []

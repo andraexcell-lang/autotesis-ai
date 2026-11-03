@@ -11,14 +11,45 @@ import time
 def get_or_create_word(visible=True):
     """Gets running Word instance or creates a new one, ensuring at least one document is open."""
     import win32com.client
+    import pythoncom
+
+    word = None
+    # 1. Coba GetActiveObject standar
     try:
         word = win32com.client.GetActiveObject("Word.Application")
     except Exception:
-        word = win32com.client.Dispatch("Word.Application")
+        # Jika gen_py corrupt (CLSIDToPackageMap/CLSIDToClassMap error), fallback ke dynamic IDispatch
+        try:
+            disp = pythoncom.GetActiveObject("Word.Application")
+            idisp = disp.QueryInterface(pythoncom.IID_IDispatch)
+            word = win32com.client.dynamic.Dispatch(idisp)
+        except Exception:
+            pass
+
+    # 2. Jika Word belum aktif, Dispatch / dynamic Dispatch
+    if word is None:
+        try:
+            word = win32com.client.Dispatch("Word.Application")
+        except Exception:
+            try:
+                word = win32com.client.dynamic.Dispatch("Word.Application")
+            except Exception:
+                # Bersihkan gen_py cache jika corrupt
+                import shutil
+                gen_path = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Temp", "gen_py")
+                if os.path.exists(gen_path):
+                    shutil.rmtree(gen_path, ignore_errors=True)
+                word = win32com.client.Dispatch("Word.Application")
     
-    word.Visible = visible
-    if word.Documents.Count == 0:
-        word.Documents.Add()
+    try:
+        word.Visible = visible
+    except Exception:
+        pass
+    try:
+        if word.Documents.Count == 0:
+            word.Documents.Add()
+    except Exception:
+        pass
     return word
 
 def set_page_setup_native(doc):

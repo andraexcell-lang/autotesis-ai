@@ -178,8 +178,7 @@ def _search_openalex(query, kind="article", limit=6, fast=False):
     """
     clean_q = re.sub(r"[^\w\s]", " ", query).strip()
     enc = urllib.parse.quote(clean_q)
-    year_min = VL.SEARCH_YEAR_MIN
-    year_max = VL.SEARCH_YEAR_MAX
+    year_min, year_max = VL.active_year_range()
     max_retry = 3 if fast else SEARCH_MAX_RETRY
     backoff_base = 3.0 if fast else SEARCH_BACKOFF_BASE
     url = (
@@ -355,7 +354,7 @@ def _search_crossref(query, kind="article", limit=4, fast=False):
     """
     clean_q = re.sub(r"[^\w\s]", " ", query).strip()
     type_filter = "journal-article" if kind == "article" else "book"
-    y_min, y_max = VL.SEARCH_YEAR_MIN, VL.SEARCH_YEAR_MAX
+    y_min, y_max = VL.active_year_range()
     url = (
         f"{CROSSREF_BASE}?query.bibliographic={urllib.parse.quote(clean_q)}"
         f"&filter=from-pub-date:{y_min}-01-01,until-pub-date:{y_max}-12-31,type:{type_filter}"
@@ -375,7 +374,8 @@ def _search_crossref(query, kind="article", limit=4, fast=False):
             year = int(((item.get("issued") or {}).get("date-parts") or [[0]])[0][0])
         except Exception:
             year = 0
-        if not (VL.SEARCH_YEAR_MIN <= year <= VL.SEARCH_YEAR_MAX):
+        _ymin, _ymax = VL.active_year_range()
+        if not (_ymin <= year <= _ymax):
             continue
         titles = item.get("title") or []
         authors = []
@@ -415,7 +415,7 @@ def _search_s2(query, kind="article", limit=4, fast=False):
     langsung (openAccessPdf) -- sangat membantu karena tahap verifikasi butuh PDF.
     """
     clean_q = re.sub(r"[^\w\s]", " ", query).strip()
-    y_min, y_max = VL.SEARCH_YEAR_MIN, VL.SEARCH_YEAR_MAX
+    y_min, y_max = VL.active_year_range()
     fields = "title,year,abstract,venue,externalIds,openAccessPdf,authors,journal"
     url = (
         f"{S2_BASE}?query={urllib.parse.quote(clean_q)}"
@@ -432,7 +432,8 @@ def _search_s2(query, kind="article", limit=4, fast=False):
         if not doi:
             continue
         year = item.get("year") or 0
-        if not (VL.SEARCH_YEAR_MIN <= year <= VL.SEARCH_YEAR_MAX):
+        _ymin, _ymax = VL.active_year_range()
+        if not (_ymin <= year <= _ymax):
             continue
         oa = item.get("openAccessPdf") or {}
         jr = item.get("journal") or {}
@@ -472,7 +473,7 @@ def _search_doaj(query, kind="article", limit=4, fast=False):
     if kind != "article":
         return []                      # DOAJ tidak memuat buku
     clean_q = re.sub(r"[^\w\s]", " ", query).strip()
-    y_min, y_max = VL.SEARCH_YEAR_MIN, VL.SEARCH_YEAR_MAX
+    y_min, y_max = VL.active_year_range()
     if not clean_q:
         return []
     # DOAJ memakai AND sederhana atas SEMUA kata, jadi kueri panjang
@@ -1652,7 +1653,7 @@ def trace_variable(var_name, role="X", judul="", instansi="", force=False):
 
     return {"status": "needs_review", "entry": None,
             "report": {**report,
-                       "note": "Tidak ada sumber 2022-2026 yang lolos verifikasi kutipan. "
+                       "note": "Tidak ada sumber dalam rentang tahun sitasi aktif yang lolos verifikasi kutipan. "
                                "Silakan unggah jurnal/buku khusus untuk variabel ini."}}
 
 

@@ -319,7 +319,7 @@ def research_doctoral_ontology(
             "input_name": var_name,
             "nama_resmi": var_name.title(),
             "grand_theory": "Organizational Behavior & Contingency Theory",
-            "tokoh_ahli": "Robbins & Judge (2022); Luthans (2020)",
+            "tokoh_ahli": "Robbins & Judge (2022); Luthans et al. (2022)",
             "definisi": f"Konstruk {var_name} dalam perspektif manajemen strategis pada {instansi}.",
             "dimensi": [
                 {
@@ -442,6 +442,14 @@ def build_s3_kuesioner_items(ontology: Dict[str, Any]) -> List[Dict[str, str]]:
 
         item_num = 1
         dims = var_data.get("dimensi", [])
+        try:
+            import s3_narrative_variation as nv
+            if not dims or nv.is_generic_dims(dims):
+                kb = nv.lookup(var_name) or {}
+                if kb.get("dimensi"):
+                    dims = kb["dimensi"]
+        except Exception:
+            pass
         for d in dims:
             dim_name = d.get("nama", "Dimensi")
             inds = d.get("indikator", [])

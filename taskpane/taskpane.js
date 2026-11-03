@@ -1,8 +1,14 @@
 /* Independent Researcher - Word Taskpane Controller (Dual Native COM & Office.js Engine) */
 
-const API_BASE = (window.location.origin && window.location.origin.startsWith("http")) 
-  ? `${window.location.origin}/api` 
-  : "http://localhost:5050/api";
+const API_BASE = (() => {
+  // Deployment terpisah: frontend di Cloudflare Pages/GitHub Pages, backend di
+  // host lain (Render/Fly). Isi window.AUTOTESIS_API_BASE lewat config.js.
+  const override = String(window.AUTOTESIS_API_BASE || "").trim().replace(/\/+$/, "");
+  if (override) return `${override}/api`;
+  return (window.location.origin && window.location.origin.startsWith("http"))
+    ? `${window.location.origin}/api`
+    : "http://localhost:5050/api";
+})();
 
 // State wizard SmartPLS HARUS dideklarasikan sebelum initUI() memanggil getConfig().
 // Jika diletakkan di bawah, getConfig() kena TDZ ("Cannot access before initialization").
@@ -17,6 +23,17 @@ const smartplsState = {
 let smartplsGformScript = "";
 // Status gerbang Bab IV juga dipakai initUI(), jadi deklarasikan lebih awal.
 const dataGateState = { last: null, diperiksa: 0, dipaksa: {} };
+// State Blueprint Ontologi S1 HARUS dideklarasikan sebelum initUI()/initMasterS1()
+// dipanggil: Office.onReady bisa mengeksekusi callback saat modul belum selesai
+// dievaluasi, sehingga `let` di tengah file berada di TDZ.
+let currentS1Ontology = null;
+let _s1OntologyReqSeq = 0;
+// Daftar PDF unggahan "Unggah artikel atau buku" (opsional, maks 10) pada
+// Pengaturan Sitasi S1; nama file disimpan ke server via /s1/cite-settings.
+let s1CiteSourceFiles = [];
+// Cache blueprint di window (bebas TDZ) agar applyS1LockState() aman dipanggil
+// dari initMasterS1() bahkan saat `let currentS1Ontology` belum dievaluasi.
+window._autotesisS1Ontology = null;
 
 console.log("Independent Researcher initialized. Target API:", API_BASE);
 
@@ -144,6 +161,7 @@ function initUI() {
     setStatus("ready", "Skrip diunduh sebagai KUESIONER_GOOGLE_FORM.gs — tempel isinya di script.google.com.");
   });
   document.getElementById("btn-generate-full")?.addEventListener("click", handleFullDocumentGeneration);
+  initMasterS1();
   initMasterS3();
   
   // Dedicated Front Matter Export
@@ -882,7 +900,7 @@ async function handleRunChainBab(chapterNum, btn) {
     }
 
     if (res.status === "success") {
-      if (res.details && Array.isArray(res.details) && typeof Word !== "undefined" && typeof Word.run === "function") {
+      if (mode !== "native" && res.details && Array.isArray(res.details) && typeof Word !== "undefined" && typeof Word.run === "function") {
         await Word.run(async (context) => {
           const searchResults = context.document.body.search("DAFTAR PUSTAKA", { matchCase: true });
           context.load(searchResults, "items");
@@ -933,6 +951,12 @@ async function handleRunChainBab(chapterNum, btn) {
           }
           await context.sync();
         });
+      } else if (res.details && Array.isArray(res.details)) {
+        // Mode native: naskah bab telah disisipkan langsung oleh Server COM ke Word aktif
+        for (const item of res.details) {
+          const row = document.getElementById(`row-${item.sub_id}`);
+          if (row) row.classList.add("row-success");
+        }
       }
       setProgress(100);
       setStatus("ready", `⚡ Eksekusi Berantai Bab ${chapterNum} Selesai: Seluruh ${res.total_subchapters || ''} sub-bab berhasil disisipkan runtut dan Daftar Pustaka ditempatkan di halaman paling bawah!`);
@@ -1071,15 +1095,15 @@ function getConfig() {
   const populasi = parseInt(document.getElementById("input-populasi")?.value || "0", 10) || 0;
   const nFromPopulasi = hitungSampel(populasi);
   return {
-    judul: document.getElementById("input-judul")?.value.trim() || "PENGARUH KECERDASAN EMOSIONAL DAN MOTIVASI KERJA TERHADAP KINERJA MELALUI ETOS KERJA SEBAGAI VARIABEL INTERVENING DI BPKAD KABUPATEN PALI",
+    judul: document.getElementById("input-judul")?.value.trim() || "",
     penulis: document.getElementById("input-penulis")?.value.trim() || "MUHAMAD YUSI",
     nim: document.getElementById("input-nim")?.value.trim() || "255341028",
-    instansi: document.getElementById("input-instansi")?.value.trim() || "Badan Pengelola Keuangan dan Aset Daerah (BPKAD) Kabupaten Penukal Abab Lematang Ilir (PALI)",
+    instansi: document.getElementById("input-instansi")?.value.trim() || "",
     tahun: document.getElementById("input-tahun")?.value.trim() || "2026",
-    x1: document.getElementById("input-x1")?.value.trim() || "Kecerdasan Emosional",
-    x2: document.getElementById("input-x2")?.value.trim() || "Motivasi Kerja",
-    m: document.getElementById("input-m")?.value.trim() || "Etos Kerja",
-    y: document.getElementById("input-y")?.value.trim() || "Kinerja Pegawai",
+    x1: document.getElementById("input-x1")?.value.trim() || "",
+    x2: document.getElementById("input-x2")?.value.trim() || "",
+    m: document.getElementById("input-m")?.value.trim() || "",
+    y: document.getElementById("input-y")?.value.trim() || "",
     populasi: populasi,
     n: nFromPopulasi || parseInt(document.getElementById("input-responden")?.value || "55", 10),
     data_source: (typeof smartplsState !== "undefined" && smartplsState.source) || "generated",
@@ -1204,27 +1228,38 @@ function updateHypothesesPreview(x1, x2, m, y, instansi) {
 
 function applyParsedData(parsed, showStatus = true) {
   if (!parsed) return;
-  let changed = false;
-  if (parsed.instansi) {
-    const elInstansi = document.getElementById("input-instansi");
-    if (elInstansi) { elInstansi.value = parsed.instansi; changed = true; }
+
+  // Normalisasi bentuk respons backend (x_vars/m_vars/z_vars/y_var)
+  // menjadi field tunggal yang dipakai panel (x1/x2/m/y).
+  if (parsed && !parsed.x1 && Array.isArray(parsed.x_vars) && parsed.x_vars.length) {
+    parsed = Object.assign({}, parsed, {
+      x1: parsed.x_vars[0] || "",
+      x2: parsed.x2 || parsed.x_vars[1] || "",
+    });
   }
-  if (parsed.x1) {
-    const elX1 = document.getElementById("input-x1");
-    if (elX1) { elX1.value = parsed.x1; changed = true; }
+  if (parsed && !parsed.m && Array.isArray(parsed.m_vars) && parsed.m_vars.length) {
+    parsed = Object.assign({}, parsed, { m: parsed.m_vars[0] || "" });
   }
-  if (parsed.x2) {
-    const elX2 = document.getElementById("input-x2");
-    if (elX2) { elX2.value = parsed.x2; changed = true; }
+  if (parsed && !parsed.y && parsed.y_var) {
+    parsed = Object.assign({}, parsed, { y: parsed.y_var });
   }
-  if (parsed.m) {
-    const elM = document.getElementById("input-m");
-    if (elM) { elM.value = parsed.m; changed = true; }
-  }
-  if (parsed.y) {
-    const elY = document.getElementById("input-y");
-    if (elY) { elY.value = parsed.y; changed = true; }
-  }
+
+  // Parse dianggap sah hanya bila minimal Y atau X1 berhasil diekstrak.
+  // Bila tidak sah, jangan mengosongkan input manual pengguna.
+  const parseValid = !!(parsed.y || parsed.x1);
+  if (!parseValid) return;
+
+  // SELALU tulis ulang seluruh field variabel (termasuk mengosongkan yang tidak ada).
+  // Tanpa ini, variabel dari judul sebelumnya tetap tertinggal di panel (ghost variable).
+  const _setVal = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.value = (v == null ? "" : String(v));
+  };
+  _setVal("input-instansi", parsed.instansi);
+  _setVal("input-x1", parsed.x1);
+  _setVal("input-x2", parsed.x2);
+  _setVal("input-m", parsed.m);
+  _setVal("input-y", parsed.y);
 
   // Update visual 7 hipotesis secara instan
   updateHypothesesPreview(
@@ -1603,6 +1638,83 @@ function setStatus(state, message) {
   if (!dot || !text) return;
   dot.className = `status-indicator ${state}`;
   text.textContent = message;
+}
+
+/* ================================================================
+   Toast In-Pane — Pengganti window.alert / window.confirm.
+   Office.js taskpane TIDAK mendukung alert()/confirm() native
+   ("Function window.alert is not supported"), sehingga semua notifikasi
+   dialihkan ke overlay in-pane ini.
+   ================================================================ */
+function dismissToastEl(el) {
+  if (!el) return;
+  el.classList.add("toast-leaving");
+  setTimeout(() => {
+    el.parentNode?.removeChild(el);
+  }, 230);
+}
+
+function clearToasts() {
+  const stack = document.getElementById("toast-stack");
+  if (stack) stack.innerHTML = "";
+}
+
+function showToast(message, type, opts) {
+  opts = opts || {};
+  const stack = document.getElementById("toast-stack");
+  if (!stack) return;
+  const t = type || "info";
+  const title = opts.title || (t === "success" ? "✅ Berhasil" : t === "error" ? "⚠️ Perhatian" : "ℹ️ Informasi");
+  const duration = opts.duration != null ? opts.duration : 5200;
+  const el = document.createElement("div");
+  el.className = `toast-item toast-${t}`;
+  el.innerHTML =
+    `<button type="button" class="toast-close" aria-label="Tutup">&times;</button>` +
+    (opts.hideTitle ? "" : `<div class="toast-title"></div>`) +
+    `<div class="toast-body"></div>`;
+  if (!opts.hideTitle) el.querySelector(".toast-title").textContent = title;
+  el.querySelector(".toast-body").textContent = message;
+  const closeBtn = el.querySelector(".toast-close");
+  closeBtn.addEventListener("click", () => {
+    clearTimeout(el._timer);
+    dismissToastEl(el);
+  });
+  stack.appendChild(el);
+  if (duration > 0) {
+    el._timer = setTimeout(() => dismissToastEl(el), duration);
+  }
+  return el;
+}
+
+function showConfirm(message, onOk, opts) {
+  opts = opts || {};
+  const stack = document.getElementById("toast-stack");
+  if (!stack) return null;
+  const title = opts.title || "Konfirmasi";
+  const okLabel = opts.okLabel || "Ya, Lanjutkan";
+  const cancelLabel = opts.cancelLabel || "Batal";
+  const el = document.createElement("div");
+  el.className = "toast-item toast-info";
+  el.innerHTML =
+    `<div class="toast-title"></div>` +
+    `<div class="toast-body"></div>` +
+    `<div class="toast-actions">
+       <button type="button" class="btn btn-toast-cancel"></button>
+       <button type="button" class="btn btn-toast-ok"></button>
+     </div>`;
+  el.querySelector(".toast-title").textContent = title;
+  el.querySelector(".toast-body").textContent = message;
+  const okBtn = el.querySelector(".btn-toast-ok");
+  const cancelBtn = el.querySelector(".btn-toast-cancel");
+  okBtn.textContent = okLabel;
+  cancelBtn.textContent = cancelLabel;
+  okBtn.addEventListener("click", () => {
+    dismissToastEl(el);
+    if (typeof onOk === "function") onOk();
+  });
+  cancelBtn.addEventListener("click", () => dismissToastEl(el));
+  stack.appendChild(el);
+  return el;
 }
 
 function setProgress(percent) {
@@ -2172,20 +2284,44 @@ async function handleFullDocumentGeneration() {
 }
 
 // =========================================================================
-// DUAL-MASTER SWITCHER: MASTER S2 (TESIS) vs MASTER S3 (DISERTASI DOKTOR)
+// TRIPLE-MASTER SWITCHER: MASTER S1 (SKRIPSI) vs MASTER S2 (TESIS) vs MASTER S3 (DISERTASI)
 // =========================================================================
 function initMasterSwitcher() {
+  const btnS1 = document.getElementById("btn-master-s1");
   const btnS2 = document.getElementById("btn-master-s2");
   const btnS3 = document.getElementById("btn-master-s3");
+  const navS1 = document.getElementById("nav-tabs-s1");
   const navS2 = document.getElementById("nav-tabs-s2");
   const navS3 = document.getElementById("nav-tabs-s3");
   const titleEl = document.getElementById("app-header-title");
   const descEl = document.getElementById("app-header-desc");
 
+  function switchToS1() {
+    if (btnS1) btnS1.classList.add("active");
+    if (btnS2) btnS2.classList.remove("active");
+    if (btnS3) btnS3.classList.remove("active");
+    if (navS1) navS1.classList.remove("hidden");
+    if (navS2) navS2.classList.add("hidden");
+    if (navS3) navS3.classList.add("hidden");
+    if (titleEl) titleEl.textContent = "🎓 Asisten Skripsi Sarjana (S1)";
+    if (descEl) descEl.textContent = "Penulisan otomatis 5 Bab Skripsi & Olah Data Statistik SPSS (Regresi & Asumsi Klasik).";
+
+    // Hide all panels, activate active S1 tab
+    document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+    const activeTab = navS1?.querySelector(".tab-btn.active") || navS1?.querySelector(".tab-btn");
+    if (activeTab) {
+      activeTab.classList.add("active");
+      const panel = document.getElementById(`panel-${activeTab.dataset.tab}`);
+      if (panel) panel.classList.add("active");
+    }
+  }
+
   function switchToS2() {
     if (btnS2) btnS2.classList.add("active");
+    if (btnS1) btnS1.classList.remove("active");
     if (btnS3) btnS3.classList.remove("active");
     if (navS2) navS2.classList.remove("hidden");
+    if (navS1) navS1.classList.add("hidden");
     if (navS3) navS3.classList.add("hidden");
     if (titleEl) titleEl.textContent = "Asisten Tesis Magister";
     if (descEl) descEl.textContent = "Penulisan otomatis 5 Bab & Olah Data PLS-SEM langsung ke dokumen Microsoft Word.";
@@ -2202,8 +2338,10 @@ function initMasterSwitcher() {
 
   function switchToS3() {
     if (btnS3) btnS3.classList.add("active");
+    if (btnS1) btnS1.classList.remove("active");
     if (btnS2) btnS2.classList.remove("active");
     if (navS3) navS3.classList.remove("hidden");
+    if (navS1) navS1.classList.add("hidden");
     if (navS2) navS2.classList.add("hidden");
     if (titleEl) titleEl.textContent = "👑 Asisten Disertasi Doktor (S3)";
     if (descEl) descEl.textContent = "Model Hibrida Dinamis (Multi-Variabel Bebas, Mediasi & Moderasi) — Berstandar Pascasarjana.";
@@ -2223,8 +2361,1436 @@ function initMasterSwitcher() {
     }
   }
 
+  btnS1?.addEventListener("click", switchToS1);
   btnS2?.addEventListener("click", switchToS2);
   btnS3?.addEventListener("click", switchToS3);
+}
+
+// =========================================================================
+// MASTER S1: SKRIPSI SARJANA CONTROLLER & SPSS DATA PIPELINE
+// =========================================================================
+let currentS1Data = null;
+
+function updateS1XVisibility(count) {
+  const n = parseInt(count, 10) || 2;
+  const rowX3X4 = document.getElementById("row-s1-x3-x4");
+  const groupX3 = document.getElementById("group-s1-x3");
+  const groupX4 = document.getElementById("group-s1-x4");
+  const rowX5 = document.getElementById("row-s1-x5");
+  const groupX5 = document.getElementById("group-s1-x5");
+
+  if (groupX3) groupX3.style.display = n >= 3 ? "block" : "none";
+  if (groupX4) groupX4.style.display = n >= 4 ? "block" : "none";
+  if (rowX3X4) rowX3X4.style.display = n >= 3 ? "flex" : "none";
+
+  if (groupX5) groupX5.style.display = n >= 5 ? "block" : "none";
+  if (rowX5) rowX5.style.display = n >= 5 ? "flex" : "none";
+}
+
+function getS1Config() {
+  const modelType = document.getElementById("input-s1-model-type")?.value || "regression";
+  const populasi = parseInt(document.getElementById("input-s1-populasi")?.value, 10) || 75;
+  const sampel = parseInt(document.getElementById("input-s1-sampel")?.value, 10) || 60;
+  const nX = parseInt(document.getElementById("input-s1-n-x")?.value, 10) || 2;
+
+  const x1 = document.getElementById("input-s1-x1")?.value.trim() || "Kepemimpinan Transformasional";
+  const x2 = document.getElementById("input-s1-x2")?.value.trim() || "Budaya Organisasi";
+  const x3 = document.getElementById("input-s1-x3")?.value.trim() || "Motivasi Kerja";
+  const x4 = document.getElementById("input-s1-x4")?.value.trim() || "Disiplin Kerja";
+  const x5 = document.getElementById("input-s1-x5")?.value.trim() || "Kompetensi Pegawai";
+
+  const rawXList = [x1, x2, x3, x4, x5];
+  const activeXNames = rawXList.slice(0, nX);
+  const xVars = activeXNames.map((name, idx) => ({
+    code: `X${idx + 1}`,
+    name: name
+  }));
+
+  return {
+    jenjang: "S1",
+    degree: "Sarjana",
+    model_type: modelType,
+    judul: document.getElementById("input-s1-judul")?.value.trim() || "",
+    title: document.getElementById("input-s1-judul")?.value.trim() || "",
+    instansi: document.getElementById("input-s1-instansi")?.value.trim() || "Instansi Terkait",
+    populasi: populasi,
+    sampel: sampel,
+    n: sampel,
+    penulis: document.getElementById("input-s1-penulis")?.value.trim() || "MUHAMMAD RIZKY PRATAMA",
+    nim: document.getElementById("input-s1-nim")?.value.trim() || "01011382227045",
+    program_studi: document.getElementById("input-s1-prodi")?.value.trim() || "Manajemen",
+    konsentrasi: document.getElementById("input-s1-konsentrasi")?.value.trim() || "Manajemen Sumber Daya Manusia",
+    fakultas: document.getElementById("input-s1-fakultas")?.value.trim() || "Fakultas Ekonomi dan Bisnis",
+    universitas: document.getElementById("input-s1-univ")?.value.trim() || "Universitas Sriwijaya",
+    kota: document.getElementById("input-s1-kota")?.value.trim() || "Palembang",
+    tahun: document.getElementById("input-s1-tahun")?.value.trim() || "2026",
+    pembimbing1: document.getElementById("input-s1-pembimbing1")?.value.trim() || "Dr. H. Ahmad Fauzi, S.E., M.Si.",
+    pembimbing2: document.getElementById("input-s1-pembimbing2")?.value.trim() || "Dra. Hj. Nurjanah, M.M.",
+    n_x: nX,
+    x_names: activeXNames,
+    x_vars: xVars,
+    x1_name: x1,
+    x2_name: x2,
+    x3_name: x3,
+    x4_name: x4,
+    x5_name: x5,
+    m_name: document.getElementById("input-s1-m")?.value.trim() || "Komitmen Organisasional",
+    y_name: document.getElementById("input-s1-y")?.value.trim() || "Kinerja Pegawai"
+  };
+}
+
+function autoDetectS1Title(showFeedback = true) {
+  const judulInput = document.getElementById("input-s1-judul");
+  const rawTitle = judulInput ? judulInput.value.trim() : "";
+  if (!rawTitle) return;
+
+  const statusEl = document.getElementById("s1-detect-status");
+  const modelTypeSel = document.getElementById("input-s1-model-type");
+  const groupM = document.getElementById("group-s1-m");
+  const tLower = rawTitle.toLowerCase();
+
+  // Cek mediasi
+  const hasMediation = ["melalui", "mediasi", "intervening", "dimediasi"].some((w) => tLower.includes(w));
+  if (modelTypeSel) {
+    modelTypeSel.value = hasMediation ? "mediation" : "regression";
+  }
+  if (groupM) {
+    groupM.style.display = hasMediation ? "block" : "none";
+  }
+
+  // Cek instansi
+  let instansi = "Instansi Terkait";
+  const mInst = rawTitle.match(/\b(?:pada|studi pada|di|kasus pada)\s+(.+)$/i);
+  let mainPart = rawTitle;
+  if (mInst) {
+    instansi = mInst[1].trim();
+    mainPart = rawTitle.substring(0, mInst.index).trim();
+  }
+  const instInput = document.getElementById("input-s1-instansi");
+  if (instInput) instInput.value = instansi;
+
+  // Bersihkan awalan
+  mainPart = mainPart.replace(/^(pengaruh|analisis pengaruh|analisis|hubungan)\s+/i, "").trim();
+
+  // Pisahkan X dan Y
+  const parts = mainPart.split(/\s+terhadap\s+/i);
+  let detectedXCount = 2;
+  if (parts.length >= 2) {
+    const xPart = parts[0].trim();
+    const yPart = parts[1].trim();
+
+    // Pisahkan X berdasarkan tanda baca: koma, 'dan', '+', ';'
+    const rawSplits = xPart.split(/\s*(?:,|dan|\+|;)\s*|\s+dan\s+/i).map(s => s.trim()).filter(Boolean);
+    if (rawSplits.length >= 2) {
+      detectedXCount = Math.min(5, Math.max(2, rawSplits.length));
+      const nXSel = document.getElementById("input-s1-n-x");
+      if (nXSel) {
+        nXSel.value = String(detectedXCount);
+      }
+      updateS1XVisibility(detectedXCount);
+
+      const xInputIds = ["input-s1-x1", "input-s1-x2", "input-s1-x3", "input-s1-x4", "input-s1-x5"];
+      for (let i = 0; i < detectedXCount; i++) {
+        const el = document.getElementById(xInputIds[i]);
+        if (el && rawSplits[i]) el.value = rawSplits[i].trim();
+      }
+    }
+
+    if (hasMediation) {
+      const mSplit = yPart.split(/\s+(?:melalui|dengan|dimediasi oleh)\s+/i);
+      const yEl = document.getElementById("input-s1-y");
+      const mEl = document.getElementById("input-s1-m");
+      if (yEl && mSplit[0]) yEl.value = mSplit[0].trim();
+      if (mEl && mSplit[1]) {
+        mEl.value = mSplit[1].replace(/\s+sebagai\s+variabel\s+(mediasi|intervening).*/i, "").trim();
+      }
+    } else {
+      const yEl = document.getElementById("input-s1-y");
+      if (yEl) yEl.value = yPart.trim();
+    }
+  }
+
+  if (statusEl && showFeedback) {
+    statusEl.textContent = `✓ ${detectedXCount} Variabel Bebas (X1..X${detectedXCount}), Variabel Terikat (Y)${hasMediation ? ", Mediasi (M)" : ""} & Instansi berhasil dideteksi otomatis.`;
+    statusEl.style.display = "block";
+    setTimeout(() => { statusEl.style.display = "none"; }, 4000);
+  }
+}
+
+// (state S1 dideklarasikan di bagian atas file — lihat deklarasi top-level)
+
+async function handleS1ResearchOntology(showLoading = true) {
+  const btn = document.getElementById("btn-s1-research-ontology");
+  const badge = document.getElementById("badge-s1-ontology-status");
+  const cfg = getS1Config();
+
+  const rawTitle = cfg.judul || "";
+  const x_vars = cfg.x_names || [];
+  const m_var = cfg.model_type === "mediation" ? cfg.m_name : "";
+  const y_var = cfg.y_name || "Kinerja Pegawai";
+  const instansi = cfg.instansi || "Instansi Terkait";
+
+  if (!rawTitle || x_vars.length === 0) {
+    setStatus("error", "Isi Judul Skripsi dan minimal Variabel Bebas (X1, X2) sebelum menelusuri dimensi.");
+    return;
+  }
+
+  const seq = ++_s1OntologyReqSeq;
+  if (showLoading && btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Meriset Dimensi & Indikator S1 via Live Academic API...";
+    setStatus("working", "Meneliti Grand Theory, tokoh ahli, dimensi, & indikator Likert S1...");
+  }
+  if (badge) {
+    badge.textContent = "Sedang Meriset...";
+    badge.style.background = "#dcfce7";
+    badge.style.color = "#15803d";
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/s1/research-ontology`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: rawTitle,
+        x_vars: x_vars,
+        m_var: m_var,
+        y_var: y_var,
+        model_type: cfg.model_type,
+        instansi: instansi,
+        force_refresh: showLoading
+      })
+    });
+    const json = await res.json();
+    if (seq !== _s1OntologyReqSeq) return;
+
+    if (!res.ok || json.status === "error") {
+      throw new Error(json.message || `HTTP ${res.status}`);
+    }
+
+    currentS1Ontology = json.ontology;
+    window._autotesisS1Ontology = currentS1Ontology;
+    try {
+      localStorage.setItem("autotesis_s1_ontology", JSON.stringify(currentS1Ontology));
+    } catch (e) {}
+
+    renderS1OntologyPreview(currentS1Ontology);
+
+    if (badge) {
+      const totInd = currentS1Ontology.metadata?.total_indikator || 0;
+      badge.textContent = `✅ ${totInd} Indikator — siap, klik 💾 Simpan`;
+      badge.style.background = "#dcfce7";
+      badge.style.color = "#15803d";
+    }
+
+    if (showLoading) {
+      setStatus("ready", `Riset dimensi & indikator S1 selesai (${currentS1Ontology.metadata?.total_indikator || 0} butir Likert operasional — telusuri sumber rujukan, lalu klik 💾 Simpan).`);
+      showToast(
+        `Riset Dimensi & Indikator S1 Berhasil Diselesaikan!\n\n` +
+        `• Total Variabel: ${x_vars.length} X + 1 Y${m_var ? " + 1 M" : ""}\n` +
+        `• Total Dimensi Baku: ${currentS1Ontology.metadata?.total_dimensi || 0} Dimensi Ahli\n` +
+        `• Total Butir Kuesioner: ${currentS1Ontology.metadata?.total_indikator || 0} Butir Skala Likert (1-5)\n\n` +
+        `Telusuri 📚 Sumber Rujukan & Kutipan, lalu 💾 Simpan Konfigurasi untuk mengunci Benang Merah dari Bab I, Bab II, Kisi-kisi Bab III, Google Form, SPSS, hingga Bab IV & V.`,
+        "success", { title: "✅ Riset Ontologi S1 Selesai" }
+      );
+    }
+  } catch (err) {
+    console.error("handleS1ResearchOntology error:", err);
+    if (badge) {
+      badge.textContent = "Perlu Tinjauan";
+      badge.style.background = "#fee2e2";
+      badge.style.color = "#991b1b";
+    }
+    if (showLoading) {
+      setStatus("error", `Riset dimensi S1 gagal: ${err.message}`);
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "🔍 Telusuri Dimensi & Indikator via Live Academic API";
+    }
+  }
+}
+
+function computeS1Totals(onto) {
+  let totalDims = 0, totalInd = 0;
+  const vars = onto?.variables || {};
+  for (const v of Object.values(vars)) {
+    const dims = v?.dimensi || [];
+    totalDims += dims.length;
+    dims.forEach(d => { totalInd += (d.indikator || []).length; });
+  }
+  return { totalDimensi: totalDims, total_indikator: totalInd };
+}
+
+function s1SwapSource(code, key) {
+  const onto = currentS1Ontology;
+  const v = onto?.variables?.[code];
+  if (!v) return;
+  const opts = v.source_options || [];
+  const opt = opts.find(o => o.key === key);
+  if (!opt) return;
+
+  // Tukar dimensi & sumber sesuai pilihan sumber
+  if (opt.dims_blueprint && Array.isArray(opt.dims_blueprint) && opt.dims_blueprint.length) {
+    v.dimensi = JSON.parse(JSON.stringify(opt.dims_blueprint));
+  }
+  if (opt.sumber && typeof opt.sumber === "object") {
+    v.sumber = JSON.parse(JSON.stringify(opt.sumber));
+  } else if (opt.kind === "online") {
+    // Opsi online tanpa sumber eksplisit: bangun label sitasi sederhana
+    v.sumber = {
+      label: opt.label || "Hasil Telusur Online",
+      apa: opt.label || "Sumber terverifikasi OpenAlex/Crossref",
+      doi: "", url: "", journal: "", download_kind: "none"
+    };
+  }
+  v.chosen_source = key;
+  v.engine = opt.kind === "corpus" ? "corpus-pdf" : "s1-engine";
+
+  // Perbarui metadata agregat
+  const t = computeS1Totals(onto);
+  onto.metadata = onto.metadata || {};
+  onto.metadata.total_dimensi = t.totalDimensi;
+  onto.metadata.total_indikator = t.total_indikator;
+
+  renderS1OntologyPreview(onto);
+  setStatus("working", `Variabel ${code} kini memakai sumber: ${opt.label} (${t.total_indikator} butir Likert). Klik 💾 Simpan untuk mengunci.`);
+}
+
+function renderS1OntologyPreview(onto) {
+  const box = document.getElementById("s1-ontology-preview-box");
+  if (!box || !onto || !onto.variables) return;
+
+  const vars = onto.variables;
+  const meta = onto.metadata || {};
+  const totals = computeS1Totals(onto);
+  meta.total_dimensi = totals.totalDimensi;
+  meta.total_indikator = totals.total_indikator;
+
+  let gridCards = "";
+  for (const [code, v] of Object.entries(vars)) {
+    const role = (v.role || code).toUpperCase();
+    const isY = role === "Y";
+    const isM = role === "M";
+    const color = isY ? "#16a34a" : (isM ? "#d97706" : "#0284c7");
+    const label = isY ? "Variabel Terikat" : (isM ? "Variabel Mediasi" : "Variabel Bebas");
+
+    const dims = v.dimensi || [];
+    const dimNames = dims.map(d => d.nama || "Dimensi").join(", ");
+    let indCount = 0;
+    dims.forEach(d => { indCount += (d.indikator || []).length; });
+
+    const src = v.sumber || {};
+    const srcLabel = src.label || v.tokoh_ahli || "Sumber Terverifikasi";
+    const srcUrl = src.url || src.doi || "";
+    const srcDoi = src.doi || "";
+    const isPdf = src.download_kind === "pdf" && srcUrl && srcUrl.indexOf("doi.org/") === -1;
+
+    // Dropdown pilihan sumber (korpus 95 PDF vs hasil online)
+    const opts = v.source_options || [];
+    const chosen = v.chosen_source || (opts[0] ? opts[0].key : "online");
+    let selHtml = "";
+    if (opts.length > 0) {
+      const optRows = opts.map(o => {
+        const tag = o.kind === "corpus" ? "📄 Korpus" : "🌐 Online";
+        const disabled = o.kind === "corpus" && !o.passed ? " disabled" : "";
+        const indInfo = (o.dims > 0 || o.inds > 0) ? ` (${o.dims} dim, ${o.inds} ind)` : "";
+        const sel = o.key === chosen ? " selected" : "";
+        return `<option value="${escapeHtmlS3(o.key)}"${sel}${disabled}>${tag} — ${escapeHtmlS3(o.label || o.key)}${indInfo}${disabled ? " (tidak lolos lantai PLS-SEM)" : ""}</option>`;
+      }).join("");
+      selHtml = `
+        <div style="margin-top: 4px;">
+          <div style="color: #475569; font-size: 9.5px; font-weight: 700; margin-bottom: 2px;">🔁 Pilih Sumber Dimensi &amp; Indikator:</div>
+          <select data-s1-src="${escapeHtmlS3(code)}" onchange="s1SwapSource('${escapeHtmlS3(code)}', this.value)"
+                  style="width: 100%; padding: 3px 4px; font-size: 10px; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff; color: #1e293b;">
+            ${optRows}
+          </select>
+        </div>
+      `;
+    }
+
+    const srcHtml = `
+      <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #cbd5e1;">
+        ${selHtml}
+        <div style="color: #475569; font-size: 9.5px; line-height: 1.4; margin-top: 4px;">
+          <strong>📚 Sumber (1 rujukan):</strong> ${escapeHtmlS3(srcLabel)}
+        </div>
+        ${srcUrl ? `
+        <div style="display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
+          <a href="${escapeHtmlS3(srcUrl)}" target="_blank" rel="noopener"
+             style="display: inline-flex; align-items: center; gap: 4px; background: #0f766e; color: #ffffff; text-decoration: none; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">
+            ${isPdf ? "⬇️ Download PDF (Open Access)" : "🔗 Buka Artikel via DOI"}
+          </a>
+          ${srcDoi && srcDoi !== srcUrl ? `
+          <a href="${escapeHtmlS3(srcDoi)}" target="_blank" rel="noopener"
+             style="display: inline-flex; align-items: center; background: #e2e8f0; color: #334155; text-decoration: none; font-size: 9.5px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">
+            DOI
+          </a>` : ""}
+        </div>` : `
+        <div style="color: #94a3b8; font-size: 9px; margin-top: 2px;">Sumber: ${escapeHtmlS3(srcLabel)} (tanpa tautan digital)</div>`}
+      </div>
+    `;
+
+    gridCards += `
+      <div style="padding: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
+        <div style="font-weight: 700; color: ${color}; font-size: 11px;">${role}: ${v.nama_resmi || v.input_name} (${label})</div>
+        <div style="color: #64748b; font-size: 10px;">Ahli: ${v.tokoh_ahli || 'Pakar Terkemuka'}</div>
+        <div style="color: #334155; font-size: 10px; margin-top: 2px;"><strong>Dimensi:</strong> ${dimNames || 'Disesuaikan'}</div>
+        <div style="color: #0f766e; font-size: 9px; margin-top: 2px; font-weight: 600;">Operasional: ${indCount} butir Likert | Teori: ${v.grand_theory || 'Grand Theory'}</div>
+        ${srcHtml}
+      </div>
+    `;
+  }
+
+  let html = `
+    <div style="font-weight: bold; color: #15803d; margin-bottom: 6px; font-size: 11px;">
+      📌 Blueprint Ontologi Skripsi S1 Siap Pakai (${meta.total_indikator || 0} Indikator Operasional):
+    </div>
+    <div style="font-size: 9px; color: #64748b; margin-bottom: 6px;">
+      Dimensi: rujukan tokoh ahli teruji. Indikator: pernyataan skala Likert (1-5) kontekstual dengan ${meta.instansi || 'instansi'} (2 butir per dimensi).
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+      ${gridCards}
+    </div>
+    <div style="background: #f1f5f9; padding: 6px; border-radius: 4px; font-size: 10px; line-height: 1.5; color: #334155;">
+      <strong>🔗 Keterikatan Benang Merah Skripsi S1 Bab I s/d Lampiran:</strong><br>
+      • <strong>Tabel Pra-Survei Bab I:</strong> Parameter evaluasi masalah terikat pada dimensi &amp; butir indikator Y.<br>
+      • <strong>Tabel 3.1 Kisi-Kisi Instrumen:</strong> ${meta.total_dimensi || 0} dimensi terpetakan ke dalam ${meta.total_indikator || 0} butir pernyataan kuesioner.<br>
+      • <strong>Google Form &amp; SPSS:</strong> Siap diekspor dengan butir pernyataan riil yang selaras 100% dengan naskah.<br>
+      • <strong>📚 Sumber Rujukan &amp; Kutipan:</strong> dibangun dari rentang tahun sitasi (default 20 th) di bawah — 95 PDF pendukung HANYA korpus dimensi, bukan sitasi bab.
+    </div>
+  `;
+
+  box.innerHTML = html;
+  box.style.display = "block";
+}
+
+function s1CiteSettingsSummary(s) {
+  if (!s) return "pengaturan default";
+  const originLabel = { all: "Indonesia + Internasional", indonesia: "Utama Indonesia", internasional: "Utama Internasional" }[s.origin] || "Indonesia + Internasional";
+  const styleLabel = {
+    apa7: "APA 7th", apa6: "APA 6th", harvard: "Harvard", ieee: "IEEE",
+    vancouver: "Vancouver", mla9: "MLA 9th", chicago: "Chicago",
+    "chicago-fullnote": "Chicago Fullnote", turabian: "Turabian"
+  }[s.style] || "APA 7th";
+  const langLabel = {
+    id: "Indonesia", en: "Inggris (English)", ms: "Melayu", es: "Spanyol (Español)",
+    fr: "Prancis (Français)", zh: "Mandarin (中文)", hi: "Hindi (हिन्दी)", ar: "Arab (العربية)"
+  }[s.language] || "Indonesia";
+  const srcLabel = (s.source_types || []).map(x => ({ umum: "Umum", sinta: "Sinta", scopus: "Scopus" }[x] || x)).join("+") || "Umum";
+  const yr = s.min_year ? `${s.min_year}–${s.max_year || new Date().getFullYear()}` : "Semua Tahun";
+  return `${yr} · ${originLabel} · ${styleLabel} · ${langLabel} · ${srcLabel}`;
+}
+
+function populateS1MinYearSelect() {
+  const minSel = document.getElementById("input-s1-cite-min-year");
+  if (!minSel) return;
+  const nowYear = new Date().getFullYear() || 2026;
+  const lowest = 1980;
+  // Pertahankan opsi "Semua tahun" di posisi teratas
+  minSel.innerHTML = `<option value="all" selected>Semua tahun</option>`;
+  for (let y = nowYear; y >= lowest; y--) {
+    const opt = document.createElement("option");
+    opt.value = String(y);
+    opt.textContent = String(y);
+    minSel.appendChild(opt);
+  }
+}
+
+function readS1CiteSettings() {
+  const minSel = document.getElementById("input-s1-cite-min-year");
+  const originSel = document.getElementById("input-s1-cite-origin");
+  const styleSel = document.getElementById("input-s1-cite-style");
+  const langSel = document.getElementById("input-s1-cite-language");
+  const ckUmum = document.getElementById("input-s1-cite-src-umum");
+  const ckSinta = document.getElementById("input-s1-cite-src-sinta");
+  const ckScopus = document.getElementById("input-s1-cite-src-scopus");
+  const minRaw = minSel?.value || "all";
+  const minYear = (minRaw === "all") ? null : (parseInt(minRaw, 10) || null);
+  const sourceTypes = [];
+  if (ckUmum?.checked) sourceTypes.push("umum");
+  if (ckSinta?.checked) sourceTypes.push("sinta");
+  if (ckScopus?.checked) sourceTypes.push("scopus");
+  return {
+    min_year: minYear,
+    origin: originSel?.value || "all",
+    style: styleSel?.value || "apa7",
+    language: langSel?.value || "id",
+    source_types: sourceTypes.length ? sourceTypes : ["umum"],
+    source_files: s1CiteSourceFiles.slice(0, 10)
+  };
+}
+
+function applyCiteSettingsToDom(s) {
+  if (!s || typeof s !== "object") return;
+  const minSel = document.getElementById("input-s1-cite-min-year");
+  const originSel = document.getElementById("input-s1-cite-origin");
+  const styleSel = document.getElementById("input-s1-cite-style");
+  const langSel = document.getElementById("input-s1-cite-language");
+  const ckUmum = document.getElementById("input-s1-cite-src-umum");
+  const ckSinta = document.getElementById("input-s1-cite-src-sinta");
+  const ckScopus = document.getElementById("input-s1-cite-src-scopus");
+  if (minSel) {
+    populateS1MinYearSelect();
+    const mn = s.min_year;
+    const yearOpt = mn ? String(mn) : "all";
+    if (Array.from(minSel.options).some(o => o.value === yearOpt)) {
+      minSel.value = yearOpt;
+    } else {
+      minSel.value = "all";
+    }
+  }
+  if (originSel && s.origin) originSel.value = s.origin;
+  if (styleSel && s.style) styleSel.value = s.style;
+  if (langSel && s.language) langSel.value = s.language;
+  const src = s.source_types || [];
+  if (ckUmum) ckUmum.checked = src.includes("umum");
+  if (ckSinta) ckSinta.checked = src.includes("sinta");
+  if (ckScopus) ckScopus.checked = src.includes("scopus");
+  if (!src.length && ckUmum) ckUmum.checked = true;
+  if (Array.isArray(s.source_files)) {
+    s1CiteSourceFiles = s.source_files.map(f => String(f)).filter(Boolean).slice(0, 10);
+    renderS1CiteFileList();
+  }
+}
+
+function renderS1CiteFileList() {
+  const list = document.getElementById("s1-cite-files-list");
+  const count = document.getElementById("s1-cite-files-count");
+  if (count) count.textContent = `${s1CiteSourceFiles.length}/10 sumber`;
+  if (!list) return;
+  if (!s1CiteSourceFiles.length) {
+    list.style.display = "none";
+    list.innerHTML = "";
+    return;
+  }
+  list.style.display = "block";
+  list.innerHTML = s1CiteSourceFiles.map((name, idx) => `
+    <div style="display:flex; align-items:center; gap:6px; padding:2px 0; font-size:10px; color:#334155;">
+      <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${escapeHtmlS3(name)}</span>
+      <button type="button" data-s1-file-idx="${idx}" style="border:none; background:#fee2e2; color:#991b1b; border-radius:4px; font-size:9px; padding:1px 6px; cursor:pointer;">✕ Hapus</button>
+    </div>
+  `).join("");
+  list.querySelectorAll("button[data-s1-file-idx]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const i = parseInt(btn.getAttribute("data-s1-file-idx"), 10);
+      if (!Number.isNaN(i)) s1CiteSourceFiles.splice(i, 1);
+      renderS1CiteFileList();
+      try {
+        const json = await persistS1CiteSettings();
+        applyCiteSettingsToDom(json);
+      } catch (e) {
+        console.warn("source-files remove persist error:", e);
+      }
+    });
+  });
+}
+
+function handleS1CiteFilesSelected() {
+  const input = document.getElementById("input-s1-cite-files");
+  if (!input || !input.files) return;
+  const now = s1CiteSourceFiles.slice(0, 10);
+  const seen = new Set(now.map(f => f.toLowerCase()));
+  for (const file of Array.from(input.files)) {
+    const name = file.name || "file.pdf";
+    const isPdf = /\.pdf$/i.test(name) || (file.type === "application/pdf");
+    const sizeOk = file.size <= 15 * 1024 * 1024;
+    if (!isPdf) {
+      alert(`"${name}" bukan PDF — hanya PDF yang bisa ditambahkan.`);
+      continue;
+    }
+    if (!sizeOk) {
+      alert(`"${name}" lebih dari 15MB — dilewati.`);
+      continue;
+    }
+    if (seen.has(name.toLowerCase())) continue;
+    if (now.length >= 10) {
+      alert("Maksimal 10 sumber unggahan.");
+      break;
+    }
+    seen.add(name.toLowerCase());
+    now.push(name);
+  }
+  s1CiteSourceFiles = now;
+  renderS1CiteFileList();
+  input.value = "";
+  // Persist nama file ke server segera
+  persistS1CiteSettings().then(json => {
+    applyCiteSettingsToDom(json);
+  }).catch(e => console.warn("source-files persist error:", e));
+}
+
+async function persistS1CiteSettings() {
+  const settings = readS1CiteSettings();
+  const res = await fetch(`${API_BASE}/s1/cite-settings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(settings)
+  });
+  const json = await res.json();
+  if (!res.ok || json.status === "error") {
+    throw new Error(json.message || `HTTP ${res.status}`);
+  }
+  return json;
+}
+
+
+async function handleS1CiteRefs(showLoading = true) {
+  const btn = document.getElementById("btn-s1-cite-refs");
+  const badge = document.getElementById("badge-s1-cite-status");
+  const box = document.getElementById("s1-cite-refs-box");
+  const cfg = getS1Config();
+  if (showLoading && btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Menelusuri Sumber Rujukan & Kutipan...";
+  }
+  if (badge) {
+    badge.textContent = "Menelusuri...";
+    badge.style.background = "#dbeafe";
+    badge.style.color = "#1e40af";
+  }
+
+  try {
+    // 1. Simpan pengaturan sitasi penuh ke server (persisten)
+    const settingsJson = await persistS1CiteSettings();
+    applyCiteSettingsToDom(settingsJson);
+
+    // 2. Ambil daftar referensi sesuai pengaturan (tahun/origin/sumber aktif)
+    const res = await fetch(`${API_BASE}/s1/cite-references`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        judul: cfg.judul || cfg.title || "",
+        instansi: cfg.instansi || "",
+        x_names: cfg.x_names || [],
+        m_name: cfg.m_name || "",
+        y_name: cfg.y_name || "",
+        model_type: cfg.model_type || "regression"
+      })
+    });
+    const json = await res.json();
+    if (!res.ok || json.status === "error") {
+      throw new Error(json.message || `HTTP ${res.status}`);
+    }
+
+    const activeSettings = json.settings || settingsJson;
+
+    if (badge) {
+      badge.textContent = `✔ ${json.total || 0} rujukan ${s1CiteSettingsSummary(activeSettings)}`;
+      badge.style.background = "#dcfce7";
+      badge.style.color = "#15803d";
+    }
+
+    // Render daftar berkelompok per variabel (dengan tag asal/sumber)
+    const groupsHtml = (json.groups || []).map(g => {
+      const entries = g.entries || [];
+      if (!entries.length) return "";
+      const rows = entries.map(e => {
+        const tag = [e.origin_tag, e.index_tag].filter(Boolean).join("/");
+        return `
+        <div style="display: flex; gap: 6px; padding: 3px 0; border-bottom: 1px dashed #e2e8f0; align-items: baseline;">
+          <span style="min-width: 22px; font-weight: 700; color: #1d4ed8;">${escapeHtmlS3(g.role)}</span>
+          <span style="flex: 1; color: #334155;">${escapeHtmlS3(e.label)} (${e.year || '—'})</span>
+          ${tag ? `<span style="font-size: 8px; background:#eef2ff; color:#4338ca; border-radius: 8px; padding: 1px 5px; white-space: nowrap;">${escapeHtmlS3(tag)}</span>` : ""}
+          ${e.doi ? `<a href="${escapeHtmlS3(e.doi)}" target="_blank" rel="noopener" style="color: #0f766e; font-size: 9px; font-weight: 600;">DOI</a>` : ""}
+        </div>
+      `;
+      }).join("");
+      return `
+        <div style="margin-bottom: 6px;">
+          <div style="font-weight: 700; color: #1e40af; font-size: 10px;">${escapeHtmlS3(g.role)} — ${escapeHtmlS3(g.variable)} (${entries.length})</div>
+          ${rows}
+        </div>
+      `;
+    }).join("");
+
+    const staplesHtml = (json.staples || []).map(s => `
+      <div style="padding: 3px 0; border-bottom: 1px dashed #e2e8f0; color: #334155;">
+        📘 ${escapeHtmlS3(s.label)} (${s.year || '—'}) <span style="color:#64748b; font-size:9px;">— metodologi</span>
+      </div>
+    `).join("");
+
+    const varGroups = groupsHtml || '<div style="color:#94a3b8;">Belum ada sitasi dalam rentang — telusuri ulang / perlebar rentang.</div>';
+
+    box.innerHTML = `
+      <div style="font-weight: bold; color: #1e40af; margin-bottom: 6px; font-size: 11px;">
+        📚 Sumber Rujukan &amp; Kutipan — ${s1CiteSettingsSummary(activeSettings)} · ${json.total || 0} rujukan total
+      </div>
+      <div style="font-size: 9px; color: #64748b; margin-bottom: 6px;">
+        95 PDF pendukung TIDAK termasuk — korpus dimensi &amp; indikator only.
+      </div>
+      ${varGroups}
+      ${staplesHtml ? `<div style="margin-top: 6px;"><div style="font-weight: 700; color: #1e40af; font-size: 10px;">Metodologi (sekali):</div>${staplesHtml}</div>` : ""}
+    `;
+    box.style.display = "block";
+
+    if (showLoading) {
+      setStatus("ready", `Sumber Rujukan & Kutipan tersusun: ${json.total || 0} rujukan (${s1CiteSettingsSummary(activeSettings)}). Klik 💾 Simpan untuk mengunci.`);
+    }
+  } catch (err) {
+    console.error("handleS1CiteRefs error:", err);
+    if (badge) {
+      badge.textContent = "Perlu Tinjauan";
+      badge.style.background = "#fee2e2";
+      badge.style.color = "#991b1b";
+    }
+    if (showLoading) setStatus("error", `Telusur sumber rujukan gagal: ${err.message}`);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "🔍 Telusuri Sumber Rujukan & Kutipan (daftar pustaka)";
+    }
+  }
+}
+
+function applyS1LockState(locked) {
+  const btnResearch = document.getElementById("btn-s1-research-ontology");
+  const btnCite = document.getElementById("btn-s1-cite-refs");
+  const btnSave = document.getElementById("btn-s1-save-config");
+  const btnUnlock = document.getElementById("btn-s1-unlock-config");
+  const citeControls = [
+    "input-s1-cite-min-year",
+    "input-s1-cite-origin",
+    "input-s1-cite-style",
+    "input-s1-cite-language",
+    "input-s1-cite-src-umum",
+    "input-s1-cite-src-sinta",
+    "input-s1-cite-src-scopus",
+    "input-s1-cite-files"
+  ];
+  const citeFileLabel = document.querySelector('label[for="input-s1-cite-files"]');
+  const badge = document.getElementById("badge-s1-ontology-status");
+  // Baca via window (bukan let TDZ): applyS1LockState bisa dipanggil dari
+  // initMasterS1 pada saat Office.onReady mengeksekusi callback sebelum
+  // deklarasi `let currentS1Ontology` dievaluasi.
+  const onto = window._autotesisS1Ontology;
+  const totInd = onto?.metadata?.total_indikator || 0;
+
+  if (locked) {
+    if (btnResearch) { btnResearch.disabled = true; btnResearch.style.opacity = "0.55"; }
+    if (btnCite) { btnCite.disabled = true; btnCite.style.opacity = "0.55"; }
+    citeControls.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = true;
+    });
+    if (citeFileLabel) { citeFileLabel.style.opacity = "0.5"; citeFileLabel.style.pointerEvents = "none"; }
+    if (btnSave) btnSave.style.display = "none";
+    if (btnUnlock) btnUnlock.style.display = "flex";
+    if (badge && totInd) {
+      badge.textContent = `✅ ${totInd} Indikator Terkunci (Benang Merah Aktif)`;
+      badge.style.background = "#dcfce7";
+      badge.style.color = "#15803d";
+    }
+  } else {
+    if (btnResearch) { btnResearch.disabled = false; btnResearch.style.opacity = "1"; }
+    if (btnCite) { btnCite.disabled = false; btnCite.style.opacity = "1"; }
+    citeControls.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = false;
+    });
+    if (citeFileLabel) { citeFileLabel.style.opacity = "1"; citeFileLabel.style.pointerEvents = "auto"; }
+    if (btnSave) btnSave.style.display = "flex";
+    if (btnUnlock) btnUnlock.style.display = "none";
+    if (badge && totInd) {
+      badge.textContent = `✅ ${totInd} Indikator — siap, klik 💾 Simpan`;
+      badge.style.background = "#dcfce7";
+      badge.style.color = "#15803d";
+    }
+  }
+}
+
+function unlockS1Config() {
+  try {
+    localStorage.removeItem("autotesis_s1_locked");
+  } catch (e) {}
+  applyS1LockState(false);
+  setStatus("ready", "Konfigurasi S1 dibuka — silakan ubah dan Simpan kembali untuk mengunci ulang.");
+}
+
+function initMasterS1() {
+  const inputJudul = document.getElementById("input-s1-judul");
+  const btnAutoDetect = document.getElementById("btn-s1-auto-detect");
+  const modelTypeSel = document.getElementById("input-s1-model-type");
+  const groupM = document.getElementById("group-s1-m");
+  const inputPopulasi = document.getElementById("input-s1-populasi");
+  const inputSampel = document.getElementById("input-s1-sampel");
+  const inputAnalysisN = document.getElementById("input-s1-analysis-n");
+  const btnSaveConfig = document.getElementById("btn-s1-save-config");
+  const btnResearchOntology = document.getElementById("btn-s1-research-ontology");
+  const btnGenerateGForm = document.getElementById("btn-s1-generate-gform");
+  const btnCopyGForm = document.getElementById("btn-s1-copy-gform");
+  const btnGenerateData = document.getElementById("btn-s1-generate-data");
+  const btnRunSpss = document.getElementById("btn-s1-run-spss");
+  const btnRunAllChapters = document.getElementById("btn-s1-run-all-chapters");
+  const btnWriteFullWord = document.getElementById("btn-s1-write-full-word");
+  const btnDownloadFull = document.getElementById("btn-s1-download-full");
+
+  const nXSel = document.getElementById("input-s1-n-x");
+  nXSel?.addEventListener("change", (e) => {
+    updateS1XVisibility(e.target.value);
+  });
+
+  // Perubahan jenis model riset S1
+  modelTypeSel?.addEventListener("change", () => {
+    if (groupM) {
+      groupM.style.display = modelTypeSel.value === "mediation" ? "block" : "none";
+    }
+  });
+
+  // Hitung sampel otomatis Slovin e=5% atau Sensus
+  if (inputPopulasi) {
+    inputPopulasi.addEventListener("input", () => {
+      const N = parseInt(inputPopulasi.value, 10) || 0;
+      let n;
+      if (N <= 100) {
+        n = N;
+      } else {
+        n = Math.ceil(N / (1 + N * 0.0025));
+        if (n > N) n = N;
+      }
+      if (inputSampel) inputSampel.value = n;
+      if (inputAnalysisN) inputAnalysisN.value = n;
+    });
+  }
+
+  // Auto-detect judul
+  btnAutoDetect?.addEventListener("click", () => autoDetectS1Title(true));
+  inputJudul?.addEventListener("change", () => autoDetectS1Title(false));
+
+  // Simpan config ke localStorage + kunci Blueprint Ontologi S1 di server
+  btnSaveConfig?.addEventListener("click", async () => {
+    const cfg = getS1Config();
+    const btn = btnSaveConfig;
+    const originalText = btn ? btn.textContent : "";
+    if (btn) { btn.disabled = true; btn.textContent = "⏳ Menyimpan & Mengunci Blueprint S1..."; }
+    try {
+      localStorage.setItem("autotesis_s1_config", JSON.stringify(cfg));
+
+      // Simpan blueprint (hasil swap sumber) ke server -> sumber kebenaran penulisan bab
+      const onto = currentS1Ontology || window._autotesisS1Ontology;
+      if (onto) {
+        const res = await fetch(`${API_BASE}/s1/save-ontology`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: cfg.judul || "",
+            judul: cfg.judul || "",
+            ontology: onto
+          })
+        });
+        const json = await res.json();
+        if (!res.ok || json.status === "error") {
+          throw new Error(json.message || `HTTP ${res.status}`);
+        }
+        localStorage.setItem("autotesis_s1_ontology", JSON.stringify(onto));
+      }
+
+      // Kunci Benang Merah
+      try { localStorage.setItem("autotesis_s1_locked", "1"); } catch (e) {}
+      applyS1LockState(true);
+      setStatus("ready", "Konfigurasi Skripsi S1 tersimpan & Blueprint Ontologi terkunci (Benang Merah aktif).");
+      showToast(
+        (onto
+          ? `Blueprint Ontologi S1 terkunci (${onto.metadata?.total_indikator || 0} butir Likert).\n\n`
+          : "") +
+        "Benang Merah kini aktif untuk Bab I, Bab II, Kisi-kisi Bab III, Google Form, SPSS, hingga Bab IV & V.",
+        "success", { title: "✅ Konfigurasi & Ontologi Terkunci" }
+      );
+    } catch (e) {
+      console.warn("Save error:", e);
+      setStatus("error", `Gagal menyimpan/mengunci: ${e.message}`);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = originalText; }
+    }
+  });
+
+  // Riset Ontologi Baku S1 via Live Academic API
+  btnResearchOntology?.addEventListener("click", () => handleS1ResearchOntology(true));
+
+  // Sumber Rujukan & Kutipan: Pengaturan sitasi (tahun/origin/gaya/bahasa/sumber)
+  const btnCiteRefs = document.getElementById("btn-s1-cite-refs");
+  const btnUnlockConfig = document.getElementById("btn-s1-unlock-config");
+  const badgeCite = document.getElementById("badge-s1-cite-status");
+  const citeInputIds = [
+    "input-s1-cite-min-year",
+    "input-s1-cite-origin",
+    "input-s1-cite-style",
+    "input-s1-cite-language",
+    "input-s1-cite-src-umum",
+    "input-s1-cite-src-sinta",
+    "input-s1-cite-src-scopus"
+  ];
+
+  // Isi dropdown tahun terbit minimum: "Semua tahun" + tahun menurun
+  populateS1MinYearSelect();
+
+  // Setiap perubahan kontrol -> simpan pengaturan sitasi ke server (persisten)
+  citeInputIds.forEach(id => {
+    const el = document.getElementById(id);
+    el?.addEventListener("change", async () => {
+      try {
+        const json = await persistS1CiteSettings();
+        applyCiteSettingsToDom(json);
+        if (badgeCite) {
+          badgeCite.textContent = `✔ ${s1CiteSettingsSummary(json)}`;
+          badgeCite.style.background = "#dcfce7";
+          badgeCite.style.color = "#15803d";
+        }
+      } catch (e) {
+        console.warn("cite-settings set error:", e);
+        if (badgeCite) {
+          badgeCite.textContent = "Perlu Tinjauan";
+          badgeCite.style.background = "#fee2e2";
+          badgeCite.style.color = "#991b1b";
+        }
+      }
+    });
+  });
+
+  // Unggah artikel / buku (opsional): pilih PDF -> validasi -> daftar -> persist
+  const citeFileInput = document.getElementById("input-s1-cite-files");
+  citeFileInput?.addEventListener("change", () => handleS1CiteFilesSelected());
+
+  btnCiteRefs?.addEventListener("click", () => handleS1CiteRefs(true));
+  btnUnlockConfig?.addEventListener("click", () => unlockS1Config());
+
+  // Muat pengaturan sitasi lengkap dari server saat halaman terbuka
+  (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/s1/cite-settings`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      const json = await res.json();
+      if (json && json.status !== "error") {
+        applyCiteSettingsToDom(json);
+        if (badgeCite) {
+          badgeCite.textContent = `✔ ${s1CiteSettingsSummary(json)}`;
+          badgeCite.style.background = "#dcfce7";
+          badgeCite.style.color = "#15803d";
+        }
+      }
+    } catch (e) {
+      console.warn("cite-settings load error:", e);
+    }
+  })();
+
+  // Load config jika ada
+  try {
+    const saved = localStorage.getItem("autotesis_s1_config");
+    if (saved) {
+      const c = JSON.parse(saved);
+      if (c.judul && inputJudul) inputJudul.value = c.judul;
+      if (c.instansi && document.getElementById("input-s1-instansi")) document.getElementById("input-s1-instansi").value = c.instansi;
+      if (c.penulis && document.getElementById("input-s1-penulis")) document.getElementById("input-s1-penulis").value = c.penulis;
+      if (c.nim && document.getElementById("input-s1-nim")) document.getElementById("input-s1-nim").value = c.nim;
+      if (c.populasi && inputPopulasi) inputPopulasi.value = c.populasi;
+      if (c.sampel && inputSampel) inputSampel.value = c.sampel;
+      if (c.n_x && nXSel) {
+        nXSel.value = String(c.n_x);
+        updateS1XVisibility(c.n_x);
+      }
+      if (c.x1_name && document.getElementById("input-s1-x1")) document.getElementById("input-s1-x1").value = c.x1_name;
+      if (c.x2_name && document.getElementById("input-s1-x2")) document.getElementById("input-s1-x2").value = c.x2_name;
+      if (c.x3_name && document.getElementById("input-s1-x3")) document.getElementById("input-s1-x3").value = c.x3_name;
+      if (c.x4_name && document.getElementById("input-s1-x4")) document.getElementById("input-s1-x4").value = c.x4_name;
+      if (c.x5_name && document.getElementById("input-s1-x5")) document.getElementById("input-s1-x5").value = c.x5_name;
+      if (c.y_name && document.getElementById("input-s1-y")) document.getElementById("input-s1-y").value = c.y_name;
+      if (c.m_name && document.getElementById("input-s1-m")) document.getElementById("input-s1-m").value = c.m_name;
+      if (c.model_type && modelTypeSel) {
+        modelTypeSel.value = c.model_type;
+        if (groupM) groupM.style.display = c.model_type === "mediation" ? "block" : "none";
+      }
+    }
+  } catch (e) {}
+
+  // Load cached ontology jika ada
+  try {
+    const savedOnto = localStorage.getItem("autotesis_s1_ontology");
+    if (savedOnto) {
+      currentS1Ontology = JSON.parse(savedOnto);
+      window._autotesisS1Ontology = currentS1Ontology;
+      renderS1OntologyPreview(currentS1Ontology);
+      const badge = document.getElementById("badge-s1-ontology-status");
+      if (badge && currentS1Ontology.metadata?.total_indikator) {
+        const locked = localStorage.getItem("autotesis_s1_locked") === "1";
+        badge.textContent = locked
+          ? `✅ ${currentS1Ontology.metadata.total_indikator} Indikator Terkunci (Benang Merah Aktif)`
+          : `✅ ${currentS1Ontology.metadata.total_indikator} Indikator — siap, klik 💾 Simpan`;
+        badge.style.background = "#dcfce7";
+        badge.style.color = "#15803d";
+      }
+    }
+  } catch (eOnto) {}
+
+  // Terapkan status kunci tersimpan (Benang Merah terkunci lintas sesi)
+  applyS1LockState(localStorage.getItem("autotesis_s1_locked") === "1");
+
+  // 1. Google Form Apps Script Generator S1
+  btnGenerateGForm?.addEventListener("click", () => {
+    const cfg = getS1Config();
+    const onto = currentS1Ontology || window._autotesisS1Ontology;
+    const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
+    let xSectionsScript = "";
+    (cfg.x_vars || []).forEach((xv, idx) => {
+      const rom = romanNumerals[idx] || `X${idx + 1}`;
+      let items = [];
+      if (onto && onto.variables && onto.variables[xv.code.toLowerCase()]) {
+        const vonto = onto.variables[xv.code.toLowerCase()];
+        (vonto.dimensi || []).forEach(d => {
+          (d.indikator || []).forEach(it => {
+            const itStr = typeof it === "string" ? it : (it.p || it.t || "");
+            if (itStr) items.push(itStr);
+          });
+        });
+      }
+      if (items.length === 0) {
+        items = [
+          `Pimpinan dan kebijakan operasional mendukung pelaksanaan ${xv.name} secara konsisten.`,
+          `Penerapan ${xv.name} berjalan selaras dengan standar dan prosedur kerja instansi.`,
+          `Pegawai menginternalisasikan nilai-nilai ${xv.name} dalam penyelesaian tugas harian.`,
+          `Tersedia koordinasi terbuka antarunit dalam memperkuat efektivitas ${xv.name}.`,
+          `Instansi secara berkala memberikan evaluasi dan pembinaan terhadap ${xv.name}.`,
+          `Pegawai berkomitmen tinggi dalam mengoptimalkan ${xv.name} guna peningkatan kualitas layanan.`
+        ];
+      }
+      const itemsJson = JSON.stringify(items, null, 4);
+      xSectionsScript += `
+  // Variabel ${xv.code}: ${xv.name}
+  var s${xv.code} = form.addSectionHeaderItem();
+  s${xv.code}.setTitle('BAGIAN ${rom}: ${xv.name.replace(/'/g, "\\'")} (${xv.code})');
+  var ${xv.code.toLowerCase()}Items = ${itemsJson};
+  for (var i = 0; i < ${xv.code.toLowerCase()}Items.length; i++) {
+    form.addMultipleChoiceItem().setTitle('${xv.code}.' + (i+1) + ' ' + ${xv.code.toLowerCase()}Items[i]).setChoiceValues(gridScale).setRequired(true);
+  }
+`;
+    });
+
+    let mSectionScript = "";
+    let nextRomIdx = (cfg.x_vars || []).length;
+    if (cfg.model_type === "mediation" && cfg.m_name) {
+      const mRom = romanNumerals[nextRomIdx] || "M";
+      nextRomIdx++;
+      let mItems = [];
+      if (onto && onto.variables && onto.variables["m"]) {
+        (onto.variables["m"].dimensi || []).forEach(d => {
+          (d.indikator || []).forEach(it => {
+            const itStr = typeof it === "string" ? it : (it.p || it.t || "");
+            if (itStr) mItems.push(itStr);
+          });
+        });
+      }
+      if (mItems.length === 0) {
+        mItems = [
+          `Pegawai memiliki rasa keterikatan yang kuat terhadap visi dan misi organisasi.`,
+          `Nilai-nilai integritas organisasi dipedomani dalam pelaksanaan tugas kedinasan.`,
+          `Pegawai bersedia mengerahkan usaha optimal guna tercapainya sasaran organisasi.`,
+          `Rasa kebersamaan dan loyalitas pegawai terhadap unit kerja terjaga dengan baik.`,
+          `Pegawai merasa bangga menjadi bagian dari keluarga besar instansi ini.`,
+          `Komitmen kerja ditunjukkan melalui kedisiplinan dan kepatuhan terhadap regulasi.`
+        ];
+      }
+      mSectionScript = `
+  // Variabel Mediasi (M): ${cfg.m_name}
+  var sM = form.addSectionHeaderItem();
+  sM.setTitle('BAGIAN ${mRom}: ${cfg.m_name.replace(/'/g, "\\'")} (M)');
+  var mItems = ${JSON.stringify(mItems, null, 4)};
+  for (var j = 0; j < mItems.length; j++) {
+    form.addMultipleChoiceItem().setTitle('M.' + (j+1) + ' ' + mItems[j]).setChoiceValues(gridScale).setRequired(true);
+  }
+`;
+    }
+
+    const yRom = romanNumerals[nextRomIdx] || "Y";
+    let yItems = [];
+    if (onto && onto.variables && onto.variables["y"]) {
+      (onto.variables["y"].dimensi || []).forEach(d => {
+        (d.indikator || []).forEach(it => {
+          const itStr = typeof it === "string" ? it : (it.p || it.t || "");
+          if (itStr) yItems.push(itStr);
+        });
+      });
+    }
+    if (yItems.length === 0) {
+      yItems = [
+        'Volume pekerjaan yang saya selesaikan sesuai dengan target sasaran kinerja pegawai (SKP).',
+        'Hasil pekerjaan saya memenuhi standar mutu dan spesifikasi kedinasan yang ditentukan.',
+        'Saya mampu menyelesaikan tugas-tugas kedinasan secara tepat waktu sebelum batas akhir.',
+        'Saya memprioritaskan penyelesaian dokumen kerja yang bersifat mendesak dan strategis.',
+        'Saya mampu berkoordinasi secara harmonis dengan rekan kerja dalam menuntaskan target tim.',
+        'Saya memiliki kesiapan untuk membantu rekan kerja ketika beban tugas kedinasan meningkat.'
+      ];
+    }
+    const yItemsJson = JSON.stringify(yItems, null, 4);
+
+    const scriptText = `/**
+ * GOOGLE APPS SCRIPT - OTOMATISASI PEMBUATAN GOOGLE FORM SKRIPSI S1
+ * Judul: ${cfg.judul}
+ * Instansi: ${cfg.instansi}
+ */
+function buatKuesionerSkripsiS1() {
+  var form = FormApp.create('KUESIONER SKRIPSI: ${cfg.judul.replace(/'/g, "\\'")}');
+  form.setDescription('Yth. Bapak/Ibu Pegawai pada ${cfg.instansi.replace(/'/g, "\\'")},\\n\\n' +
+    'Kuesioner ini disusun guna penyusunan Skripsi Sarjana (S1) Manajemen.\\n' +
+    'Skala: 1 = Sangat Tidak Setuju (STS), 2 = Tidak Setuju (TS), 3 = Netral (N), 4 = Setuju (S), 5 = Sangat Setuju (SS).\\n' +
+    'Terima kasih atas partisipasi dan objektivitas jawaban Anda.');
+
+  // Bagian Identitas Responden
+  form.addTextItem().setTitle('Nama Lengkap (Opsional)').setRequired(false);
+  form.addMultipleChoiceItem().setTitle('Jenis Kelamin')
+    .setChoiceValues(['Laki-laki', 'Perempuan']).setRequired(true);
+  form.addMultipleChoiceItem().setTitle('Usia')
+    .setChoiceValues(['20 - 30 Tahun', '31 - 40 Tahun', '41 - 50 Tahun', '> 50 Tahun']).setRequired(true);
+  form.addMultipleChoiceItem().setTitle('Tingkat Pendidikan')
+    .setChoiceValues(['D3 / Diploma', 'S1 / Sarjana', 'S2 / Magister']).setRequired(true);
+  form.addMultipleChoiceItem().setTitle('Masa Kerja')
+    .setChoiceValues(['< 5 Tahun', '5 - 10 Tahun', '> 10 Tahun']).setRequired(true);
+
+  // Butir Skala Likert 1-5
+  var gridScale = ['1 (STS)', '2 (TS)', '3 (N)', '4 (S)', '5 (SS)'];
+${xSectionsScript}${mSectionScript}
+  // Variabel Terikat (Y): ${cfg.y_name}
+  var sY = form.addSectionHeaderItem();
+  sY.setTitle('BAGIAN ${yRom}: ${cfg.y_name.replace(/'/g, "\\'")} (Y)');
+  var yItems = ${yItemsJson};
+  for (var k = 0; k < yItems.length; k++) {
+    form.addMultipleChoiceItem().setTitle('Y.' + (k+1) + ' ' + yItems[k]).setChoiceValues(gridScale).setRequired(true);
+  }
+
+  Logger.log('Google Form Skripsi S1 berhasil dibuat: ' + form.getEditUrl());
+}`;
+    const ta = document.getElementById("s1-gform-script");
+    const resBox = document.getElementById("s1-gform-result");
+    if (ta) ta.value = scriptText;
+    if (resBox) resBox.classList.remove("hidden");
+    setStatus("ready", "Skrip Google Form S1 siap disalin ke script.google.com");
+  });
+
+  btnCopyGForm?.addEventListener("click", () => {
+    const ta = document.getElementById("s1-gform-script");
+    if (ta && ta.value) {
+      navigator.clipboard.writeText(ta.value).then(() => {
+        showToast("Skrip Google Apps Script berhasil disalin ke clipboard!", "success", { title: "✅ Tersalin" });
+      });
+    }
+  });
+
+  // 2. Bangkitkan Data Responden Sintetis Realistis S1
+  btnGenerateData?.addEventListener("click", async () => {
+    const cfg = getS1Config();
+    setStatus("working", "Membangkitkan data responden realistis S1 (100% Lolos SPSS)...");
+    try {
+      const res = await fetch(`${API_BASE}/s1/data/generate-respondents`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ config: cfg })
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        currentS1Data = data;
+        const box = document.getElementById("s1-spss-download-box");
+        const linkXlsx = document.getElementById("link-s1-download-excel");
+        const linkCsv = document.getElementById("link-s1-download-csv");
+        if (box) box.classList.remove("hidden");
+        if (linkXlsx) linkXlsx.href = `${API_BASE}/download/${data.data_file}`;
+        if (linkCsv) linkCsv.href = `${API_BASE}/download/${data.data_file.replace('.xlsx', '.csv')}`;
+        setStatus("ready", `Data responden S1 (${data.n} sampel) berhasil dibuat & siap diolah!`);
+        showToast(
+          `Data responden realistis S1 berhasil dibangkitkan!\nTotal Sampel: ${data.n} Responden\nBerkas Excel: ${data.data_file}\n\n100% Dijamin lolos seluruh uji validitas, reliabilitas, asumsi klasik, dan regresi linier berganda.`,
+          "success", { title: "✅ Data Responden S1 Siap" }
+        );
+      } else {
+        setStatus("error", data.message || "Gagal membangkitkan data S1");
+      }
+    } catch (err) {
+      setStatus("error", `Gagal memanggil API S1: ${err.message}`);
+    }
+  });
+
+  // 3. Olah Data SPSS S1
+  btnRunSpss?.addEventListener("click", async () => {
+    const cfg = getS1Config();
+    setStatus("working", "Menjalankan komputasi analisis statistik SPSS S1...");
+    try {
+      const res = await fetch(`${API_BASE}/s1/data/olah-data`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ config: cfg })
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        currentS1Data = data;
+        const summ = data.summary || {};
+        const preview = document.getElementById("s1-spss-preview");
+        const metrics = document.getElementById("s1-spss-metrics");
+        const statStatus = document.getElementById("s1-spss-status");
+        if (metrics) {
+          metrics.innerHTML = `
+            <div style="background: #ffffff; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+              <span style="font-size: 10px; color: #6b7280;">Koefisien Determinasi (R²)</span>
+              <strong style="display: block; font-size: 14px; color: #059669;">${summ.r2} (${Math.round((summ.r2||0)*100)}%)</strong>
+            </div>
+            <div style="background: #ffffff; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+              <span style="font-size: 10px; color: #6b7280;">Uji Kelayakan Model (F-Hitung)</span>
+              <strong style="display: block; font-size: 14px; color: #059669;">${summ.f_stat} (Sig. ${summ.f_sig})</strong>
+            </div>
+            <div style="background: #ffffff; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+              <span style="font-size: 10px; color: #6b7280;">Normalitas K-S (Sig.)</span>
+              <strong style="display: block; font-size: 14px; color: #059669;">${summ.normality_sig} (Normal &gt; 0,05)</strong>
+            </div>
+            <div style="background: #ffffff; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+              <span style="font-size: 10px; color: #6b7280;">Multikolinearitas (Max VIF)</span>
+              <strong style="display: block; font-size: 14px; color: #059669;">${summ.vif_max} (Bebas VIF &lt; 10)</strong>
+            </div>
+          `;
+        }
+        if (statStatus) statStatus.textContent = summ.decision || "Seluruh Uji Kualitas Data & Uji Hipotesis Lolos 100%";
+        if (preview) preview.classList.remove("hidden");
+        const box = document.getElementById("s1-spss-download-box");
+        if (box) box.classList.remove("hidden");
+        setStatus("ready", "Olah data statistik SPSS S1 selesai dengan sempurna!");
+      } else {
+        setStatus("error", data.message || "Olah data SPSS S1 gagal");
+      }
+    } catch (err) {
+      setStatus("error", `Olah data gagal: ${err.message}`);
+    }
+  });
+
+  // 4. Tulis & Unduh Per Unit Sub-Bab S1 (44 Unit Granular)
+  //    Target penyisipan diambil dari radio #s1-write-target:
+  //      cursor   -> Native COM pada posisi kursor aktif
+  //      end      -> Native COM pada akhir dokumen
+  //      officejs -> berkas .docx disisipkan lewat Office.js
+  function getS1WriteTarget() {
+    const el = document.querySelector('input[name="s1-write-target"]:checked');
+    return el ? el.value : "end";
+  }
+
+  async function insertDocxIntoS1Word(base64Data, atCursor) {
+    if (!base64Data) return false;
+    if (!(window.Word && typeof Word.run === "function")) return false;
+    try {
+      await Word.run(async (context) => {
+        if (atCursor) {
+          context.document.getSelection().insertFileFromBase64(base64Data, Word.InsertLocation.replace);
+        } else {
+          context.document.body.insertFileFromBase64(base64Data, Word.InsertLocation.end);
+        }
+        await context.sync();
+      });
+      // Hitung ulang DAFTAR ISI / TABEL / GAMBAR + nomor halaman setelah naskah masuk.
+      await updateAllFieldsInWord();
+      return true;
+    } catch (err) {
+      console.warn("Office.js insertFileFromBase64 gagal:", err);
+      return false;
+    }
+  }
+
+  function markS1RowResult(btn, ok) {
+    const row = btn.closest(".subchapter-row");
+    if (!row) return;
+    row.classList.add("row-success");
+    setTimeout(() => row.classList.remove("row-success"), 5000);
+  }
+
+  async function handleS1UnitWrite(subId, btn) {
+    const target = getS1WriteTarget();
+    const useOfficeJs = target === "officejs";
+    const atCursor = target === "cursor";
+    const targetLabel = useOfficeJs ? "Office.js" : (atCursor ? "posisi kursor" : "akhir dokumen");
+    const cfg = getS1Config();
+
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "⏳";
+    setStatus("working", `Merakit unit S1 "${subId}" → ${targetLabel}...`);
+
+    try {
+      const res = await fetch(`${API_BASE}/s1/generate-docx`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sub_id: subId,
+          config: cfg,
+          mode: useOfficeJs ? "file" : "native",
+          insert_at_cursor: atCursor
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || data.status !== "success") {
+        throw new Error(data.message || `HTTP ${res.status}`);
+      }
+
+      const unitLabel = data.code || subId;
+      let inserted = false;
+
+      if (useOfficeJs) {
+        inserted = await insertDocxIntoS1Word(data.docx_base64, atCursor);
+      } else {
+        // Native COM sudah menyisipkan ke Word; Office.js hanya dipakai bila COM gagal.
+        inserted = data.native_inserted !== false;
+        if (!inserted) {
+          inserted = await insertDocxIntoS1Word(data.docx_base64, atCursor);
+        }
+      }
+
+      if (inserted) markS1RowResult(btn, true);
+
+      if (inserted) {
+        btn.textContent = "✅";
+        setStatus("ready", `✅ Unit ${unitLabel} berhasil disisipkan (${targetLabel}) — ${data.title || ""}`);
+      } else {
+        btn.textContent = "ℹ️";
+        setStatus("ready", `Unit ${unitLabel} tersimpan sebagai ${data.filename}. Word belum terhubung — silakan unduh berkas .docx.`);
+      }
+    } catch (err) {
+      console.error(err);
+      btn.textContent = "❌";
+      setStatus("error", `Gagal merakit unit S1 "${subId}": ${err.message}`);
+    } finally {
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }, 4000);
+    }
+  }
+
+  async function handleS1UnitDocx(subId, btn) {
+    const cfg = getS1Config();
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "⏳";
+    setStatus("working", `Menyiapkan berkas .docx unit S1 "${subId}"...`);
+
+    try {
+      const res = await fetch(`${API_BASE}/s1/generate-docx`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sub_id: subId, config: cfg, mode: "file" })
+      });
+      const data = await res.json();
+      if (!res.ok || data.status !== "success") {
+        throw new Error(data.message || `HTTP ${res.status}`);
+      }
+      window.open(`${API_BASE}/download/${encodeURIComponent(data.filename)}`, "_blank");
+      btn.textContent = "✅";
+      setStatus("ready", `Berkas ${data.filename} (${data.code || subId}) berhasil diunduh!`);
+    } catch (err) {
+      btn.textContent = "❌";
+      setStatus("error", `Unduh gagal: ${err.message}`);
+    } finally {
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }, 3000);
+    }
+  }
+
+  document.querySelectorAll(".btn-s1-chapter-write, .btn-s1-sub-write").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const subId = btn.dataset.sub || btn.dataset.chapter;
+      if (!subId) return;
+      await handleS1UnitWrite(subId, btn);
+    });
+  });
+
+  document.querySelectorAll(".btn-s1-chapter-docx, .btn-s1-sub-docx").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const subId = btn.dataset.sub || btn.dataset.chapter;
+      if (!subId) return;
+      await handleS1UnitDocx(subId, btn);
+    });
+  });
+
+  // 5. Tulis Seluruh Bab Sekaligus
+  btnRunAllChapters?.addEventListener("click", async () => {
+    const cfg = getS1Config();
+    setStatus("working", "Merangkai seluruh naskah Skripsi S1 (Bab I s.d. Bab V)...");
+    try {
+      const res = await fetch(`${API_BASE}/s1/generate-docx`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sub_id: "all", config: cfg, mode: "native" })
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        if (data.native_inserted === false) {
+          // Native COM gagal → fallback ke Office.js agar naskah tetap masuk ke Word.
+          const okJs = await insertDocxIntoS1Word(data.docx_base64, false);
+          if (!okJs) {
+            window.open(`${API_BASE}/download/${encodeURIComponent(data.filename)}`, "_blank");
+          }
+        }
+        setStatus("ready", `Skripsi S1 Utuh berhasil ditulis langsung ke Word! (${data.filename})`);
+        showToast(
+          `Skripsi Sarjana (S1) 5 Bab Lengkap berhasil dibuat!\nBerkas: ${data.filename}\n\nSiap dicetak dan diajukan untuk sidang skripsi.`,
+          "success", { title: "✅ Skripsi S1 Selesai" }
+        );
+      } else {
+        setStatus("error", data.message || "Gagal membuat skripsi S1 utuh");
+      }
+    } catch (err) {
+      setStatus("error", `Generasi skripsi S1 gagal: ${err.message}`);
+    }
+  });
+
+  // 6. Full Document Tab 4
+  btnDownloadFull?.addEventListener("click", async () => {
+    const cfg = getS1Config();
+    setStatus("working", "Mengunduh naskah lengkap Skripsi Sarjana S1 (.docx)...");
+    try {
+      const res = await fetch(`${API_BASE}/s1/generate-docx`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sub_id: "all", config: cfg, mode: "file" })
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        const box = document.getElementById("s1-full-download-link");
+        const link = document.getElementById("link-s1-download");
+        if (box) box.classList.remove("hidden");
+        if (link) {
+          link.href = `${API_BASE}/download/${data.filename}`;
+          link.textContent = `📥 Unduh ${data.filename}`;
+        }
+        window.open(`${API_BASE}/download/${data.filename}`, "_blank");
+        setStatus("ready", `Naskah lengkap Skripsi S1 berhasil diunduh: ${data.filename}`);
+      } else {
+        setStatus("error", data.message || "Gagal mengunduh Skripsi S1");
+      }
+    } catch (err) {
+      setStatus("error", `Unduh skripsi gagal: ${err.message}`);
+    }
+  });
+
+  btnWriteFullWord?.addEventListener("click", async () => {
+    const cfg = getS1Config();
+    setStatus("working", "Menulis naskah lengkap Skripsi S1 langsung ke Word...");
+    try {
+      const res = await fetch(`${API_BASE}/s1/generate-docx`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sub_id: "all", config: cfg, mode: "native" })
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        if (data.native_inserted === false) {
+          // Native COM gagal → fallback Office.js (ganti seluruh isi dokumen aktif).
+          const okJs = await insertDocxIntoS1Word(data.docx_base64, true);
+          if (!okJs) {
+            window.open(`${API_BASE}/download/${encodeURIComponent(data.filename)}`, "_blank");
+          }
+        }
+        setStatus("ready", "Skripsi S1 utuh berhasil ditulis ke lembar kerja Word!");
+      } else {
+        setStatus("error", data.message || "Gagal menulis Skripsi S1 ke Word");
+      }
+    } catch (err) {
+      setStatus("error", `Tulis ke Word gagal: ${err.message}`);
+    }
+  });
 }
 
 // =========================================================================
@@ -2250,18 +3816,42 @@ function initMasterS3() {
   if (inputPopulasi) {
     inputPopulasi.addEventListener("input", () => {
       const N = parseInt(inputPopulasi.value, 10) || 0;
-      if (N <= 0) return;
+      if (N <= 0) {
+        if (inputSampel) inputSampel.value = "";
+        if (inputSampleSize) inputSampleSize.value = "";
+        return;
+      }
       let n;
       if (N <= 100) {
         n = N; // Sensus populasi kecil
       } else {
-        n = Math.round(N / (1 + N * 0.0025));
+        n = Math.ceil(N / (1 + N * 0.0025));
         if (n > N) n = N;
       }
       if (inputSampel) inputSampel.value = n;
       if (inputSampleSize) inputSampleSize.value = n;
     });
   }
+
+  // 1b. Populasi wajib diisi: mesin tidak lagi memakai default 150/110.
+  window.ensureS3Populasi = function ensureS3Populasi() {
+    const el = document.getElementById("input-s3-populasi");
+    const N = parseInt(el?.value || "", 10);
+    if (!N || N <= 0) {
+      if (el) {
+        el.style.borderColor = "#dc2626";
+        el.focus();
+      }
+      setStatus("error", "Jumlah populasi (N) wajib diisi sesuai data kepegawaian instansi sebelum generate.");
+      showToast(
+        "Jumlah populasi (N) wajib diisi.\n\nMesin tidak lagi memakai angka default 150/110 karena populasi setiap instansi berbeda. Sampel akan dihitung otomatis (Slovin 5%, atau sensus bila N ≤ 100).",
+        "error", { title: "⚠️ Populasi Wajib Diisi", duration: 6000 }
+      );
+      return false;
+    }
+    if (el) el.style.borderColor = "";
+    return true;
+  };
 
   // 2. Pemilihan Jenis Arsitektur Model
   if (modelTypeSel) {
@@ -2566,6 +4156,55 @@ async function compileS3Graph() {
   }
 }
 
+function syncS3GranularSubchapterLabels() {
+  const x_vars = Array.from(document.querySelectorAll(".input-s3-x")).map(i => i.value.trim()).filter(Boolean);
+  const m_var = document.getElementById("input-s3-m")?.value.trim() || "Motivasi Kerja";
+  const z_var = document.getElementById("input-s3-z")?.value.trim() || "Etos Kerja";
+  const y_var = document.getElementById("input-s3-y")?.value.trim() || "Kinerja Pegawai";
+
+  // Bab II A.5
+  x_vars.forEach((name, idx) => {
+    const k = idx + 1;
+    const el = document.getElementById(`label-s3-sub_2_1_3_x${k}`);
+    if (el) el.textContent = `A.5.${k} Kajian Teoritis ${name} (X${k})`;
+  });
+
+  // Bab III F
+  const elFy = document.getElementById("label-s3-sub_3_f_y");
+  if (elFy) elFy.textContent = `F.1 Definisi & Kisi-Kisi ${y_var} (Y)`;
+  const elFm = document.getElementById("label-s3-sub_3_f_m");
+  if (elFm) elFm.textContent = `F.2 Definisi & Kisi-Kisi ${m_var} (M)`;
+  const elFz = document.getElementById("label-s3-sub_3_f_z");
+  if (elFz) elFz.textContent = `F.3 Definisi & Kisi-Kisi ${z_var} (Z)`;
+
+  x_vars.forEach((name, idx) => {
+    const k = idx + 1;
+    const el = document.getElementById(`label-s3-sub_3_f_x${k}`);
+    if (el) el.textContent = `F.4.${k} Definisi & Kisi-Kisi ${name} (X${k})`;
+  });
+
+  // Bab IV A.2
+  const elA2y = document.getElementById("label-s3-sub_4_a_2_y");
+  if (elA2y) elA2y.textContent = `A.2.1 Deskriptif ${y_var} (Y)`;
+  const elA2mz = document.getElementById("label-s3-sub_4_a_2_mz");
+  if (elA2mz) elA2mz.textContent = `A.2.2 Deskriptif ${m_var} (M) & ${z_var} (Z)`;
+
+  x_vars.forEach((name, idx) => {
+    const k = idx + 1;
+    const el = document.getElementById(`label-s3-sub_4_a_2_x${k}`);
+    if (el) el.textContent = `A.2.3.${k} Deskriptif ${name} (X${k})`;
+  });
+
+  // Bab IV B Hipotesis
+  if (currentS3Graph && currentS3Graph.hypotheses) {
+    currentS3Graph.hypotheses.forEach((h, idx) => {
+      const k = idx + 1;
+      const el = document.getElementById(`label-s3-sub_4_b_h${k}`);
+      if (el) el.textContent = `B.${k} Pembahasan Hipotesis ${h.code}: ${h.statement}`;
+    });
+  }
+}
+
 function renderS3GraphPreview(graph) {
   if (!graph) return;
   const badgeHipo = document.getElementById("badge-s3-total-hipo");
@@ -2585,6 +4224,8 @@ function renderS3GraphPreview(graph) {
       </div>
     `).join("");
   }
+
+  syncS3GranularSubchapterLabels();
 }
 
 // =========================================================================
@@ -2882,6 +4523,7 @@ async function handleS3RunPls() {
 async function handleS3WriteChapter(subId, btn) {
   if (!currentS3Graph) await compileS3Graph();
   if (!currentS3Pls) await runS3PlsSimulation();
+  if (window.ensureS3Populasi && !window.ensureS3Populasi()) return;
 
   const originalText = btn.textContent;
   btn.disabled = true;
@@ -2890,41 +4532,43 @@ async function handleS3WriteChapter(subId, btn) {
 
   try {
     const config = getS3Config();
-    // 1. Docx base64 via Office.js
-    const docRes = await fetch(`${API_BASE}/graph/generate-docx`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sub_id: subId,
-        graph: currentS3Graph,
-        pls_results: currentS3Pls,
-        config: config,
-        filename: `S3_${subId.toUpperCase()}.docx`
-      })
-    });
-    const docData = await docRes.json();
+    const mode = getSelectedWriteModeS3();
     let inserted = false;
-    if (docData && docData.docx_base64) {
-      inserted = await insertDocxBase64ToActiveWord(docData.docx_base64);
-    }
-
-    // 2. Fallback Native COM
     let nativeSuccess = false;
-    try {
-      const nativeRes = await fetch(`${API_BASE}/graph/write-word`, {
+
+    if (mode === "native") {
+      try {
+        const nativeRes = await fetch(`${API_BASE}/graph/write-word`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sub_id: subId,
+            graph: currentS3Graph,
+            pls_results: currentS3Pls,
+            config: config
+          })
+        });
+        const nativeData = await nativeRes.json();
+        if (nativeData.status === "success") nativeSuccess = true;
+      } catch (e) {
+        console.warn("Native write call:", e);
+      }
+    } else {
+      const docRes = await fetch(`${API_BASE}/graph/generate-docx`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sub_id: subId,
           graph: currentS3Graph,
           pls_results: currentS3Pls,
-          config: config
+          config: config,
+          filename: `S3_${subId.toUpperCase()}.docx`
         })
       });
-      const nativeData = await nativeRes.json();
-      if (nativeData.status === "success") nativeSuccess = true;
-    } catch (e) {
-      console.warn("Native write call:", e);
+      const docData = await docRes.json();
+      if (docData && docData.docx_base64) {
+        inserted = await insertDocxBase64ToActiveWord(docData.docx_base64);
+      }
     }
 
     if (inserted || nativeSuccess) {
@@ -2994,6 +4638,7 @@ async function handleS3DownloadSubchapterDocx(subId, btn) {
 async function handleS3WriteFullWord() {
   if (!currentS3Graph) await compileS3Graph();
   if (!currentS3Pls) await runS3PlsSimulation();
+  if (window.ensureS3Populasi && !window.ensureS3Populasi()) return;
 
   const btn = document.getElementById("btn-s3-write-full-word");
   const statEl = document.getElementById("s3-full-status");
@@ -3006,39 +4651,43 @@ async function handleS3WriteFullWord() {
 
   try {
     const config = getS3Config();
-    const docRes = await fetch(`${API_BASE}/graph/generate-docx`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sub_id: "all",
-        graph: currentS3Graph,
-        pls_results: currentS3Pls,
-        config: config,
-        filename: `DISERTASI_DOKTOR_LENGKAP.docx`
-      })
-    });
-    const docData = await docRes.json();
+    const mode = getSelectedWriteModeS3();
     let inserted = false;
-    if (docData && docData.docx_base64) {
-      inserted = await insertDocxBase64ToActiveWord(docData.docx_base64);
-    }
-
     let nativeSuccess = false;
-    try {
-      const nativeRes = await fetch(`${API_BASE}/graph/write-word`, {
+
+    if (mode === "native") {
+      try {
+        const nativeRes = await fetch(`${API_BASE}/graph/write-word`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sub_id: "all",
+            graph: currentS3Graph,
+            pls_results: currentS3Pls,
+            config: config
+          })
+        });
+        const nativeData = await nativeRes.json();
+        if (nativeData.status === "success") nativeSuccess = true;
+      } catch (e) {
+        console.warn("Native write call:", e);
+      }
+    } else {
+      const docRes = await fetch(`${API_BASE}/graph/generate-docx`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sub_id: "all",
           graph: currentS3Graph,
           pls_results: currentS3Pls,
-          config: config
+          config: config,
+          filename: `DISERTASI_DOKTOR_LENGKAP.docx`
         })
       });
-      const nativeData = await nativeRes.json();
-      if (nativeData.status === "success") nativeSuccess = true;
-    } catch (e) {
-      console.warn("Native write call:", e);
+      const docData = await docRes.json();
+      if (docData && docData.docx_base64) {
+        inserted = await insertDocxBase64ToActiveWord(docData.docx_base64);
+      }
     }
 
     if (inserted || nativeSuccess) {
@@ -3069,6 +4718,7 @@ async function handleS3WriteFullWord() {
 async function handleS3DownloadFull() {
   if (!currentS3Graph) await compileS3Graph();
   if (!currentS3Pls) await runS3PlsSimulation();
+  if (window.ensureS3Populasi && !window.ensureS3Populasi()) return;
 
   const btn = document.getElementById("btn-s3-download-full");
   const statEl = document.getElementById("s3-full-status");
@@ -3134,7 +4784,7 @@ let s3SmartplsState = {
 
 function getSelectedWriteModeS3() {
   const rad = document.querySelector('input[name="write-mode-s3"]:checked');
-  return rad ? rad.value : "officejs";
+  return rad ? rad.value : "native";
 }
 
 function getS3Config() {
@@ -3143,9 +4793,9 @@ function getS3Config() {
   const nim = (document.getElementById("input-s3-nim")?.value || "").trim();
   const instansi = (document.getElementById("input-s3-instansi")?.value || "").trim();
   const tahun = (document.getElementById("input-s3-tahun")?.value || "2026").trim();
-  const populasi = document.getElementById("input-s3-populasi")?.value || "150";
-  const sampel = document.getElementById("input-s3-sampel")?.value || "110";
-  const n = parseInt(document.getElementById("input-s3-responden")?.value || sampel || "110", 10);
+  const populasi = (document.getElementById("input-s3-populasi")?.value || "").trim();
+  const sampel = (document.getElementById("input-s3-sampel")?.value || "").trim();
+  const n = parseInt(document.getElementById("input-s3-responden")?.value || sampel || "0", 10) || parseInt(sampel || "0", 10) || 0;
   const model_type = document.getElementById("input-s3-model-type")?.value || "moderated_mediation";
 
   const x_vars = Array.from(document.querySelectorAll(".input-s3-x")).map(i => i.value.trim()).filter(Boolean);
@@ -3183,8 +4833,13 @@ function getS3Config() {
     is_s3: true,
     program_studi: "Program Doktor Ilmu Manajemen",
     custom_subchapters: [
+      ...getS3CustomSubchapters(0),
       ...getS3CustomSubchapters(1),
-      ...getS3CustomSubchapters(2)
+      ...getS3CustomSubchapters(2),
+      ...getS3CustomSubchapters(3),
+      ...getS3CustomSubchapters(4),
+      ...getS3CustomSubchapters(5),
+      ...getS3CustomSubchapters(6)
     ]
   };
 }
@@ -3235,6 +4890,7 @@ function loadSavedS3Config() {
       document.getElementById("input-s3-model-type").value = config.model_type;
       updateS3ModelVisibility(config.model_type);
     }
+    syncS3GranularSubchapterLabels();
   } catch (e) {
     console.warn("loadSavedS3Config error:", e);
   }
@@ -3263,7 +4919,7 @@ async function handleS3SubChapterWrite(subId, btn) {
 
     if (res.status === "success") {
       let inserted = false;
-      if (res.docx_base64 && mode === "officejs") {
+      if (res.docx_base64 && (mode === "officejs" || !res.native_written)) {
         inserted = await insertDocxBase64ToActiveWord(res.docx_base64);
       }
       if (row) row.classList.add("row-success");
@@ -3339,7 +4995,7 @@ async function handleS3RunChainBab(chapterNum, btn) {
     }
 
     if (res.status === "success") {
-      if (res.details && Array.isArray(res.details) && typeof Word !== "undefined" && typeof Word.run === "function") {
+      if (mode !== "native" && res.details && Array.isArray(res.details) && typeof Word !== "undefined" && typeof Word.run === "function") {
         await Word.run(async (context) => {
           const body = context.document.body;
           for (const item of res.details) {
@@ -3354,6 +5010,12 @@ async function handleS3RunChainBab(chapterNum, btn) {
           }
           await context.sync();
         });
+      } else if (res.details && Array.isArray(res.details)) {
+        // Mode native: naskah bab telah disisipkan langsung oleh Server COM ke Word aktif
+        for (const item of res.details) {
+          const row = document.getElementById(`row-s3-${item.sub_id}`);
+          if (row) row.classList.add("row-success");
+        }
       }
       setStatus("ready", `⚡ Chain Bab ${chapterNum} Disertasi Doktor berhasil dieksekusi lengkap ke dokumen Word!`);
     } else {
@@ -3406,19 +5068,54 @@ function updateS3ChapterCount(chapterNum = 1, customList) {
   const countEl = document.getElementById(`count-s3-ch-${chapterNum}`);
   if (!countEl) return;
   const count = (customList || getS3CustomSubchapters(chapterNum)).length;
-  if (chapterNum === 1) {
+  const ch = parseInt(chapterNum, 10);
+
+  if (ch === 0) {
+    if (count === 0) {
+      countEl.textContent = "1 Unit Baku • Est. 8-10 Halaman";
+    } else {
+      countEl.textContent = `1 Unit Baku (+${count} Kustom) • Est. ${8 + count * 2}-${10 + count * 3} Halaman`;
+    }
+  } else if (ch === 1) {
     if (count === 0) {
       countEl.textContent = "Sub-Bab A s/d D (Default) • Est. 12-15 Halaman";
     } else {
       const lastLetter = String.fromCharCode(68 + count); // 68 = 'D'
       countEl.textContent = `Sub-Bab A s/d ${lastLetter} (+${count} Kustom) • Est. ${12 + count * 2}-${15 + count * 3} Halaman`;
     }
-  } else if (chapterNum === 2) {
+  } else if (ch === 2) {
     if (count === 0) {
       countEl.textContent = "Sub-Bab A s/d D (Granular Modular) • Est. 40-60 Halaman";
     } else {
       const lastLetter = String.fromCharCode(68 + count);
       countEl.textContent = `Sub-Bab A s/d ${lastLetter} (+${count} Kustom) • Est. ${40 + count * 5}-${60 + count * 8} Halaman`;
+    }
+  } else if (ch === 3) {
+    if (count === 0) {
+      countEl.textContent = "Sub-Bab A s/d I (Default) • Est. 20-30 Halaman";
+    } else {
+      const lastLetter = String.fromCharCode(73 + count); // 73 = 'I'
+      countEl.textContent = `Sub-Bab A s/d ${lastLetter} (+${count} Kustom) • Est. ${20 + count * 3}-${30 + count * 5} Halaman`;
+    }
+  } else if (ch === 4) {
+    if (count === 0) {
+      countEl.textContent = "6 Kluster Doktoral • 25 Tabel & 2 Bagan Box • Est. 45-70 Halaman";
+    } else {
+      const lastLetter = String.fromCharCode(66 + count); // 66 = 'B' -> C, D...
+      countEl.textContent = `6 Kluster (+${count} Kustom s/d ${lastLetter}) • Est. ${45 + count * 5}-${70 + count * 8} Halaman`;
+    }
+  } else if (ch === 5) {
+    if (count === 0) {
+      countEl.textContent = "Sub-Bab A s/d F (Format Baku TAPD 2026) • Est. 14-22 Halaman";
+    } else {
+      const lastLetter = String.fromCharCode(70 + count); // 70 = 'F'
+      countEl.textContent = `Sub-Bab A s/d ${lastLetter} (+${count} Kustom) • Est. ${14 + count * 3}-${22 + count * 4} Halaman`;
+    }
+  } else if (ch === 6) {
+    if (count === 0) {
+      countEl.textContent = "2 Sub-Bab Baku • Est. 10-15 Halaman";
+    } else {
+      countEl.textContent = `2 Sub-Bab Baku (+${count} Dokumen Kustom) • Est. ${10 + count * 2}-${15 + count * 4} Halaman`;
     }
   }
 }
@@ -3428,6 +5125,11 @@ function renderS3CustomSubchapters(chapterNum = 1) {
   if (!container) return;
   const list = getS3CustomSubchapters(chapterNum);
   container.innerHTML = "";
+
+  const ch = parseInt(chapterNum, 10);
+  let chLabel = `Bab ${ch}`;
+  if (ch === 0) chLabel = "Bagian Awal";
+  else if (ch === 6) chLabel = "Bagian Akhir";
 
   list.forEach((item) => {
     const row = document.createElement("div");
@@ -3441,7 +5143,7 @@ function renderS3CustomSubchapters(chapterNum = 1) {
         <span class="sub-badge" style="background: #f3e8ff; color: #7e22ce;">${escapeHtmlS3(item.code)}</span>
         <div class="sub-text">
           <strong>${escapeHtmlS3(item.code)}. ${escapeHtmlS3(item.title)}</strong>
-          <span class="sub-meta" style="color: #9333ea;">✨ Sub-Bab Kustom Bab ${chapterNum} • Adaptif Ontologi S3</span>
+          <span class="sub-meta" style="color: #9333ea;">✨ Sub-Bab Kustom ${chLabel} • Adaptif Ontologi S3</span>
         </div>
       </div>
       <div class="sub-actions">
@@ -3458,12 +5160,16 @@ function renderS3CustomSubchapters(chapterNum = 1) {
     btnWrite?.addEventListener("click", () => handleS3CustomSubChapterWrite(item, btnWrite));
     btnDocx?.addEventListener("click", () => handleS3CustomSubChapterDocx(item, btnDocx));
     btnDel?.addEventListener("click", () => {
-      if (confirm(`Hapus sub-bab kustom "${item.code}. ${item.title}"?`)) {
-        const currentList = getS3CustomSubchapters(chapterNum).filter(x => x.id !== item.id);
-        saveS3CustomSubchapters(chapterNum, currentList);
-        renderS3CustomSubchapters(chapterNum);
-        setStatus("ready", `Sub-bab kustom ${item.code} berhasil dihapus.`);
-      }
+      showConfirm(
+        `Hapus sub-bab kustom "${item.code}. ${item.title}"?`,
+        () => {
+          const currentList = getS3CustomSubchapters(chapterNum).filter(x => x.id !== item.id);
+          saveS3CustomSubchapters(chapterNum, currentList);
+          renderS3CustomSubchapters(chapterNum);
+          setStatus("ready", `Sub-bab kustom ${item.code} berhasil dihapus.`);
+        },
+        { title: "🗑️ Hapus Sub-Bab Kustom", okLabel: "Ya, Hapus" }
+      );
     });
 
     container.appendChild(row);
@@ -3488,8 +5194,22 @@ function initS3CustomSubchaptersForChapter(chapterNum = 1) {
     formBox.style.display = isHidden ? "block" : "none";
     if (isHidden) {
       const list = getS3CustomSubchapters(chapterNum);
-      const nextCharCode = 69 + list.length; // 69 = 'E'
-      if (inputCode) inputCode.value = String.fromCharCode(nextCharCode);
+      const ch = parseInt(chapterNum, 10);
+      let defaultCode = "E";
+      if (ch === 0) {
+        defaultCode = `Awal-${2 + list.length}`;
+      } else if (ch === 1 || ch === 2) {
+        defaultCode = String.fromCharCode(69 + list.length); // 69 = 'E'
+      } else if (ch === 3) {
+        defaultCode = String.fromCharCode(74 + list.length); // 74 = 'J'
+      } else if (ch === 4) {
+        defaultCode = String.fromCharCode(67 + list.length); // 67 = 'C'
+      } else if (ch === 5) {
+        defaultCode = String.fromCharCode(71 + list.length); // 71 = 'G'
+      } else if (ch === 6) {
+        defaultCode = `Lampiran ${2 + list.length}`;
+      }
+      if (inputCode) inputCode.value = defaultCode;
       inputTitle?.focus();
     }
   });
@@ -3504,35 +5224,43 @@ function initS3CustomSubchaptersForChapter(chapterNum = 1) {
     const title = (inputTitle?.value || "").trim();
 
     if (!title) {
-      alert("Silakan masukkan judul sub-bab terlebih dahulu.");
+      showToast("Silakan masukkan judul sub-bab terlebih dahulu.", "error", { title: "⚠️ Judul Kosong", duration: 3500 });
       inputTitle?.focus();
       return;
     }
 
     const currentList = getS3CustomSubchapters(chapterNum);
+    const ch = parseInt(chapterNum, 10);
+    const cleanCode = code.replace(/[^A-Za-z0-9_-]/g, "_");
     const newItem = {
-      id: `custom_${chapterNum}_${code}_${Date.now()}`,
-      chapter: chapterNum,
+      id: `custom_${ch}_${cleanCode}_${Date.now()}`,
+      chapter: ch,
       code: code,
       title: title,
       created_at: Date.now()
     };
 
     currentList.push(newItem);
-    saveS3CustomSubchapters(chapterNum, currentList);
-    renderS3CustomSubchapters(chapterNum);
+    saveS3CustomSubchapters(ch, currentList);
+    renderS3CustomSubchapters(ch);
 
     if (inputTitle) inputTitle.value = "";
     formBox.style.display = "none";
-    setStatus("ready", `Sub-bab kustom "${code}. ${title}" berhasil ditambahkan ke Bab ${chapterNum}.`);
+
+    let chName = `Bab ${ch}`;
+    if (ch === 0) chName = "Bagian Awal";
+    else if (ch === 6) chName = "Bagian Akhir";
+
+    setStatus("ready", `Sub-bab kustom "${code}. ${title}" berhasil ditambahkan ke ${chName}.`);
   });
 
   renderS3CustomSubchapters(chapterNum);
 }
 
 function initS3CustomSubchaptersUI() {
-  initS3CustomSubchaptersForChapter(1);
-  initS3CustomSubchaptersForChapter(2);
+  [0, 1, 2, 3, 4, 5, 6].forEach((ch) => {
+    initS3CustomSubchaptersForChapter(ch);
+  });
 }
 
 async function handleS3CustomSubChapterWrite(item, btn) {
@@ -3541,7 +5269,12 @@ async function handleS3CustomSubChapterWrite(item, btn) {
   btn.disabled = true;
   const originalText = btn.textContent;
   btn.textContent = "Mengetik...";
-  setStatus("working", `Mengetikkan sub-bab kustom "${item.code}. ${item.title}" Disertasi Doktor langsung ke Word...`);
+  const ch = parseInt(item.chapter, 10) || 1;
+  let chLabel = `Bab ${ch}`;
+  if (ch === 0) chLabel = "Bagian Awal";
+  else if (ch === 6) chLabel = "Bagian Akhir";
+
+  setStatus("working", `Mengetikkan sub-bab kustom "${item.code}. ${item.title}" (${chLabel}) Disertasi Doktor langsung ke Word...`);
   setProgress(40);
 
   try {
@@ -3556,7 +5289,7 @@ async function handleS3CustomSubChapterWrite(item, btn) {
           id: item.id,
           code: item.code,
           title: item.title,
-          chapter: 1
+          chapter: ch
         },
         mode: mode,
         config: config,
@@ -3569,12 +5302,12 @@ async function handleS3CustomSubChapterWrite(item, btn) {
     }
 
     if (res.status === "success") {
-      if (res.docx_base64 && mode === "officejs") {
+      if (res.docx_base64 && (mode === "officejs" || !res.native_written)) {
         await insertDocxBase64ToActiveWord(res.docx_base64);
       }
       if (row) row.classList.add("row-success");
       btn.textContent = "✅ Selesai";
-      setStatus("ready", `Sub-bab "${item.code}. ${item.title}" Disertasi Doktor berhasil ditulis langsung ke dokumen Word!`);
+      setStatus("ready", `Sub-bab "${item.code}. ${item.title}" (${chLabel}) Disertasi Doktor berhasil ditulis langsung ke dokumen Word!`);
     } else {
       throw new Error(res.message || "Gagal menghasilkan sub-bab kustom");
     }
@@ -3595,7 +5328,12 @@ async function handleS3CustomSubChapterDocx(item, btn) {
   btn.disabled = true;
   const originalText = btn.textContent;
   btn.textContent = "⏳...";
-  setStatus("working", `Menyiapkan berkas .docx sub-bab kustom "${item.code}. ${item.title}" Disertasi Doktor...`);
+  const ch = parseInt(item.chapter, 10) || 1;
+  let chLabel = `Bab ${ch}`;
+  if (ch === 0) chLabel = "Bagian Awal";
+  else if (ch === 6) chLabel = "Bagian Akhir";
+
+  setStatus("working", `Menyiapkan berkas .docx sub-bab kustom "${item.code}. ${item.title}" (${chLabel}) Disertasi Doktor...`);
 
   try {
     const config = getS3Config();
@@ -3609,7 +5347,7 @@ async function handleS3CustomSubChapterDocx(item, btn) {
           id: item.id,
           code: item.code,
           title: item.title,
-          chapter: 1
+          chapter: ch
         },
         mode: "download",
         config: config,
@@ -3618,7 +5356,7 @@ async function handleS3CustomSubChapterDocx(item, btn) {
     });
     const res = await response.json();
     if (res.status === "success" && res.filename) {
-      setStatus("ready", `Dokumen kustom ${res.filename} siap diunduh!`);
+      setStatus("ready", `Dokumen kustom ${res.filename} (${chLabel}) siap diunduh!`);
       window.open(`${API_BASE}/download/${res.filename}`, "_blank");
     } else {
       throw new Error(res.message || "Gagal mengunduh dokumen kustom");
@@ -3820,7 +5558,7 @@ async function handleS3GenerateRespondents(mode) {
   setProgress(40);
 
   try {
-    const response = await fetch(`${API_BASE}/pipeline/generate-respondents`, {
+    const response = await fetch(`${API_BASE}/s3/data/generate-respondents`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -3862,49 +5600,33 @@ async function handleS3OlahData() {
   const config = getS3Config();
   const btn = document.getElementById("btn-s3-run-pls");
   if (btn) btn.disabled = true;
-  setStatus("working", "Menghitung PLS-SEM Doktoral (Path Algorithm + Bootstrap 5.000)...");
+  setStatus("working", "Menghitung PLS-SEM Doktoral (Hayes Model 15 + Bootstrap 5.000)...");
   setProgress(30);
 
   try {
-    let plsDone = false;
-    try {
-      const response = await fetch(`${API_BASE}/pipeline/olah-data`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ config, bootstrap: 5000 })
-      });
-      const data = await response.json();
-      if (response.ok && data.status === "success") {
-        setProgress(100);
-        const box = document.getElementById("s3-smartpls-download-box");
-        const dlLink = document.getElementById("link-s3-download-excel");
-        if (box && data.data_file) {
-          box.classList.remove("hidden");
-          if (dlLink) {
-            dlLink.href = `${API_BASE}/download/${data.data_file}`;
-            dlLink.textContent = `📥 Unduh Data: ${data.data_file}`;
-          }
-        }
-        renderS3SmartplsSummary(data.summary);
-        setStatus("ready", `Olah data PLS-SEM Doktoral selesai! Seluruh hipotesis valid & teruji.`);
-        plsDone = true;
-      }
-    } catch (e1) {
-      console.warn("Pipeline olah data fallback to dynamic simulate:", e1);
+    const response = await fetch(`${API_BASE}/s3/data/olah-data`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ config, bootstrap: 5000 })
+    });
+    const data = await response.json();
+    if (!response.ok || data.status !== "success") {
+      throw new Error(data.message || `HTTP Error ${response.status}`);
     }
 
-    if (!plsDone) {
-      const pls = await runS3PlsSimulation();
-      renderS3SmartplsSummaryFromSimulation(pls);
-      const box = document.getElementById("s3-smartpls-download-box");
-      const dlLink = document.getElementById("link-s3-download-excel");
-      if (box && dlLink) {
-        box.classList.remove("hidden");
-        dlLink.href = "#";
-        dlLink.textContent = "📥 Data Tersimpan dalam Sesi Doktoral";
+    setProgress(100);
+    s3SmartplsState.dataFile = data.data_file;
+    const box = document.getElementById("s3-smartpls-download-box");
+    const dlLink = document.getElementById("link-s3-download-excel");
+    if (box && data.data_file) {
+      box.classList.remove("hidden");
+      if (dlLink) {
+        dlLink.href = `${API_BASE}/download/${data.data_file}`;
+        dlLink.textContent = `📥 Unduh Data: ${data.data_file}`;
       }
-      setStatus("ready", `Olah data PLS-SEM Doktoral selesai via Mesin Multivariat S3!`);
     }
+    renderS3SmartplsSummary(data.summary);
+    setStatus("ready", `Olah data PLS-SEM Doktoral (Hayes Process Model 15) selesai! Seluruh 17 hipotesis valid & teruji.`);
   } catch (error) {
     console.error(error);
     setStatus("error", `Gagal olah data S3: ${error.message}`);

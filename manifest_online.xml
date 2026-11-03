@@ -12,13 +12,13 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Independent Researcher" />
   <Description DefaultValue="Asisten Penulisan Tesis Magister Manajemen &amp; Olah Data SmartPLS Standar By SkripsiPlg" />
-  <IconUrl DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/assets/icon-32.png" />
-  <HighResolutionIconUrl DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/assets/icon-64.png" />
-  <SupportUrl DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com" />
+  <IconUrl DefaultValue="https://quarter-seed-hopefully-competent.trycloudflare.com/assets/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="https://quarter-seed-hopefully-competent.trycloudflare.com/assets/icon-64.png" />
+  <SupportUrl DefaultValue="https://quarter-seed-hopefully-competent.trycloudflare.com" />
   
   <AppDomains>
-    <AppDomain>https://thousand-jvc-procedure-scale.trycloudflare.com</AppDomain>
-    <AppDomain>https://thousand-jvc-procedure-scale.trycloudflare.com</AppDomain>
+    <AppDomain>https://quarter-seed-hopefully-competent.trycloudflare.com</AppDomain>
+    <AppDomain>https://quarter-seed-hopefully-competent.trycloudflare.com</AppDomain>
   </AppDomains>
 
   <Hosts>
@@ -26,7 +26,7 @@
   </Hosts>
 
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/taskpane.html" />
+    <SourceLocation DefaultValue="https://quarter-seed-hopefully-competent.trycloudflare.com/taskpane.html" />
   </DefaultSettings>
 
   <Permissions>ReadWriteDocument</Permissions>
@@ -79,14 +79,14 @@
 
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16" DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/assets/icon-16.png" />
-        <bt:Image id="Icon.32" DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/assets/icon-32.png" />
-        <bt:Image id="Icon.80" DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/assets/icon-80.png" />
+        <bt:Image id="Icon.16" DefaultValue="https://quarter-seed-hopefully-competent.trycloudflare.com/assets/icon-16.png" />
+        <bt:Image id="Icon.32" DefaultValue="https://quarter-seed-hopefully-competent.trycloudflare.com/assets/icon-32.png" />
+        <bt:Image id="Icon.80" DefaultValue="https://quarter-seed-hopefully-competent.trycloudflare.com/assets/icon-80.png" />
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="Commands.Url" DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/taskpane.html" />
-        <bt:Url id="Taskpane.Url" DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com/taskpane.html" />
-        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://thousand-jvc-procedure-scale.trycloudflare.com" />
+        <bt:Url id="Commands.Url" DefaultValue="https://quarter-seed-hopefully-competent.trycloudflare.com/taskpane.html" />
+        <bt:Url id="Taskpane.Url" DefaultValue="https://quarter-seed-hopefully-competent.trycloudflare.com/taskpane.html" />
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://quarter-seed-hopefully-competent.trycloudflare.com" />
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GetStarted.Title" DefaultValue="Selamat Datang di Independent Researcher" />

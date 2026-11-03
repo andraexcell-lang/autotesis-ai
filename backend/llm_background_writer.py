@@ -26,7 +26,26 @@ import time
 
 from llm_title_parser import load_config, MODEL_CHAIN, gemini_keys
 from llm_ontology_researcher import _call_gemini_matrix
-from academic_connector import MIN_CITE_YEAR, MAX_CITE_YEAR, tahun_sitasi_terlarang
+import academic_connector as _AC
+tahun_sitasi_terlarang = _AC.tahun_sitasi_terlarang
+
+
+def _ac_min_year():
+    """Rentang tahun sitasi aktif (Menu 1, default 20 tahun)."""
+    return _AC.get_cite_year_range()[0]
+
+
+def _ac_max_year():
+    """Batas atas tahun sitasi aktif."""
+    return _AC.get_cite_year_range()[1]
+
+
+def _resolve_th(min_th=None, max_th=None):
+    """Resolusi min_th/max_th: None memakai rentang sitasi aktif."""
+    lo, hi = _AC.get_cite_year_range()
+    return (lo if min_th is None else int(min_th),
+            hi if max_th is None else int(max_th))
+
 
 # (#5) Mode senyap untuk "dry-run" pengumpulan spesifikasi tabel: saat aktif,
 # _gemini_json langsung mengembalikan None sehingga tidak ada kuota yang terpakai.
@@ -118,7 +137,7 @@ Isu lapangan   : {isu}
 8. HANYA balas JSON valid berisi 13 kunci di atas, tanpa teks lain.
 9. TEORI harus TEPAT dan RELEVAN untuk variabelnya, sesuai dengan 'Definisi' variabel di ONTOLOGI. DILARANG memakai teori motivasi untuk variabel kinerja/produktivitas, dan sebaliknya. Setiap variabel (Y, M, X1, X2) harus memakai teori yang sesuai variabelnya masing-masing; jangan menyalin teori antar variabel.
 10. SETIAP SITASI HANYA BOLEH MUNCUL SATU KALI di seluruh naskah. Dilarang mengulang sitasi yang sama di paragraf lain.
-11. TAHUN SITASI WAJIB 2022–2026. Semua kutipan — jurnal MAUPUN buku — harus tahun {min_th} sampai {max_th}. Tahun lain DILARANG, TANPA kecuali.
+11. TAHUN SITASI WAJIB {min_th}–{max_th}. Semua kutipan — jurnal MAUPUN buku — harus tahun {min_th} sampai {max_th}. Tahun lain DILARANG, TANPA kecuali.
     Satu-satunya pengecualian adalah KUTIPAN DALAM (teori klasik yang dirujuk melalui sumber baru). Bila teori lama memang perlu disebut, wajib ditulis dengan format:
         Kristof (1996) dalam Andra, (2025)
     dengan tahun pertama tahun teori asli dan tahun kedua tahun sitasi sah {min_th}–{max_th} dari daftar. TANPA kata "dalam", teori klasik berarti pelanggaran dan naskah akan ditolak.
@@ -267,7 +286,7 @@ def _validate_bg(raw, acad, judul, extra_sah=None, tabel_aktif=False):
     Empat lapis penolakan, berurutan dari yang paling murah dihitung:
       1. Struktur  — 13 kunci wajib ada, tiap paragraf panjang wajar.
       2. Penulis   — nama dalam kurung sitasi harus dari daftar sah.
-      3. Tahun     — SEMUA tahun sitasi wajib 2022-2026; teori klasik hanya
+      3. Tahun     — SEMUA tahun sitasi wajib dalam rentang tahun aktif; teori klasik hanya
                      sah bila berbentuk kutipan dalam ("Kristof (1996) dalam
                      Andra, (2025)"). Tanpa "dalam", ditolak.
       4. Tabel     — bila mode tanpa tabel, kata "Tabel 1.1"/"Tabel 1.2" dan
@@ -306,23 +325,23 @@ def _validate_bg(raw, acad, judul, extra_sah=None, tabel_aktif=False):
             f"DAFTAR SITASI TERVERIFIKASI, contoh: {'; '.join(unknown[:5])}. "
             "Hapus semua sitasi itu.")
 
-    # --- LAPIS 3: tahun sitasi wajib 2022-2026 -----------------------------
+    # --- LAPIS 3: tahun sitasi wajib dalam rentang aktif -----------------------------
     # Dijalankan atas SELURUH naskah sekaligus agar hubungan "dalam" yang
     # membentang di antara dua paragraf tetap terbaca.
     naskah = " ".join(out.values())
     tahun_larang = tahun_sitasi_terlarang(naskah)
     if tahun_larang:
         return _tolak_bg(
-            f"[background] tolak: tahun sitasi di luar {MIN_CITE_YEAR}-"
-            f"{MAX_CITE_YEAR} tanpa bentuk kutipan dalam -> {tahun_larang}",
+            f"[background] tolak: tahun sitasi di luar {_ac_min_year()}-"
+            f"{_ac_max_year()} tanpa bentuk kutipan dalam -> {tahun_larang}",
             f"TAHUN SITASI. Tahun {tahun_larang} terlarang. SEMUA sitasi wajib "
-            f"{MIN_CITE_YEAR}-{MAX_CITE_YEAR}.")
+            f"{_ac_min_year()}-{_ac_max_year()}.")
 
     # Teori klasik hanya sah melalui kutipan dalam; pastikan bentuknya utuh.
     klasik_bulan = []
     for m in re.finditer(r"\(\s*(\d{4})\s*\)", naskah):
         th = int(m.group(1))
-        if th < MIN_CITE_YEAR:
+        if th < _ac_min_year():
             sesudah = naskah[m.start(): m.start() + 170]
             if not re.search(r"\bdalam\b", sesudah, re.IGNORECASE):
                 klasik_bulan.append(th)
@@ -405,8 +424,8 @@ def write_latar_belakang(cfg, onto, ctx, acad):
         aturan_angka=_aturan_angka(tabel_aktif),
         aturan_tabel=_aturan_tabel(tabel_aktif),
         aturan_angka_akhir=_aturan_angka_akhir(tabel_aktif),
-        min_th=MIN_CITE_YEAR,
-        max_th=MAX_CITE_YEAR,
+        min_th=_ac_min_year(),
+        max_th=_ac_max_year(),
         sitasi_block=_sitasi_block(acad),
         c_macro=_fmt_citation(acad, "cite_macro"),
         c_sdm=_fmt_citation(acad, "cite_sdm"),
@@ -474,7 +493,7 @@ def _koreksi_bg(acad, alasan):
         "2. DILARANG menulis penulis lain dalam bentuk kurung (termasuk tokoh "
         "teori lama). Bila ingin menyebut teori klasik, sebut namanya TANPA "
         "kurung/tahun, atau tulis 'Tokoh (Tahun) dalam Penulis, (20xx)'.\n"
-        f"3. SEMUA tahun di dalam kurung wajib {MIN_CITE_YEAR}-{MAX_CITE_YEAR}.\n"
+        f"3. SEMUA tahun di dalam kurung wajib {_ac_min_year()}-{_ac_max_year()}.\n"
         "4. Jangan mengarang angka/persentase apa pun."
     )
 
@@ -505,7 +524,7 @@ Sejalan dengan pandangan tersebut, kinerja juga dipahami sebagai hasil kerja yan
 3. Setiap paragraf menggunakan SITASI DARI DAFTAR SUMBER di bawah. Jika jumlah sumber < jumlah paragraf, BOLEH mengulang sitasi (maksimal 2x per sumber). Usahakan variasi.
 4. Tidak ada kata "menurut", "Berdasarkan pandangan", "pendapat", "kata", "ungkapkan" di depan nama penulis.
 5. 8-10 paragraf definisi total (minimal 5 jika sumber terbatas).
-6. Semua sitasi harus tahun 2022-2026.
+6. Semua sitasi harus tahun {min_th}-{max_th}.
 7. SITASI HANYA BOLEH DARI DAFTAR SUMBER WAJIB DIGUNAKAN di bawah. DILARANG mengarang sitasi di luar daftar ini.
 8. SETIAP paragraf WAJIB dibuka dengan kalimat yang MENYATAKAN APA ITU {y} (definisi dari sumber),
    contoh: "{y} adalah hasil kerja ...", "{y} merupakan ...", "{y} dipahami sebagai ...".
@@ -528,7 +547,7 @@ M (Mediating): {m}
 === ONTOLOGI DIMENSI & INDIKATOR Y ===
 {dimensi_indikator_block}
 
-=== DAFTAR SUMBER WAJIB DIGUNAKAN (HANYA dari daftar ini, 8-10 sumber tahun 2022-2026) ===
+=== DAFTAR SUMBER WAJIB DIGUNAKAN (HANYA dari daftar ini, 8-10 sumber tahun {min_th}-{max_th}) ===
 {sumber_block}
 
 Setiap paragraf definisi {y} HARUS mengutip salah satu sumber di atas dengan format APA in-text: (Penulis, Tahun).
@@ -576,7 +595,7 @@ Setiap sumber hanya boleh DIPAKAI SATU KALI di seluruh naskah (anti-duplikasi un
 
 === ATURAN KERAS ===
 1. Bahasa Indonesia akademik formal.
-2. TAHUN SITASI WAJIB 2022-2026. Tahun lain DILARANG, tanpa kecuali.
+2. TAHUN SITASI WAJIB {min_th}-{max_th}. Tahun lain DILARANG, tanpa kecuali.
 3. Sitasi HANYA dari DAFTAR SUMBER WAJIB DIGUNAKAN di atas. Bila jumlah sumber < jumlah paragraf, sitasi boleh diulang maksimal 2 kali per sumber; bila sumber cukup, setiap sumber dipakai sekali.
 4. Definisi {y} = 8-10 paragraf (dengan sitasi) + 1 paragraf kesimpulan sintetis (minimal 5 paragraf bila sumber terbatas). Setiap paragraf definisi memuat tepat satu sitasi; posisinya bervariasi (maksimal 2 paragraf dibuka dengan sitasi, sisanya di tengah atau akhir kalimat). Kesimpulan TANPA sitasi baru.
 5. DILARANG menggunakan kata "menurut", "Berdasarkan pandangan", "Menurut", "pendapat", "kata", "ungkapkan".
@@ -614,7 +633,7 @@ Sejalan dengan pandangan tersebut, employee engagement dipahami sebagai kondisi 
 3. Setiap paragraf menggunakan SITASI YANG BERBEDA dari daftar sumber di bawah.
 4. Tidak ada kata "menurut", "Berdasarkan pandangan", "pendapat", "kata", "ungkapkan" di depan nama penulis.
 5. Buat 1 paragraf definisi untuk SETIAP sumber unik dalam daftar (minimal 2, maksimal 10 paragraf), lalu 1 paragraf kesimpulan sintetis.
-6. Semua sitasi harus tahun 2022-2026.
+6. Semua sitasi harus tahun {min_th}-{max_th}.
 7. SITASI HANYA BOLEH DARI DAFTAR SUMBER WAJIB DIGUNAKAN di bawah. DILARANG mengarang sitasi di luar daftar ini.
 
 === JUDUL PENELITIAN ===
@@ -632,7 +651,7 @@ M (Mediating): {m}
 === ONTOLOGI DIMENSI & INDIKATOR M ===
 {dimensi_indikator_block}
 
-=== DAFTAR SUMBER WAJIB DIGUNAKAN (HANYA dari daftar ini, 8-10 sumber tahun 2022-2026) ===
+=== DAFTAR SUMBER WAJIB DIGUNAKAN (HANYA dari daftar ini, 8-10 sumber tahun {min_th}-{max_th}) ===
 {sumber_block}
 
 Setiap paragraf definisi {m} HARUS mengutip salah satu sumber di atas dengan format APA in-text: (Penulis, Tahun).
@@ -652,7 +671,7 @@ Setiap sumber hanya boleh DIPAKAI SATU KALI di seluruh naskah (anti-duplikasi un
 
 === ATURAN KERAS ===
 1. Bahasa Indonesia akademik formal.
-2. TAHUN SITASI WAJIB 2022-2026. Tahun lain DILARANG, tanpa kecuali.
+2. TAHUN SITASI WAJIB {min_th}-{max_th}. Tahun lain DILARANG, tanpa kecuali.
 3. Situsasi HANYA dari DAFTAR SUMBER WAJIB DIGUNAKAN di atas. Setiap sumber hanya boleh dipakai SATU KALI.
 4. Definisi = 2 sampai 10 paragraf definisi (dengan sitasi BERBEDA) + 1 paragraf kesimpulan sintetis. Gunakan SETIAP sumber unik tepat satu kali; JUMLAH paragraf = jumlah sumber unik yang tersedia — JANGAN mengulang sumber yang sama. Setiap paragraf definisi memuat tepat satu sitasi; posisinya bervariasi (maksimal 2 paragraf dibuka dengan sitasi, sisanya di tengah atau akhir kalimat). Kesimpulan TANPA sitasi baru.
 5. DILARANG menggunakan kata "menurut", "Berdasarkan pandangan", "Menurut", "pendapat", "kata", "ungkapkan".
@@ -692,7 +711,7 @@ Sejalan dengan pandangan tersebut, pelatihan dipahami sebagai proses sistematis 
 3. Setiap paragraf menggunakan SITASI YANG BERBEDA dari daftar sumber di bawah.
 4. Tidak ada kata "menurut", "Berdasarkan pandangan", "pendapat", "kata", "ungkapkan" di depan nama penulis.
 5. Buat 1 paragraf definisi untuk SETIAP sumber unik dalam daftar (minimal 2, maksimal 10 paragraf), lalu 1 paragraf kesimpulan sintetis.
-6. Semua sitasi harus tahun 2022-2026.
+6. Semua sitasi harus tahun {min_th}-{max_th}.
 7. SITASI HANYA BOLEH DARI DAFTAR SUMBER WAJIB DIGUNAKAN di bawah. DILARANG mengarang sitasi di luar daftar ini.
 
 === JUDUL PENELITIAN ===
@@ -710,7 +729,7 @@ M (Mediating): {m}
 === ONTOLOGI DIMENSI & INDIKATOR X1 ===
 {dimensi_indikator_block}
 
-=== DAFTAR SUMBER WAJIB DIGUNAKAN (HANYA dari daftar ini, 8-10 sumber tahun 2022-2026) ===
+=== DAFTAR SUMBER WAJIB DIGUNAKAN (HANYA dari daftar ini, 8-10 sumber tahun {min_th}-{max_th}) ===
 {sumber_block}
 
 Setiap paragraf definisi {x1} HARUS mengutip salah satu sumber di atas dengan format APA in-text: (Penulis, Tahun).
@@ -730,7 +749,7 @@ Setiap sumber hanya boleh DIPAKAI SATU KALI di seluruh naskah (anti-duplikasi un
 
 === ATURAN KERAS ===
 1. Bahasa Indonesia akademik formal.
-2. TAHUN SITASI WAJIB 2022-2026. Tahun lain DILARANG, tanpa kecuali.
+2. TAHUN SITASI WAJIB {min_th}-{max_th}. Tahun lain DILARANG, tanpa kecuali.
 3. Situsasi HANYA dari DAFTAR SUMBER WAJIB DIGUNAKAN di atas. Setiap sumber hanya boleh dipakai SATU KALI.
 4. Definisi {x1} = 2 sampai 10 paragraf definisi (dengan sitasi BERBEDA) + 1 paragraf kesimpulan sintetis. Gunakan SETIAP sumber unik tepat satu kali; JUMLAH paragraf = jumlah sumber unik yang tersedia — JANGAN mengulang sumber yang sama. Setiap paragraf definisi memuat tepat satu sitasi; posisinya bervariasi (maksimal 2 paragraf dibuka dengan sitasi, sisanya di tengah atau akhir kalimat). Kesimpulan TANPA sitasi baru.
 5. DILARANG menggunakan kata "menurut", "Berdasarkan pandangan", "Menurut", "pendapat", "kata", "ungkapkan".
@@ -770,7 +789,7 @@ Sejalan dengan pandangan tersebut, mutasi kerja dipahami sebagai perpindahan peg
 3. Setiap paragraf menggunakan SITASI YANG BERBEDA dari daftar sumber di bawah.
 4. Tidak ada kata "menurut", "Berdasarkan pandangan", "pendapat", "kata", "ungkapkan" di depan nama penulis.
 5. Buat 1 paragraf definisi untuk SETIAP sumber unik dalam daftar (minimal 2, maksimal 10 paragraf), lalu 1 paragraf kesimpulan sintetis.
-6. Semua sitasi harus tahun 2022-2026.
+6. Semua sitasi harus tahun {min_th}-{max_th}.
 7. SITASI HANYA BOLEH DARI DAFTAR SUMBER WAJIB DIGUNAKAN di bawah. DILARANG mengarang sitasi di luar daftar ini.
 
 === JUDUL PENELITIAN ===
@@ -788,7 +807,7 @@ M (Mediating): {m}
 === ONTOLOGI DIMENSI & INDIKATOR X2 ===
 {dimensi_indikator_block}
 
-=== DAFTAR SUMBER WAJIB DIGUNAKAN (HANYA dari daftar ini, 8-10 sumber tahun 2022-2026) ===
+=== DAFTAR SUMBER WAJIB DIGUNAKAN (HANYA dari daftar ini, 8-10 sumber tahun {min_th}-{max_th}) ===
 {sumber_block}
 
 Setiap paragraf definisi {x2} HARUS mengutip salah satu sumber di atas dengan format APA in-text: (Penulis, Tahun).
@@ -808,7 +827,7 @@ Setiap sumber hanya boleh DIPAKAI SATU KALI di seluruh naskah (anti-duplikasi un
 
 === ATURAN KERAS ===
 1. Bahasa Indonesia akademik formal.
-2. TAHUN SITASI WAJIB 2022-2026. Tahun lain DILARANG, tanpa kecuali.
+2. TAHUN SITASI WAJIB {min_th}-{max_th}. Tahun lain DILARANG, tanpa kecuali.
 3. Situsasi HANYA dari DAFTAR SUMBER WAJIB DIGUNAKAN di atas. Setiap sumber hanya boleh dipakai SATU KALI.
 4. Definisi {x2} = 2 sampai 10 paragraf definisi (dengan sitasi BERBEDA) + 1 paragraf kesimpulan sintetis. Gunakan SETIAP sumber unik tepat satu kali; JUMLAH paragraf = jumlah sumber unik yang tersedia — JANGAN mengulang sumber yang sama. Setiap paragraf definisi memuat tepat satu sitasi; posisinya bervariasi (maksimal 2 paragraf dibuka dengan sitasi, sisanya di tengah atau akhir kalimat). Kesimpulan TANPA sitasi baru.
 5. DILARANG menggunakan kata "menurut", "Berdasarkan pandangan", "Menurut", "pendapat", "kata", "ungkapkan".
@@ -1432,7 +1451,8 @@ def _sitasi_tidak_terverifikasi(semua_sitasi, daftar_sumber):
     return buruk
 
 
-def _validate_sub_2_1_1(raw, sources_y, min_th=2022, max_th=2026):
+def _validate_sub_2_1_1(raw, sources_y, min_th=None, max_th=None):
+    min_th, max_th = _resolve_th(min_th, max_th)
     """Validasi output sub_2_1_1 dari Gemini.
 
     Setiap citation (Penulis, Tahun) di output HARUS cocok dengan salah satu
@@ -1522,7 +1542,7 @@ def _validate_sub_2_1_1(raw, sources_y, min_th=2022, max_th=2026):
             print(f"[sub_2_1_1] kata terlarang ditemukan: '{t}'")
             return None
 
-    # Cek tahun sitasi 2022-2026
+    # Cek tahun sitasi dalam rentang aktif
     import re
     tahun_larang = []
     semua_sitasi = []
@@ -1568,7 +1588,7 @@ def _validate_sub_2_1_1(raw, sources_y, min_th=2022, max_th=2026):
                 "raw": raw}
 
     # Peringatan (bukan penolakan): citation di luar daftar pre-fetch
-    # (Gemini mungkin menggunakan knowledge internal, yang masih valid bila tahun 2022-2026)
+    # (Gemini mungkin menggunakan knowledge internal, yang masih valid bila tahun dalam rentang aktif)
     # TOLAK sitasi yang tidak punya sumber terverifikasi (tahun + penulis tak cocok).
     # Sitasi seperti "(Karaday, 2025)" yang tak ada di daftar pre-fetch membuat
     # naskah berisi sitasi tanpa entri DAFTAR PUSTAKA -> harus diperbaiki model.
@@ -2088,7 +2108,7 @@ def _rapikan_definisi_paragraf(hasil, var_name, onto=None, role=None, instances=
 def write_sub_2_1_1(cfg, onto, ctx, acad, sources_y=None):
     """
     Menulis sub bab 2.1.1 via Gemini. Mengembalikan dict konten, atau None bila gagal.
-    sources_y: daftar sumber yang di-fetch secara live (8-10 sumber, buku+jurnal 2022-2026).
+    sources_y: daftar sumber yang di-fetch secara live (8-10 sumber, buku+jurnal dalam rentang aktif).
     """
     from llm_title_parser import load_config, gemini_keys, MODEL_CHAIN
 
@@ -2129,7 +2149,9 @@ def write_sub_2_1_1(cfg, onto, ctx, acad, sources_y=None):
         m=m,
         dimensi_indikator_block=dim_block,
         sumber_block=sumber_block,
-    )
+    
+    min_th=_ac_min_year(),
+    max_th=_ac_max_year(),)
 
     chain = [m for m in config.get("models", []) if m] or MODEL_CHAIN
     timeout = max(int(config.get("timeout_seconds", 90)), 90)
@@ -2249,7 +2271,8 @@ def write_sub_2_1_1(cfg, onto, ctx, acad, sources_y=None):
 # ============================================================================
 # VALIDASI SUB BAB 2.1.2.1 (VARIABEL M)
 # ============================================================================
-def _validate_sub_2_1_2(raw, sources_m, min_th=2022, max_th=2026):
+def _validate_sub_2_1_2(raw, sources_m, min_th=None, max_th=None):
+    min_th, max_th = _resolve_th(min_th, max_th)
     """Validasi output sub_2_1_2 (variabel M) dari Gemini."""
     if isinstance(raw, list) and raw and isinstance(raw[0], dict):
         raw = raw[0]
@@ -2304,7 +2327,7 @@ def _validate_sub_2_1_2(raw, sources_m, min_th=2022, max_th=2026):
             print(f"[sub_2_1_2] kata terlarang: '{t}'")
             return None
 
-    # Cek tahun sitasi 2022-2026
+    # Cek tahun sitasi dalam rentang aktif
     tahun_larang = []
     semua_sitasi = []
     for m in re.finditer(r"\(([A-Z][^)]*,?\s*\d{4}[a-z]?)\)", " ".join(naskah_parts)):
@@ -2345,7 +2368,8 @@ def _validate_sub_2_1_2(raw, sources_m, min_th=2022, max_th=2026):
 # ============================================================================
 # VALIDASI SUB BAB 2.1.3.1 (VARIABEL X1)
 # ============================================================================
-def _validate_sub_2_1_3(raw, sources_x1, min_th=2022, max_th=2026):
+def _validate_sub_2_1_3(raw, sources_x1, min_th=None, max_th=None):
+    min_th, max_th = _resolve_th(min_th, max_th)
     """Validasi output sub_2_1_3 (variabel X1) dari Gemini."""
     if isinstance(raw, list) and raw and isinstance(raw[0], dict):
         raw = raw[0]
@@ -2437,7 +2461,8 @@ def _validate_sub_2_1_3(raw, sources_x1, min_th=2022, max_th=2026):
 # ============================================================================
 # VALIDASI SUB BAB 2.1.4.1 (VARIABEL X2)
 # ============================================================================
-def _validate_sub_2_1_4(raw, sources_x2, min_th=2022, max_th=2026):
+def _validate_sub_2_1_4(raw, sources_x2, min_th=None, max_th=None):
+    min_th, max_th = _resolve_th(min_th, max_th)
     """Validasi output sub_2_1_4 (variabel X2) dari Gemini."""
     if isinstance(raw, list) and raw and isinstance(raw[0], dict):
         raw = raw[0]
@@ -2556,7 +2581,9 @@ def write_sub_2_1_2(cfg, onto, ctx, acad, sources_m=None):
     prompt = PROMPT_BAB2_2_1_2.format(
         judul=judul, instansi=instansi, y=y, x1=x1, x2=x2, m=m,
         dimensi_indikator_block=dim_block, sumber_block=sumber_block,
-    )
+    
+    min_th=_ac_min_year(),
+    max_th=_ac_max_year(),)
 
     chain = [m for m in config.get("models", []) if m] or MODEL_CHAIN
     timeout = max(int(config.get("timeout_seconds", 90)), 90)
@@ -2655,7 +2682,9 @@ def write_sub_2_1_3(cfg, onto, ctx, acad, sources_x1=None):
     prompt = PROMPT_BAB2_2_1_3.format(
         judul=judul, instansi=instansi, y=y, x1=x1, x2=x2, m=m,
         dimensi_indikator_block=dim_block, sumber_block=sumber_block,
-    )
+    
+    min_th=_ac_min_year(),
+    max_th=_ac_max_year(),)
 
     chain = [m for m in config.get("models", []) if m] or MODEL_CHAIN
     timeout = max(int(config.get("timeout_seconds", 90)), 90)
@@ -2754,7 +2783,9 @@ def write_sub_2_1_4(cfg, onto, ctx, acad, sources_x2=None):
     prompt = PROMPT_BAB2_2_1_4.format(
         judul=judul, instansi=instansi, y=y, x1=x1, x2=x2, m=m,
         dimensi_indikator_block=dim_block, sumber_block=sumber_block,
-    )
+    
+    min_th=_ac_min_year(),
+    max_th=_ac_max_year(),)
 
     chain = [m for m in config.get("models", []) if m] or MODEL_CHAIN
     timeout = max(int(config.get("timeout_seconds", 90)), 90)
@@ -2902,7 +2933,8 @@ Variabel:
 # ============================================================================
 # VALIDASI SUB BAB 2.1.1.2 (FAKTOR Y - 2 SUMBER)
 # ============================================================================
-def _validate_sub_2_1_1_faktor(raw, sumber_jurnal, min_th=2022, max_th=2026):
+def _validate_sub_2_1_1_faktor(raw, sumber_jurnal, min_th=None, max_th=None):
+    min_th, max_th = _resolve_th(min_th, max_th)
     """Validasi output sub_2_1_1_2 (faktor Y - 2 sumber) dari Gemini."""
     if isinstance(raw, list) and raw and isinstance(raw[0], dict):
         raw = raw[0]

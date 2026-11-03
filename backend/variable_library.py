@@ -54,6 +54,19 @@ UPLOAD_DIR = os.path.join(BACKEND_DIR, "uploaded_sources")
 SEARCH_YEAR_MIN = 2022
 SEARCH_YEAR_MAX = 2026
 
+
+def active_year_range():
+    """Rentang tahun sitasi aktif (min, max) dari academic_connector.
+
+    Dikonfigurasi di Menu 1 (default 20 tahun kebelakang, mis. 2006-2026).
+    Bila academic_connector tidak tersedia, kembali ke konstanta lama.
+    """
+    try:
+        import academic_connector as _ac
+        return _ac.get_cite_year_range()
+    except Exception:
+        return SEARCH_YEAR_MIN, SEARCH_YEAR_MAX
+
 # Padanan istilah yang lazim dalam judul tesis Indonesia/Inggris. Ini HANYA
 # menyamakan NAMA variabel saat mencari entri pustaka; tidak menambah
 # indikator dan tidak mengubah isi sumber.
@@ -270,10 +283,11 @@ def entry_needs_review(entry):
     src = entry.get("source") or {}
     if not src.get("label"):
         return True
-    # Hasil pencarian live wajib berada di rentang 2022-2026
+    # Hasil pencarian live wajib berada di rentang sitasi aktif
     if src.get("type") == "openalex":
         year = src.get("year") or 0
-        if not (SEARCH_YEAR_MIN <= year <= SEARCH_YEAR_MAX):
+        _ymin, _ymax = active_year_range()
+        if not (_ymin <= year <= _ymax):
             return True
     return False
 

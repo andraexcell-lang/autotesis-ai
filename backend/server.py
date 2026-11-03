@@ -50,6 +50,11 @@ import engine_graph_dynamic
 import s3_title_parser
 import s3_ontology_researcher
 import s3_hierarchical_engine
+try:
+    import s1_hierarchical_engine
+    import s1_data_pipeline
+except Exception as _ex_s1:
+    print(f"[server] Warning loading S1 modules: {_ex_s1}")
 from provenance import (
     label_data_source,
     label_origin,
@@ -66,6 +71,9 @@ CLOUD = bool(os.environ.get("PORT") or os.environ.get("RENDER") or os.environ.ge
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TASKPANE_DIR = os.path.join(BASE_DIR, "taskpane")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
+# Folder referensi sumber S1: PDF referensi disajikan lokal sehingga tautan
+# sumber di blueprint dijamin selalu resolve (tanpa risiko link DOI mati).
+REFERENCES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "references")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
@@ -274,9 +282,19 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
             elif path == "/taskpane.js":
                 target = os.path.join(TASKPANE_DIR, "taskpane.js")
                 content_type = "application/javascript"
+            elif path == "/config.js":
+                # Konfigurasi runtime (API base utk deployment frontend terpisah)
+                target = os.path.join(TASKPANE_DIR, "config.js")
+                content_type = "application/javascript"
             elif path.startswith("/assets/"):
                 target = os.path.join(TASKPANE_DIR, path.lstrip("/"))
                 content_type = "image/png" if path.endswith(".png") else "text/plain"
+            elif path.startswith("/references/"):
+                # Sajikan PDF referensi dari folder backend/references (tautan sumber
+                # blueprint S1 dijamin resolve tanpa risiko link DOI mati).
+                rel = path[len("/references/"):].lstrip("/")
+                target = os.path.join(REFERENCES_DIR, rel)
+                content_type = "application/pdf"
             else:
                 target = os.path.join(TASKPANE_DIR, path.lstrip("/"))
                 content_type = "text/plain"
@@ -321,22 +339,56 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
             # 0. Parse Thesis Title (LLM Gemini + Regex Fallback)
             if path == "/api/parse-title":
                 raw_title = body.get("title", "") or body.get("judul", "")
-                llm_result = llm_title_parser.parse_title_llm(raw_title)
-                if llm_result:
+
+                # Jalur utama deterministik: parser doktoral (S3). Cepat, offline,
+                # dan tidak mengarang variabel yang tidak tertulis di judul.
+                try:
+                    doc_parsed = s3_title_parser.parse_title_doctoral(raw_title)
+                except Exception:
+                    doc_parsed = {}
+
+                if doc_parsed.get("x_vars"):
+                    _tnorm = " ".join(str(raw_title).lower().split())
+                    _xv = [str(v) for v in doc_parsed.get("x_vars") or [] if str(v).strip()]
+                    _mv = [str(v) for v in doc_parsed.get("m_vars") or []
+                           if str(v).strip() and " ".join(str(v).lower().split()) in _tnorm]
+                    _zv = [str(v) for v in doc_parsed.get("z_vars") or []
+                           if str(v).strip() and " ".join(str(v).lower().split()) in _tnorm]
                     parsed = {
-                        "x1": llm_result["x1"] or "Motivasi Kerja",
-                        "x2": llm_result["x2"] or "Disiplin Kerja",
-                        "m": llm_result["m"] or "Kepuasan Kerja",
-                        "y": llm_result["y"] or "Kinerja Pegawai",
-                        "instansi": llm_result["instansi"] or "Instansi Pemerintah Daerah",
+                        "x1": _xv[0] if _xv else "",
+                        "x2": _xv[1] if len(_xv) > 1 else "",
+                        "x3": _xv[2] if len(_xv) > 2 else "",
+                        "x_vars": _xv,
+                        "m_vars": _mv,
+                        "z_vars": _zv,
+                        "m": _mv[0] if _mv else "",
+                        "z": _zv[0] if _zv else "",
+                        "y_var": doc_parsed.get("y_var") or "",
+                        "y": doc_parsed.get("y_var") or "",
+                        "instansi": doc_parsed.get("instansi") or "",
                         "sektor": semantic_title_parser.detect_institutional_sector(
-                            llm_result["instansi"], raw_title),
+                            doc_parsed.get("instansi") or "", raw_title),
                         "raw_title": raw_title,
-                        "engine": llm_result.get("_engine", "gemini"),
+                        "engine": "s3-doctoral",
                     }
                 else:
-                    parsed = semantic_title_parser.parse_academic_title(raw_title)
-                    parsed["engine"] = "regex-fallback"
+                    llm_result = llm_title_parser.parse_title_llm(raw_title)
+                    if llm_result:
+                        parsed = {
+                            "x1": llm_result.get("x1") or "",
+                            "x2": llm_result.get("x2") or "",
+                            "m": llm_result.get("m") or "",
+                            "y": llm_result.get("y") or "",
+                            "instansi": llm_result.get("instansi") or "",
+                            "sektor": semantic_title_parser.detect_institutional_sector(
+                                llm_result.get("instansi") or "", raw_title),
+                            "raw_title": raw_title,
+                            "engine": llm_result.get("_engine", "gemini"),
+                        }
+                    else:
+                        parsed = semantic_title_parser.parse_academic_title(raw_title)
+                        parsed["engine"] = "regex-fallback"
+
                 response_data = {
                     "status": "success",
                     "title": raw_title,
@@ -353,11 +405,11 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 instansi = body.get("instansi", "")
                 sektor = body.get("sektor", "")
                 judul = body.get("judul", body.get("title", ""))
-                # Blueprint BEKU untuk judul yang sama dipakai ulang. Ini
-                # mencegah klik "Telusuri" yang tidak sengaja menimpa ontologi
-                # yang sudah disetujui. Regenerasi paksa memakai force=true.
+                # 🔍 Telusuri SELALU membangun ulang blueprint (tidak lagi dipakai
+                # ulang dari cache secara diam-diam). Kunci "reuse_cache" opsional
+                # hanya untuk panggilan eksplisit yang membutuhkan blueprint beku.
                 ontology = None
-                if judul and not body.get("force"):
+                if judul and bool(body.get("reuse_cache")):
                     try:
                         ontology = academic_dimension_researcher.baca_ontology_cache(judul)
                     except Exception:
@@ -795,26 +847,48 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
 
                 if is_s3:
                     import importlib
+                    import academic_connector
+                    import s3_academic_researcher
+                    import s3_hierarchical_engine
+                    importlib.reload(academic_connector)
+                    importlib.reload(s3_academic_researcher)
+                    # Modul variasi narasi harus di-reload SEBELUM engine agar
+                    # perubahan kosakata/komposer langsung berlaku.
+                    try:
+                        importlib.reload(importlib.import_module("s3_narrative_variation"))
+                        importlib.reload(importlib.import_module("s3_data_ingest"))
+                    except Exception:
+                        pass
+                    # Modul helper tabel harus di-reload SEBELUM engine agar
+                    # perbaikan lebar kolom (apply_fixed_widths) ikut terpakai.
+                    try:
+                        importlib.reload(sys.modules["build_full_thesis_docx"])
+                    except Exception:
+                        pass
                     importlib.reload(s3_hierarchical_engine)
                     is_custom = bool(body.get("is_custom")) or str(sub_id).startswith("custom_")
                     custom_meta = body.get("custom_meta", {})
                     if is_custom:
                         fn, fp = s3_hierarchical_engine.build_s3_custom_subchapter_doc(custom_meta, config)
+                        ch_val = custom_meta.get("chapter")
+                        try:
+                            ch_int = int(ch_val) if ch_val is not None else 1
+                        except Exception:
+                            ch_int = 1
                         meta_info = {
                             "code": custom_meta.get("code", "E"),
                             "title": f"{custom_meta.get('code', 'E')}. {custom_meta.get('title', 'Sub-Bab Kustom')}",
-                            "chapter": custom_meta.get("chapter", 1),
+                            "chapter": ch_int,
                             "is_custom": True
                         }
                     else:
                         fn, fp = s3_hierarchical_engine.build_s3_subchapter_doc(sub_id, config, include_dapus=False)
-                        meta_info = s3_hierarchical_engine.S3_SUBCHAPTER_CATALOG.get(sub_id, {})
+                        meta_info = s3_hierarchical_engine.get_s3_subchapter_meta(sub_id, config)
 
                     native_written = False
                     if mode == "native":
                         try:
-                            s3_hierarchical_engine.write_s3_subchapter_native(sub_id, config, path=fp)
-                            native_written = True
+                            native_written = bool(s3_hierarchical_engine.write_s3_subchapter_native(sub_id, config, path=fp))
                         except Exception as ex:
                             print(f"Error native write S3 {sub_id}: {ex}")
 
@@ -896,6 +970,24 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
 
                 if is_s3:
                     import importlib
+                    import academic_connector
+                    import s3_academic_researcher
+                    import s3_hierarchical_engine
+                    importlib.reload(academic_connector)
+                    importlib.reload(s3_academic_researcher)
+                    # Modul variasi narasi harus di-reload SEBELUM engine agar
+                    # perubahan kosakata/komposer langsung berlaku.
+                    try:
+                        importlib.reload(importlib.import_module("s3_narrative_variation"))
+                        importlib.reload(importlib.import_module("s3_data_ingest"))
+                    except Exception:
+                        pass
+                    # Modul helper tabel harus di-reload SEBELUM engine agar
+                    # perbaikan lebar kolom (apply_fixed_widths) ikut terpakai.
+                    try:
+                        importlib.reload(sys.modules["build_full_thesis_docx"])
+                    except Exception:
+                        pass
                     importlib.reload(s3_hierarchical_engine)
                     response_data = s3_hierarchical_engine.run_s3_chained_pipeline(chapter_num, config, mode=mode)
                 else:
@@ -1119,19 +1211,46 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 llm_result = llm_title_parser.parse_title_llm(title_input)
                 if llm_result:
                     parsed = {
-                        "x1": llm_result["x1"] or "Motivasi Kerja",
-                        "x2": llm_result["x2"] or "Disiplin Kerja",
-                        "m": llm_result["m"] or "Kepuasan Kerja",
-                        "y": llm_result["y"] or "Kinerja Pegawai",
-                        "instansi": llm_result["instansi"] or "Instansi Pemerintah Daerah",
+                        "x1": llm_result.get("x1") or "",
+                        "x2": llm_result.get("x2") or "",
+                        "m": llm_result.get("m") or "",
+                        "y": llm_result.get("y") or "",
+                        "instansi": llm_result.get("instansi") or "",
                         "sektor": semantic_title_parser.detect_institutional_sector(
-                            llm_result["instansi"], title_input),
+                            llm_result.get("instansi") or "", title_input),
                         "raw_title": title_input,
                         "engine": llm_result.get("_engine", "gemini"),
                     }
                 else:
                     parsed = semantic_title_parser.parse_academic_title(title_input)
                     parsed["engine"] = "regex-fallback"
+
+                # Selaraskan dengan parser doktoral (S3): judul adalah sumber kebenaran.
+                # Panel menerima x1/x2/m/z/y sekaligus x_vars/m_vars/z_vars.
+                try:
+                    doc_parsed = s3_title_parser.parse_title_doctoral(title_input)
+                except Exception:
+                    doc_parsed = {}
+                if doc_parsed.get("x_vars"):
+                    _tnorm = " ".join(str(title_input).lower().split())
+                    _xv = [str(v) for v in doc_parsed.get("x_vars") or [] if str(v).strip()]
+                    _mv = [str(v) for v in doc_parsed.get("m_vars") or []
+                           if str(v).strip() and " ".join(str(v).lower().split()) in _tnorm]
+                    _zv = [str(v) for v in doc_parsed.get("z_vars") or []
+                           if str(v).strip() and " ".join(str(v).lower().split()) in _tnorm]
+                    parsed["x_vars"] = _xv
+                    parsed["m_vars"] = _mv
+                    parsed["z_vars"] = _zv
+                    parsed["y_var"] = doc_parsed.get("y_var") or parsed.get("y") or ""
+                    parsed["x1"] = _xv[0] if _xv else ""
+                    parsed["x2"] = _xv[1] if len(_xv) > 1 else ""
+                    parsed["x3"] = _xv[2] if len(_xv) > 2 else ""
+                    parsed["m"] = _mv[0] if _mv else ""
+                    parsed["z"] = _zv[0] if _zv else ""
+                    parsed["y"] = parsed["y_var"]
+                    if doc_parsed.get("instansi"):
+                        parsed["instansi"] = doc_parsed["instansi"]
+
                 response_data = {
                     "status": "success",
                     "title": title_input,
@@ -1179,12 +1298,117 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                     response_data = {
                         "status": "success",
                         "title": raw_title,
-                        "data": parsed_s3,
+                        "data": dict(parsed_s3, **{
+                            "x_vars": parsed_s3.get("x_vars", []),
+                            "m_vars": parsed_s3.get("m_vars", []),
+                            "z_vars": parsed_s3.get("z_vars", []),
+                            "y_var": parsed_s3.get("y_var", ""),
+                            "x1": (parsed_s3.get("x_vars") or [""])[0],
+                            "x2": (parsed_s3.get("x_vars") or ["", ""])[1] if len(parsed_s3.get("x_vars") or []) > 1 else "",
+                            "m": (parsed_s3.get("m_vars") or [""])[0],
+                            "z": (parsed_s3.get("z_vars") or [""])[0],
+                            "y": parsed_s3.get("y_var", ""),
+                        }),
                         "graph": compiled
                     }
                 except Exception as ex:
                     status_code = 400
                     response_data = {"status": "error", "message": f"Deteksi judul S3 gagal: {ex}"}
+
+            elif path in ("/api/s1/research-ontology", "/s1/research-ontology"):
+                try:
+                    import s1_ontology_researcher
+                    title_input = body.get("title") or body.get("judul") or ""
+                    x_list = body.get("x_vars", [])
+                    clean_x = []
+                    for it in x_list:
+                        if isinstance(it, dict):
+                            clean_x.append(it.get("name", ""))
+                        elif isinstance(it, str):
+                            clean_x.append(it)
+                    m_val = body.get("m_var") or body.get("m") or ""
+                    y_val = body.get("y_var") or body.get("y") or "Kinerja Pegawai"
+                    m_type = body.get("model_type") or "regression"
+                    inst = body.get("instansi") or "Instansi Terkait"
+                    sek = body.get("sektor", "")
+                    refresh = bool(body.get("force_refresh", False))
+
+                    onto_s1 = s1_ontology_researcher.research_s1_ontology(
+                        title=title_input,
+                        x_vars=clean_x,
+                        m_var=m_val,
+                        y_var=y_val,
+                        model_type=m_type,
+                        instansi=inst,
+                        sektor=sek,
+                        force_refresh=refresh
+                    )
+                    response_data = {
+                        "status": "success",
+                        "title": title_input,
+                        "ontology": onto_s1
+                    }
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": f"Riset ontologi S1 gagal: {ex}"}
+
+            elif path in ("/api/s1/get-ontology", "/s1/get-ontology"):
+                import s1_ontology_researcher
+                title_input = body.get("title") or body.get("judul") or ""
+                onto_s1 = s1_ontology_researcher.load_s1_ontology(title_input)
+                response_data = {
+                    "status": "success" if onto_s1 else "not_found",
+                    "ontology": onto_s1
+                }
+
+            elif path in ("/api/s1/cite-range", "/s1/cite-range"):
+                import academic_connector
+                if body.get("min_year") is not None or body.get("max_year") is not None:
+                    academic_connector.set_cite_year_range(
+                        body.get("min_year"), body.get("max_year"))
+                lo, hi = academic_connector.get_cite_year_range()
+                response_data = {
+                    "status": "success",
+                    "min_year": lo,
+                    "max_year": hi,
+                    "default_min": academic_connector._CURRENT_YEAR - 20,
+                    "default_max": academic_connector._CURRENT_YEAR,
+                }
+
+            elif path in ("/api/s1/cite-references", "/s1/cite-references"):
+                import s1_ontology_researcher
+                response_data = s1_ontology_researcher.build_s1_citation_references(body)
+
+            elif path in ("/api/s1/cite-settings", "/s1/cite-settings"):
+                import academic_connector
+                if ("min_year" in body or body.get("max_year") is not None
+                        or body.get("year_mode") is not None
+                        or body.get("origin") is not None or body.get("style") is not None
+                        or body.get("language") is not None or body.get("source_types") is not None
+                        or body.get("source_files") is not None):
+                    academic_connector.set_cite_settings(
+                        min_year=body.get("min_year"),
+                        max_year=body.get("max_year"),
+                        min_year_sent="min_year" in body,
+                        year_mode=body.get("year_mode"),
+                        origin=body.get("origin"),
+                        style=body.get("style"),
+                        language=body.get("language"),
+                        source_types=body.get("source_types"),
+                        source_files=body.get("source_files"))
+                response_data = academic_connector.get_cite_settings()
+                response_data["status"] = "success"
+
+            elif path in ("/api/s1/save-ontology", "/s1/save-ontology"):
+                import s1_ontology_researcher
+                blueprint = body.get("ontology") or {}
+                title_in = body.get("title") or body.get("judul") or ""
+                ok = s1_ontology_researcher.apply_s1_blueprint(blueprint, title_in)
+                response_data = {
+                    "status": "success" if ok else "error",
+                    "message": ("Blueprint ontologi S1 diterapkan (kunci Benang Merah)."
+                                if ok else "Gagal menyimpan blueprint S1."),
+                }
 
             elif path == "/api/s3/research-ontology":
                 try:
@@ -1314,6 +1538,23 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                     sub_id = body.get("sub_id", "all")
 
                     import importlib
+                    import academic_connector
+                    import s3_academic_researcher
+                    importlib.reload(academic_connector)
+                    importlib.reload(s3_academic_researcher)
+                    # Modul variasi narasi harus di-reload SEBELUM engine agar
+                    # perubahan kosakata/komposer langsung berlaku.
+                    try:
+                        importlib.reload(importlib.import_module("s3_narrative_variation"))
+                        importlib.reload(importlib.import_module("s3_data_ingest"))
+                    except Exception:
+                        pass
+                    # Modul helper tabel harus di-reload SEBELUM engine agar
+                    # perbaikan lebar kolom (apply_fixed_widths) ikut terpakai.
+                    try:
+                        importlib.reload(sys.modules["build_full_thesis_docx"])
+                    except Exception:
+                        pass
                     importlib.reload(s3_hierarchical_engine)
                     if sub_id == "all":
                         out_name, saved = s3_hierarchical_engine.build_s3_full_dissertation_doc(config)
@@ -1352,6 +1593,23 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                         }
 
                     import importlib
+                    import academic_connector
+                    import s3_academic_researcher
+                    importlib.reload(academic_connector)
+                    importlib.reload(s3_academic_researcher)
+                    # Modul variasi narasi harus di-reload SEBELUM engine agar
+                    # perubahan kosakata/komposer langsung berlaku.
+                    try:
+                        importlib.reload(importlib.import_module("s3_narrative_variation"))
+                        importlib.reload(importlib.import_module("s3_data_ingest"))
+                    except Exception:
+                        pass
+                    # Modul helper tabel harus di-reload SEBELUM engine agar
+                    # perbaikan lebar kolom (apply_fixed_widths) ikut terpakai.
+                    try:
+                        importlib.reload(sys.modules["build_full_thesis_docx"])
+                    except Exception:
+                        pass
                     importlib.reload(s3_hierarchical_engine)
                     if sub_id == "all":
                         written = s3_hierarchical_engine.write_s3_full_dissertation_native(config)
@@ -1373,6 +1631,23 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
             elif path == "/api/s3/prompt":
                 try:
                     import importlib
+                    import academic_connector
+                    import s3_academic_researcher
+                    importlib.reload(academic_connector)
+                    importlib.reload(s3_academic_researcher)
+                    # Modul variasi narasi harus di-reload SEBELUM engine agar
+                    # perubahan kosakata/komposer langsung berlaku.
+                    try:
+                        importlib.reload(importlib.import_module("s3_narrative_variation"))
+                        importlib.reload(importlib.import_module("s3_data_ingest"))
+                    except Exception:
+                        pass
+                    # Modul helper tabel harus di-reload SEBELUM engine agar
+                    # perbaikan lebar kolom (apply_fixed_widths) ikut terpakai.
+                    try:
+                        importlib.reload(sys.modules["build_full_thesis_docx"])
+                    except Exception:
+                        pass
                     importlib.reload(s3_hierarchical_engine)
                     sub_id = body.get("sub_id", "sub_1_1")
                     config = body.get("config", {})
@@ -1384,7 +1659,7 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                         title_info = f"{custom_meta.get('code', 'E')}. {custom_meta.get('title', 'Sub-Bab Kustom')}"
                     else:
                         prompt = s3_hierarchical_engine.build_s3_prompt(sub_id, ctx)
-                        title_info = s3_hierarchical_engine.S3_SUBCHAPTER_CATALOG.get(sub_id, {}).get("title", sub_id)
+                        title_info = s3_hierarchical_engine.get_s3_subchapter_meta(sub_id, ctx).get("title", sub_id)
 
                     response_data = {
                         "status": "success",
@@ -1404,6 +1679,45 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
                 except Exception as ex:
                     status_code = 400
                     response_data = {"status": "error", "message": f"Gagal menghasilkan prompt S3: {ex}"}
+
+            elif path == "/api/s3/references":
+                try:
+                    import importlib
+                    import academic_connector
+                    import s3_academic_researcher
+                    importlib.reload(academic_connector)
+                    importlib.reload(s3_academic_researcher)
+                    # Modul variasi narasi harus di-reload SEBELUM engine agar
+                    # perubahan kosakata/komposer langsung berlaku.
+                    try:
+                        importlib.reload(importlib.import_module("s3_narrative_variation"))
+                        importlib.reload(importlib.import_module("s3_data_ingest"))
+                    except Exception:
+                        pass
+                    # Modul helper tabel harus di-reload SEBELUM engine agar
+                    # perbaikan lebar kolom (apply_fixed_widths) ikut terpakai.
+                    try:
+                        importlib.reload(sys.modules["build_full_thesis_docx"])
+                    except Exception:
+                        pass
+                    importlib.reload(s3_hierarchical_engine)
+                    import s3_academic_researcher
+                    config = body.get("config", {})
+                    force_refresh = bool(body.get("force_refresh", False))
+                    ctx = s3_hierarchical_engine.resolve_s3_context(config)
+                    corpus = s3_academic_researcher.fetch_s3_verified_academic_corpus(ctx, force_refresh=force_refresh)
+                    citation_groups = s3_academic_researcher.get_s3_citation_groups(ctx)
+                    response_data = {
+                        "status": "success",
+                        "total_verified": corpus.get("total_verified_papers", 0),
+                        "total_bibliography": corpus.get("total_bibliography_entries", 0),
+                        "bibliography": corpus.get("bibliography", []),
+                        "citation_groups": citation_groups,
+                        "papers_sample": corpus.get("papers", [])[:10]
+                    }
+                except Exception as ex:
+                    status_code = 400
+                    response_data = {"status": "error", "message": f"Gagal mengambil referensi S3: {ex}"}
 
             else:
                 status_code = 404
@@ -1531,12 +1845,18 @@ class AutoTesisHandler(http.server.SimpleHTTPRequestHandler):
             ]
         elif action == "bab_3":
             import math as _math
+            _pop_raw = str(config.get("populasi") or config.get("n") or "").strip()
+            if not _pop_raw:
+                raise ValueError(
+                    "Jumlah populasi (N) wajib diisi sebelum generate Bab III. "
+                    "Mesin tidak lagi memakai angka default (45/150) karena populasi setiap instansi berbeda."
+                )
             try:
-                _pop = int(float(config.get("populasi") or config.get("n") or 45))
+                _pop = int(float(_pop_raw.replace(".", "").replace(",", ".")))
             except Exception:
-                _pop = 45
+                raise ValueError(f"Jumlah populasi '{_pop_raw}' bukan angka yang valid.")
             if _pop <= 0:
-                _pop = 45
+                raise ValueError("Jumlah populasi harus lebih besar dari 0.")
             if _pop > 100:
                 _n_exact = _pop / (1 + _pop * 0.0025)
                 _n = int(_math.ceil(_n_exact))

@@ -30,6 +30,30 @@ ROMAN = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
          "XIX", "XX", "XXI", "XXII", "XXIII", "XXIV"}
 
 
+_CAPTION_RE = re.compile(r"^(Tabel|Gambar)\s+(\d+)\.\s*(\d+)", re.I)
+
+
+def _rapikan_caption(text):
+    """Seragamkan label tabel/gambar dan baris sumber.
+
+    Caption resmi menjadi ``Tabel 3.1`` + baris baru judul. Kalimat naratif
+    seperti ``Tabel 1.1 memperlihatkan ...`` tidak diubah karena kata
+    setelah nomor berhuruf kecil.
+    """
+    m = _CAPTION_RE.match(text)
+    if m:
+        rest = text[m.end():]
+        first = rest.lstrip()[:1]
+        is_caption = rest.startswith(".") or "\n" in rest or (first.isalpha() and first.isupper())
+        if is_caption:
+            body = rest.lstrip(" .\r\n\t")
+            text = f"{m.group(1)} {m.group(2)}.{m.group(3)}" + (f"\n{body}" if body else "")
+    if text.startswith("Sumber"):
+        text = re.sub(r"^Sumber\s*:\s*", "Sumber: ", text)
+        text = re.sub(r",\s*\((20\d{2})\)", r" (\1)", text)
+    return text
+
+
 def _judul_rapi(judul):
     """Kapitalisasi judul tanpa merusak angka Romawi.
 
@@ -553,6 +577,7 @@ def _hang_number(para, indent_in=HANG_IN):
 
 def p(doc, text="", bold=False, italic=False, align=WD_ALIGN_PARAGRAPH.JUSTIFY, indent=0.5, space_before=0, space_after=6, hanging=0, font_size=12, line_spacing=2.0):
     if text:
+        text = _rapikan_caption(str(text))
         text = _rapikan_pola_sitasi(str(text))
     para = doc.add_paragraph()
     para.alignment = align
@@ -687,6 +712,65 @@ def _set_update_fields(doc):
         print(f"[updateFields] gagal menyalakan: {ex}")
 
 
+def add_page_number_footer(section, numfmt="decimal", start=None, font_size=11):
+    """Sisipkan nomor halaman (field PAGE) di footer section + atur formatnya.
+
+    ``numfmt`` : "decimal" (1, 2, 3) atau "lowerRoman" (i, ii, iii).
+    ``start``  : nomor halaman awal section (None = lanjut dari section sebelumnya).
+    """
+    try:
+        sectPr = section._sectPr
+        el = sectPr.find(qn('w:pgNumType'))
+        if el is None:
+            el = parse_xml(r'<w:pgNumType %s/>' % nsdecls('w'))
+            sectPr.append(el)
+        el.set(qn('w:fmt'), numfmt)
+        if start is not None:
+            el.set(qn('w:start'), str(int(start)))
+        elif el.get(qn('w:start')) is not None:
+            del el.attrib[qn('w:start')]
+    except Exception as ex:
+        print(f"[pgNum] gagal mengatur format nomor halaman: {ex}")
+
+    try:
+        footer = section.footer
+        footer.is_linked_to_previous = False
+        para = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
+        for r in list(para.runs):
+            r._r.getparent().remove(r._r)
+        para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = para.add_run()
+        run.font.name = "Times New Roman"
+        run.font.size = Pt(font_size)
+        run._r.append(parse_xml(r'<w:fldChar %s w:fldCharType="begin"/>' % nsdecls('w')))
+        instr = parse_xml(r'<w:instrText %s xml:space="preserve"/>' % nsdecls('w'))
+        instr.text = " PAGE "
+        run._r.append(instr)
+        run._r.append(parse_xml(r'<w:fldChar %s w:fldCharType="separate"/>' % nsdecls('w')))
+        mid = para.add_run("1")
+        mid.font.name = "Times New Roman"
+        mid.font.size = Pt(font_size)
+        end = para.add_run()
+        end._r.append(parse_xml(r'<w:fldChar %s w:fldCharType="end"/>' % nsdecls('w')))
+    except Exception as ex:
+        print(f"[pgNum] gagal membuat footer nomor halaman: {ex}")
+    return section
+
+
+def apply_section_margins(section):
+    """Terapkan margin baku disertasi (4-4-3-3 cm) pada section baru."""
+    try:
+        section.page_width = Cm(21.0)
+        section.page_height = Cm(29.7)
+        section.top_margin = Cm(4.0)
+        section.left_margin = Cm(4.0)
+        section.bottom_margin = Cm(3.0)
+        section.right_margin = Cm(3.0)
+    except Exception:
+        pass
+    return section
+
+
 # ============ GAYA PARAGRAF CAPTION (untuk DAFTAR TABEL/GAMBAR/LAMPIRAN OTOMATIS) ============
 # Word bisa menyusun daftar otomatis dari GAYA paragraf (switch TOC "\t").
 # Tiga gaya ini HANYA menandai caption; tampilannya tetap dari format langsung
@@ -803,6 +887,14 @@ def mark_caption_styles(doc):
             continue
         if t:
             par_sebelum = par
+        # Caption GAMBAR yang tidak memuat objek gambar tersemat (mis. bagan/kerangka
+        # berpikir yang digambar manual oleh peneliti): dikenali dari baris pertama
+        # yang HANYA memuat nomor gambar ("Gambar 2.1"), sehingga kalimat naskah tidak
+        # ikut tertandai.
+        if _RX_CAP_GAMBAR.match(t):
+            _baris1 = re.split(r"[\v\n]", t)[0].strip()
+            if _RX_CAP_LABEL_ONLY.match(_baris1):
+                _pasang(par, STYLE_CAP_GAMBAR, OUTLINE_CAP_GAMBAR, "gambar")
         # Judul LAMPIRAN (mis. h2 "Lampiran 1  Kuesioner Penelitian")
         if _RX_CAP_LAMPIRAN.match(t):
             pPr = par._p.find(qn('w:pPr'))
@@ -924,7 +1016,30 @@ def apply_full_borders_table(table):
 apply_open_table = apply_full_borders_table
 
 def apply_fixed_widths(table, widths_cm):
-    """Kunci lebar kolom tabel (cm) agar proporsional seperti contoh tesis."""
+    """Kunci lebar kolom tabel (cm) agar proporsional seperti contoh tesis.
+
+    Menerima dua bentuk: angka cm (mis. 3.2) ATAU objek docx.shared.Length
+    (mis. Cm(3.2) / Inches(1)). Tanpa normalisasi ini, Length (EMU) akan
+    dibaca sebagai cm sehingga lebar kolom membesar ~360.000x dan Word
+    "memperbaiki" tabel menjadi puluhan kolom saat disimpan.
+    """
+    def _as_cm(w):
+        return float(w.cm) if hasattr(w, "cm") else float(w)
+
+    widths_cm = [_as_cm(w) for w in widths_cm]
+
+    # Jaga agar total lebar kolom tidak melebihi lebar blok teks halaman.
+    try:
+        _doc = table.part.document
+        _sec = _doc.sections[0]
+        _max_cm = _sec.page_width.cm - _sec.left_margin.cm - _sec.right_margin.cm
+        _total = sum(widths_cm)
+        if _total > _max_cm + 0.01 and _total > 0:
+            _f = _max_cm / _total
+            widths_cm = [w * _f for w in widths_cm]
+    except Exception:
+        pass
+
     tblPr = table._tbl.tblPr
     for el in tblPr.findall(qn('w:tblLayout')):
         tblPr.remove(el)

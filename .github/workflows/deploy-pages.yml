@@ -1,0 +1,44 @@
+name: Deploy taskpane ke Cloudflare Pages
+
+# Opsional. Cara paling mudah: Cloudflare Dashboard > Workers & Pages >
+# Create > Pages > Connect to Git (tanpa file ini, tanpa token).
+# Workflow ini dipakai bila ingin deploy dari GitHub Actions.
+#
+# Prasyarat (Settings > Secrets and variables > Actions):
+#   secrets.CLOUDFLARE_API_TOKEN   - token dengan izin "Cloudflare Pages: Edit"
+#   secrets.CLOUDFLARE_ACCOUNT_ID  - Account ID Cloudflare
+#   vars.AUTOTESIS_BACKEND_URL     - URL backend Render/Fly, mis.
+#                                    https://autotesis-api.onrender.com
+#
+# Sengaja hanya workflow_dispatch agar push biasa tidak menghasilkan job gagal
+# saat secret belum diisi.
+
+on:
+  workflow_dispatch:
+    inputs:
+      backend_url:
+        description: "URL backend (kosongkan untuk memakai vars.AUTOTESIS_BACKEND_URL)"
+        required: false
+        default: ""
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build dist/
+        env:
+          AUTOTESIS_BACKEND_URL: ${{ inputs.backend_url || vars.AUTOTESIS_BACKEND_URL }}
+        run: node deploy/build_pages.mjs
+
+      - name: Deploy ke Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=autotesis

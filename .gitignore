@@ -47,6 +47,18 @@ backend/test_*.docx
 # === Nilai env siap-tempel (berisi API key) ===
 _render_env_values.txt
 
+# === Output build statis (Cloudflare Pages) ===
+dist/
+.wrangler/
+
+# === State runtime pengaturan sitasi (dibuat otomatis oleh backend) ===
+backend/cite_settings.json
+backend/cite_year_range.json
+
+# === Korpus PDF referensi (data besar + hak cipta pihak ketiga; jangan ke repo publik) ===
+backend/references/**/*.pdf
+backend/references/**/*.PDF
+
 # === OS/IDE ===
 .vscode/
 .idea/

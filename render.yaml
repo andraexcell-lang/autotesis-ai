@@ -1,29 +1,38 @@
-# render.yaml - Infrastructure as Code untuk Render.com
-# Deploy: push ke GitHub → connect di dashboard.render.com → auto deploy
+# render.yaml - Infrastructure as Code untuk Render.com (backend Python)
+# Deploy: push ke GitHub -> dashboard Render -> New > Blueprint -> pilih repo.
+#
+# Catatan penting:
+# - Render FREE: instance tidur setelah ~15 menit idle; permintaan pertama
+#   butuh ~30-60 detik (cold start). Untuk add-in Word sebaiknya upgrade
+#   Starter ($7/bln) agar selalu hidup, atau pakai Cloudflare Tunnel ke PC.
+# - PyMuPDF (fitz) sudah menyediakan wheel manylinux -> TIDAK perlu apt-get.
+# - --chdir memastikan import antar-modul backend (flat imports) tetap jalan.
 
 services:
   - type: web
-    name: independent-researcher
+    name: autotesis-api
     runtime: python
-    region: oregon  # free tier hanya oregon; upgrade $7/bln untuk singapore
+    plan: free
+    region: oregon          # free tier: oregon (Singapore butuh paket berbayar)
     branch: main
-    # PyMuPDF butuh libmupdf-dev di runtime image.
-    buildCommand: >
-      apt-get update && apt-get install -y --no-install-recommends libmupdf-dev
-      && pip install --no-cache-dir -r requirements.txt
-    # Server berbasis http.server (bukan Flask) -> jalankan langsung.
-    # PORT dibaca dari env oleh backend/server.py (mode CLOUD: hanya HTTP).
+    rootDir: .
+    buildCommand: pip install --no-cache-dir -r requirements.txt
     startCommand: python backend/server.py
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
-      # API Keys di-set manual di dashboard Environment Variables (lebih aman):
-      #   GEMINI_API_KEYS = ["key1","key2",...] (JSON array)
-      #   NVIDIA_API_KEY  = nvapi-xxx
     healthCheckPath: /api/healthz
     autoDeploy: true
-    # Persistent Disk untuk variable_library (butuh upgrade $7/bln)
-    # disk:
-    #   name: variable-library
-    #   mountPath: /opt/render/project/src/backend/variable_library
-    #   sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      # PORT disediakan otomatis oleh Render -> server.py masuk mode CLOUD
+      # (HTTP saja, TLS dihentikan proxy Render).
+      #
+      # API key JANGAN ditulis di sini (repo publik). Isi di dashboard
+      # Render > Environment, atau lewat `sync: false` agar diminta saat deploy:
+      - key: GEMINI_API_KEYS
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: LLM_MODELS
+        sync: false

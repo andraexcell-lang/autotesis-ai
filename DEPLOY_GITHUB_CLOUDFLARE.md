@@ -154,24 +154,37 @@ yang sama seperti sebelumnya (mode lokal/Render-saja tetap jalan).
 Manifest wajib memakai **https** dan URL absolut.
 
 ```powershell
-python deploy/make_manifest.py --base-url https://autotesis.pages.dev
+python deploy/make_manifest.py --base-url https://autotesis-ai.pages.dev --out manifest_pages.xml
 ```
 
-Perintah ini membuat `manifest_autotesis_pages_dev.xml` dengan semua URL (SourceLocation,
-ikon, AppDomain, Taskpane.Url) menunjuk ke Pages.
+Perintah ini mengganti semua URL (SourceLocation, ikon, AppDomain, Taskpane.Url)
+ke origin baru, membuang `<AppDomain>` duplikat, dan menambahkan
+`<Requirements>` WordApi 1.1 bila belum ada.
 
-Sideload:
+Manifest siap unduh: <https://autotesis-ai.pages.dev/manifest.xml>
+(dihasilkan otomatis oleh `deploy/build_pages.mjs` dari `manifest_pages.xml`).
 
-1. Word → **File → Options → Trust Center → Trust Center Settings → Trusted Add-in Catalogs**.
-2. Tambahkan folder berisi file manifest, centang **Show in Menu**, restart Word.
-3. **Insert → My Add-ins → Shared Folder → Independent Researcher**.
+Sideload (Word desktop, Windows) — cara tercepat:
+
+1. Unduh <https://autotesis-ai.pages.dev/manifest.xml> ke folder lokal.
+2. Word → **Insert → Get Add-ins → My Add-ins → Upload My Add-in** → pilih file
+   `manifest.xml`. Add-in langsung muncul di tab **Home** (tombol *Buka Asisten Tesis*).
+
+Cara permanen (Trusted Add-in Catalog, muncul di **My Add-ins → Shared Folder**):
+
+1. Simpan `manifest.xml` di folder yang dibagikan, mis. `C:\AutotesisAddin`, lalu
+   share folder itu (Properties → Sharing → Share) sebagai `AutotesisAddin`.
+2. Word → **File → Options → Trust Center → Trust Center Settings → Trusted Add-in Catalogs**.
+3. Isi *Catalog Url* dengan `\\<nama-PC>\AutotesisAddin`, klik **Add catalog**,
+   centang **Show in Menu**, OK, lalu **restart Word**.
+4. **Insert → My Add-ins → Shared Folder → Independent Researcher**.
 
 Untuk publikasi luas: upload manifest ke **Microsoft 365 admin center → Integrated apps**
 (butuh akun tenant; tidak wajib untuk pemakaian sendiri).
 
-> Catatan: ikon `assets/icon-16/32/64/80.png` belum ada di repo. Word tetap bisa
-> memuat add-in, tetapi tombol ribbon memakai ikon default. Tambahkan PNG ukuran
-> tersebut ke `taskpane/assets/` agar manifest sepenuhnya valid.
+> Ikon `taskpane/assets/icon-{16,32,64,80}.png` sudah tersedia dan diterbitkan
+> Pages (`/assets/icon-*.png`); manifest memakai 32 px untuk `IconUrl` dan
+> 64 px untuk `HighResolutionIconUrl`.
 
 ---
 

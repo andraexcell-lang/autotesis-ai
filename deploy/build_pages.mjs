@@ -15,7 +15,7 @@
  * Catatan: backend Python TIDAK ikut ke Cloudflare Pages (Pages hanya statis).
  * Deploy backend ke Render/Fly, lalu isi AUTOTESIS_BACKEND_URL dengan URL-nya.
  */
-import { cp, mkdir, readdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -64,6 +64,12 @@ async function main() {
   const assets = entries.find((e) => e.isDirectory() && e.name === "assets");
   if (assets) await cp(path.join(SRC, "assets"), path.join(outDir, "assets"), { recursive: true });
 
+  // Manifest add-in ikut diterbitkan agar bisa diunduh dari URL publik.
+  const manifest = path.join(ROOT, "manifest_pages.xml");
+  if (await stat(manifest).then((s) => s.isFile(), () => false)) {
+    await cp(manifest, path.join(outDir, "manifest.xml"));
+  }
+
   const configJs = `// Digenerate otomatis oleh deploy/build_pages.mjs - jangan diedit manual.\nwindow.AUTOTESIS_API_BASE = ${JSON.stringify(backend)};\n`;
   await writeFile(path.join(outDir, "config.js"), configJs, "utf8");
 
@@ -88,6 +94,9 @@ async function main() {
       "  Cache-Control: no-cache",
       "",
       "/config.js",
+      "  Cache-Control: no-cache",
+      "",
+      "/manifest.xml",
       "  Cache-Control: no-cache",
       "",
     ].join("\n"),

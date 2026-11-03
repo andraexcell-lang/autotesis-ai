@@ -16,7 +16,7 @@ services:
     region: oregon          # free tier: oregon (Singapore butuh paket berbayar)
     branch: main
     rootDir: .
-    buildCommand: pip install --no-cache-dir -r requirements.txt
+    buildCommand: pip install --no-cache-dir -r requirements.render.txt
     startCommand: python backend/server.py
     healthCheckPath: /api/healthz
     autoDeploy: true

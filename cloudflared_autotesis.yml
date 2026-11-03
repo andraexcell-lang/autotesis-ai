@@ -1,0 +1,21 @@
+# cloudflared_autotesis.yml - konfigurasi Named Tunnel "autotesis-api"
+# Hostname publik : https://autotesis.skripsiplg.my.id
+# Backend lokal   : http://localhost:5050
+#
+# Jalankan:
+#   cloudflared.exe tunnel --config cloudflared_autotesis.yml run autotesis-api
+#
+# Catatan: tunnel ini meneruskan seluruh trafik ke server lokal, jadi PC harus
+# menyala. Backend TIDAK punya autentikasi -> siapa pun yang tahu URL dapat
+# memakai API. Batasi pemakaian atau tambahkan token bila perlu.
+
+tunnel: 593e3473-533d-4b0b-8844-3e40b73c9271
+credentials-file: C:\Users\user\.cloudflared\593e3473-533d-4b0b-8844-3e40b73c9271.json
+
+ingress:
+  - hostname: autotesis.skripsiplg.my.id
+    service: http://localhost:5050
+    originRequest:
+      connectTimeout: 30s
+      noTLSVerify: true
+  - service: http_status:404

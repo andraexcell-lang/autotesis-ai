@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Dependensi Python dulu (cache layer)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.render.txt .
+RUN pip install --no-cache-dir -r requirements.render.txt
 
 # Kode aplikasi
 COPY . .

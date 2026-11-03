@@ -59,7 +59,7 @@ Yang **tidak** ikut terkirim (sudah di `.gitignore`, jangan diubah):
    - `GEMINI_API_KEYS` → JSON array, mis. `["AIza...","AIza..."]` (atau dipisah koma)
    - `NVIDIA_API_KEY` → `nvapi-...` (opsional)
    - `LLM_MODELS`, `EXTRACT_MODELS` → opsional
-4. Deploy. Tunggu build `pip install -r requirements.txt` (±3–5 menit).
+4. Deploy. Tunggu build `pip install -r requirements.render.txt` (±3–5 menit).
 5. Cek: `https://<nama-service>.onrender.com/api/healthz` → `200`.
 6. Salin origin-nya, mis. `https://autotesis-api.onrender.com`.
 

@@ -5,6 +5,31 @@ sebagai Word Add-in yang bisa diakses dari mana saja, memakai layanan gratis.
 
 ---
 
+## STATUS DEPLOY (aktual, 3 Nov 2026)
+
+| Komponen | URL | Status |
+|---|---|---|
+| Frontend (Cloudflare Pages) | <https://autotesis-ai.pages.dev/taskpane> | ✅ live, auto-deploy dari `main` |
+| Backend (Cloudflare Tunnel) | <https://autotesis.skripsiplg.my.id> | ✅ live selama PC menyala |
+| Health check | <https://autotesis.skripsiplg.my.id/api/healthz> | ✅ `{"status":"ok"}` |
+| Manifest | `manifest_pages.xml` | ✅ menunjuk Pages |
+
+Catatan penting:
+
+- **Backend berjalan di PC ini** lewat Named Tunnel `autotesis-api`
+  (`cloudflared_autotesis.yml`). Kalau PC mati / tunnel ditutup, frontend tetap
+  terbuka tetapi semua fitur API gagal.
+- Jalankan `START_TUNNEL_AUTOTESIS.bat` untuk menghidupkan server + tunnel.
+- **Backend belum punya autentikasi.** Siapa pun yang tahu URL dapat memanggil API
+  (termasuk endpoint yang memakai kuota LLM). Untuk pemakaian serius, pindahkan
+  backend ke Render (bagian 2) atau tambahkan pembatasan akses.
+- Pages memakai *Pretty URLs*: `/taskpane.html` dialihkan 308 ke `/taskpane`.
+  Keduanya berfungsi; manifest memakai `/taskpane.html`.
+- `requirements.txt` diganti nama menjadi `requirements.render.txt` supaya builder
+  Pages tidak otomatis menjalankan `pip install` (dulu gagal di PyMuPDF).
+
+---
+
 ## 0. Fakta arsitektur (baca dulu)
 
 | Komponen | Isi | Bisa di Cloudflare Pages? |
